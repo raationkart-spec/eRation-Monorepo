@@ -223,7 +223,7 @@ export function ProductForm({ existing }: { existing?: Product }) {
           background: #fff;
         }
         .ainput:focus {
-          border-color: #5fcc5a;
+          border-color: #f97316;
         }
       `}</style>
     </div>

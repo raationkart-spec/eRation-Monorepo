@@ -1,4 +1,4 @@
-# QuickCart — Zepto-style Grocery App (Demo Build)
+# QuickCart
 
 A working, **demo-ready** grocery commerce app built from the PRD. It runs with
 **zero environment variables and no database** — all data lives in a seeded

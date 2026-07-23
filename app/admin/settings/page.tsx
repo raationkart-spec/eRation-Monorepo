@@ -175,7 +175,7 @@ export default function AdminSettings() {
           background: #fff;
         }
         .sinput:focus {
-          border-color: #5fcc5a;
+          border-color: #f97316;
         }
       `}</style>
     </div>

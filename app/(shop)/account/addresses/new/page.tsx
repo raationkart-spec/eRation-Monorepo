@@ -172,7 +172,7 @@ function AddressForm() {
           background: #fff;
         }
         :global(.input:focus) {
-          border-color: #5fcc5a;
+          border-color: #f97316;
         }
       `}</style>
     </div>

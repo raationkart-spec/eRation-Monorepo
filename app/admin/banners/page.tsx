@@ -9,7 +9,7 @@ import { useHydrated } from "@/lib/useHydrated";
 import type { Banner } from "@/lib/types";
 
 const BGS = [
-  { label: "Green", value: "from-brand to-brand-dark" },
+  { label: "Brand", value: "from-brand to-brand-dark" },
   { label: "Sky", value: "from-sky-400 to-sky-600" },
   { label: "Orange", value: "from-amber-400 to-orange-500" },
   { label: "Violet", value: "from-violet-400 to-violet-600" },
