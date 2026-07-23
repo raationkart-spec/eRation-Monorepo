@@ -26,6 +26,7 @@ interface AuthState {
   user: User | null;
   loginWithPhone: (phone: string) => void;
   loginWithGoogle: () => void;
+  loginAsAdmin: (email: string) => void;
   logout: () => void;
   updateName: (name: string) => void;
   setEmail: (email: string) => void;
@@ -53,6 +54,15 @@ export const useAuth = create<AuthState>()(
             phone: "+91 90000 00000",
             role: "CUSTOMER",
             image: "",
+          },
+        }),
+      loginAsAdmin: (email) =>
+        set({
+          user: {
+            id: "admin_demo",
+            name: "Store Admin",
+            email,
+            role: "ADMIN",
           },
         }),
       logout: () => set({ user: null }),

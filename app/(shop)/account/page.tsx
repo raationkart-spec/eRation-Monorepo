@@ -1,14 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import {
-  ChevronRight,
-  LogOut,
-  MapPin,
-  Package,
-  Pencil,
-  Shield,
-} from "lucide-react";
+import { ChevronRight, LogOut, MapPin, Package, Pencil } from "lucide-react";
 import { useAuth } from "@/lib/store";
 import { EmptyState } from "@/components/misc";
 import { Skel } from "@/components/skeletons";
@@ -105,11 +98,6 @@ export default function AccountPage() {
           href="/account/addresses"
           icon={<MapPin size={20} />}
           label="My Addresses"
-        />
-        <Item
-          href="/admin"
-          icon={<Shield size={20} />}
-          label="Admin Dashboard (demo)"
         />
       </div>
 

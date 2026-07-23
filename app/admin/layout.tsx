@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -10,11 +10,14 @@ import {
   Image as ImageIcon,
   Settings,
   Menu,
-  X,
   ExternalLink,
+  LogOut,
 } from "lucide-react";
 import clsx from "clsx";
 import { ToastHost } from "@/components/toast";
+import { useAuth } from "@/lib/store";
+import { useHydrated } from "@/lib/useHydrated";
+import { AdminDashboardSkeleton } from "@/components/skeletons";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -33,6 +36,30 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const hydrated = useHydrated();
+  const user = useAuth((s) => s.user);
+  const logout = useAuth((s) => s.logout);
+
+  const isLoginPage = pathname === "/admin/login";
+  const isAdmin = user?.role === "ADMIN";
+
+  // Gate: non-admins are sent to the admin login screen.
+  useEffect(() => {
+    if (!isLoginPage && hydrated && !isAdmin) {
+      router.replace("/admin/login");
+    }
+  }, [isLoginPage, hydrated, isAdmin, router]);
+
+  // The login screen renders standalone (no sidebar, no gate).
+  if (isLoginPage) return <>{children}</>;
+
+  if (!hydrated || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-6">
+        <AdminDashboardSkeleton />
+      </div>
+    );
+  }
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
@@ -68,12 +95,23 @@ export default function AdminLayout({
           );
         })}
       </div>
-      <button
-        onClick={() => router.push("/")}
-        className="m-3 flex items-center justify-center gap-2 rounded-lg border border-slate-700 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
-      >
-        <ExternalLink size={16} /> View storefront
-      </button>
+      <div className="m-3 space-y-2">
+        <button
+          onClick={() => router.push("/")}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
+        >
+          <ExternalLink size={16} /> View storefront
+        </button>
+        <button
+          onClick={() => {
+            logout();
+            router.replace("/admin/login");
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium text-red-300 hover:bg-slate-800"
+        >
+          <LogOut size={16} /> Log out
+        </button>
+      </div>
     </nav>
   );
 

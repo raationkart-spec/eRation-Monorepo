@@ -1,6 +1,8 @@
 "use client";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/store";
 
 function LoginInner() {
@@ -70,6 +72,15 @@ function LoginInner() {
         <p className="mt-2 text-center text-2xs text-ink-subtle">
           By continuing you agree to our Terms &amp; Privacy Policy.
         </p>
+
+        <div className="mt-6 border-t border-surface-border pt-4 text-center">
+          <Link
+            href="/admin/login"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted"
+          >
+            <ShieldCheck size={15} /> Admin login
+          </Link>
+        </div>
       </div>
     </div>
   );
