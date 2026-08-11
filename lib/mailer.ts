@@ -22,6 +22,8 @@ export async function sendOtpEmail(email: string, otp: string): Promise<boolean>
       },
     });
 
+    const textContent = `Your QuickCart verification code is: ${otp}\n\nThis code will expire in 10 minutes. If you did not request this code, please ignore this email.`;
+
     const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -87,8 +89,10 @@ export async function sendOtpEmail(email: string, otp: string): Promise<boolean>
 
     const info = await transporter.sendMail({
       from,
+      replyTo: user,
       to: email,
       subject: `${otp} is your QuickCart verification code`,
+      text: textContent,
       html: htmlContent,
     });
 
