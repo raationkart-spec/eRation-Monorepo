@@ -1,7 +1,18 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight, LogOut, MapPin, Package, Pencil } from "lucide-react";
+import {
+  ChevronRight,
+  LogOut,
+  MapPin,
+  Package,
+  Pencil,
+  CreditCard,
+  HelpCircle,
+  Settings,
+  Star,
+  Mail,
+} from "lucide-react";
 import { useAuth } from "@/lib/store";
 import { EmptyState } from "@/components/misc";
 import { Skel } from "@/components/skeletons";
@@ -17,10 +28,10 @@ export default function AccountPage() {
 
   if (!hydrated)
     return (
-      <div>
+      <div className="space-y-4">
         <Skel className="h-7 w-32" />
-        <Skel className="mt-4 h-20 w-full rounded-xl" />
-        <Skel className="mt-4 h-40 w-full rounded-xl" />
+        <Skel className="h-28 w-full rounded-2xl" />
+        <Skel className="h-64 w-full rounded-2xl" />
       </div>
     );
 
@@ -37,19 +48,26 @@ export default function AccountPage() {
   }
 
   const initials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "QC";
 
   return (
-    <div className="content-in">
-      <h1 className="mb-4 text-2xl font-bold">Account</h1>
+    <div className="content-in space-y-6 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">My Account</h1>
 
-      <div className="flex items-center gap-3 rounded-xl border border-surface-border bg-white p-4 shadow-card">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-xl font-bold text-brand-dark">
-          {initials}
+      {/* Profile Card matching Stitch */}
+      <section className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm">
+        <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-orange-500 bg-orange-100 font-extrabold text-orange-700 text-xl shadow-inner">
+          {user.image ? (
+            <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
+          ) : (
+            <span>{initials}</span>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           {editing ? (
@@ -58,64 +76,90 @@ export default function AccountPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={user.name}
-                className="min-w-0 flex-1 rounded border border-surface-border px-2 py-1 text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-orange-500"
               />
               <button
                 onClick={() => {
                   if (name.trim()) updateName(name.trim());
                   setEditing(false);
                 }}
-                className="text-sm font-semibold text-brand-dark"
+                className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm"
               >
                 Save
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <p className="truncate text-lg font-semibold">{user.name}</p>
+              <h2 className="truncate text-xl font-bold text-slate-900">{user.name}</h2>
               <button
                 onClick={() => {
                   setName(user.name);
                   setEditing(true);
                 }}
+                className="text-slate-400 hover:text-slate-600"
               >
-                <Pencil size={14} className="text-ink-subtle" />
+                <Pencil size={15} />
               </button>
             </div>
           )}
-          {user.phone && (
-            <p className="text-sm text-ink-muted">{user.phone}</p>
-          )}
           {user.email && (
-            <p className="truncate text-xs text-ink-subtle">{user.email}</p>
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs font-semibold text-slate-500">
+              <Mail size={13} className="text-slate-400" /> {user.email}
+            </p>
           )}
+          <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-2xs font-extrabold text-emerald-700 border border-emerald-200/60">
+            <Star size={11} className="fill-emerald-600 text-emerald-600" /> VIP Member
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="mt-4 divide-y divide-surface-border overflow-hidden rounded-xl border border-surface-border bg-white shadow-card">
-        <Item href="/orders" icon={<Package size={20} />} label="My Orders" />
-        <Item
+      {/* Menu List Card matching Stitch */}
+      <section className="flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm divide-y divide-slate-100">
+        <MenuItem
+          href="/orders"
+          icon={<Package size={20} />}
+          label="My Orders"
+        />
+        <MenuItem
           href="/account/addresses"
           icon={<MapPin size={20} />}
-          label="My Addresses"
+          label="Saved Addresses"
         />
+        <MenuItem
+          href="/orders"
+          icon={<HelpCircle size={20} />}
+          label="Refunds & Help"
+        />
+        <MenuItem
+          href="/account"
+          icon={<CreditCard size={20} />}
+          label="Manage Payments"
+        />
+        <MenuItem
+          href="/account"
+          icon={<Settings size={20} />}
+          label="Settings"
+        />
+      </section>
+
+      {/* Logout Button in soft red */}
+      <div>
+        <button
+          onClick={logout}
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50/80 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 active:scale-95 shadow-2xs"
+        >
+          <LogOut size={18} /> Logout
+        </button>
       </div>
 
-      <button
-        onClick={logout}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-surface-border bg-white py-3 text-sm font-semibold text-status-error shadow-card"
-      >
-        <LogOut size={18} /> Log out
-      </button>
-
-      <p className="mt-6 text-center text-2xs text-ink-subtle">
-        QuickCart demo · v1.0
+      <p className="text-center text-2xs font-semibold text-slate-400">
+        QuickCart Instant Grocery Platform · v1.0
       </p>
     </div>
   );
 }
 
-function Item({
+function MenuItem({
   href,
   icon,
   label,
@@ -125,10 +169,17 @@ function Item({
   label: string;
 }) {
   return (
-    <Link href={href} className="flex items-center gap-3 px-4 py-3.5">
-      <span className="text-ink-muted">{icon}</span>
-      <span className="flex-1 text-sm font-medium">{label}</span>
-      <ChevronRight size={18} className="text-ink-subtle" />
+    <Link
+      href={href}
+      className="group flex items-center justify-between p-4 transition hover:bg-slate-50 active:bg-slate-100"
+    >
+      <div className="flex items-center gap-3.5">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-orange-100 group-hover:text-orange-600">
+          {icon}
+        </div>
+        <span className="text-sm font-bold text-slate-800">{label}</span>
+      </div>
+      <ChevronRight size={18} className="text-slate-400 transition group-hover:translate-x-0.5" />
     </Link>
   );
 }

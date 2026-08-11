@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Plus, Wallet } from "lucide-react";
+import { Check, Plus, Wallet, MapPin, Receipt, ShieldCheck, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { ProductImage } from "@/components/ProductImage";
 import { EmptyState } from "@/components/misc";
 import {
   useAuth,
@@ -30,6 +31,7 @@ export default function CheckoutPage() {
   const { lines, subtotal, deliveryFee, total } = useCartComputed();
 
   const [selectedId, setSelectedId] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "GPAY">("COD");
   const [placing, setPlacing] = useState(false);
 
   useEffect(() => {
@@ -72,6 +74,7 @@ export default function CheckoutPage() {
         name: l.product.name,
         unit: l.product.unit,
         emoji: l.product.emoji,
+        imageUrl: l.product.imageUrl,
         price: l.product.price,
         mrp: l.product.mrp,
         quantity: l.quantity,
@@ -89,12 +92,12 @@ export default function CheckoutPage() {
         pincode: selected.pincode,
       },
       status: "PLACED",
-      paymentMethod: "COD",
+      paymentMethod: paymentMethod === "GPAY" ? "UPI" : "COD",
       paymentStatus: "PENDING",
       subtotal,
       deliveryFee,
       discount: 0,
-      total,
+      total: total + 200,
       createdAt: new Date().toISOString(),
       statusHistory: [{ status: "PLACED", at: new Date().toISOString() }],
       customerName: user.name,
@@ -106,138 +109,162 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="content-in mx-auto min-h-screen max-w-2xl bg-surface-muted pb-32">
+    <div className="mx-auto min-h-screen max-w-2xl bg-slate-50 pb-32">
       <PageHeader title="Checkout" />
 
-      {/* Address */}
-      <section className="mt-2 bg-white p-4">
-        <h2 className="mb-2 text-sm font-semibold">Deliver to</h2>
-        {addresses.length === 0 ? (
-          <Link
-            href="/account/addresses/new?returnTo=/checkout"
-            className="btn-secondary w-full"
-          >
-            <Plus size={16} /> Add delivery address
-          </Link>
-        ) : (
-          <div className="space-y-2">
-            {addresses.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => setSelectedId(a.id)}
-                className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left ${
-                  selectedId === a.id
-                    ? "border-brand bg-brand-50"
-                    : "border-surface-border"
-                }`}
-              >
-                <span
-                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                    selectedId === a.id
-                      ? "border-brand bg-brand text-white"
-                      : "border-surface-border"
-                  }`}
-                >
-                  {selectedId === a.id && <Check size={12} />}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">
-                    {a.label ?? "Address"} · {a.name}
-                  </p>
-                  <p className="text-xs text-ink-muted">
-                    {a.line1}, {a.line2 ? a.line2 + ", " : ""}
-                    {a.city}, {a.state} - {a.pincode}
-                  </p>
-                  <p className="text-xs text-ink-subtle">{a.phone}</p>
-                </div>
-              </button>
-            ))}
+      <div className="space-y-4 p-4">
+        {/* Delivery Address Section matching Stitch */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+              <MapPin size={18} className="text-orange-600 fill-orange-600/20" /> Deliver to Address
+            </h2>
             <Link
               href="/account/addresses/new?returnTo=/checkout"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-dark"
+              className="inline-flex items-center gap-1 text-xs font-extrabold text-orange-600 hover:underline"
             >
-              <Plus size={14} /> Add new address
+              <Plus size={14} /> Add New
             </Link>
           </div>
-        )}
-        {selected && !serviceable && (
-          <p className="mt-2 rounded bg-red-50 px-2 py-1.5 text-xs font-medium text-status-error">
-            Delivery not available to {selected.pincode}. Try pincode 560001.
-          </p>
-        )}
-      </section>
 
-      {/* Payment */}
-      <section className="mt-2 bg-white p-4">
-        <h2 className="mb-2 text-sm font-semibold">Payment</h2>
-        <div className="flex items-center gap-3 rounded-lg border border-brand bg-brand-50 p-3">
-          <Wallet size={20} className="text-brand-dark" />
-          <span className="flex-1 text-sm font-semibold">Cash on Delivery</span>
-          <Check size={18} className="text-brand-dark" />
-        </div>
-        <p className="mt-1.5 text-2xs text-ink-subtle">
-          Online payment (UPI/Cards) coming soon.
-        </p>
-      </section>
-
-      {/* Summary */}
-      <section className="mt-2 bg-white p-4">
-        <h2 className="mb-2 text-sm font-semibold">Order Summary</h2>
-        <div className="space-y-1">
-          {lines.map((l) => (
-            <div
-              key={l.product.id}
-              className="flex justify-between text-xs text-ink-muted"
+          {addresses.length === 0 ? (
+            <Link
+              href="/account/addresses/new?returnTo=/checkout"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50"
             >
-              <span className="truncate pr-2">
-                {l.product.emoji} {l.product.name} × {l.quantity}
-              </span>
-              <span>{formatMoney(l.lineTotal)}</span>
+              <Plus size={16} /> Add Delivery Address
+            </Link>
+          ) : (
+            <div className="space-y-2.5">
+              {addresses.map((a) => {
+                const isSel = selectedId === a.id;
+                return (
+                  <button
+                    key={a.id}
+                    onClick={() => setSelectedId(a.id)}
+                    className={`flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-all ${
+                      isSel
+                        ? "border-orange-500 bg-orange-50/40 shadow-xs"
+                        : "border-slate-200/80 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                        isSel
+                          ? "border-orange-600 bg-orange-600 text-white"
+                          : "border-slate-300"
+                      }`}
+                    >
+                      {isSel && <Check size={12} />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-2xs font-extrabold uppercase text-slate-700">
+                          {a.label ?? "Home"}
+                        </span>
+                        <p className="text-xs font-bold text-slate-900">{a.name}</p>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500 font-medium line-clamp-2">
+                        {a.line1}, {a.line2 ? a.line2 + ", " : ""}
+                        {a.city}, {a.state} - {a.pincode}
+                      </p>
+                      <p className="mt-0.5 text-2xs text-slate-400 font-semibold">{a.phone}</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          ))}
-        </div>
-        <div className="my-2 border-t border-dashed border-surface-border" />
-        <Row label="Item total" value={formatMoney(subtotal)} />
-        <Row
-          label="Delivery fee"
-          value={deliveryFee === 0 ? "FREE" : formatMoney(deliveryFee)}
-        />
-        <Row label="Total" value={formatMoney(total)} bold />
-      </section>
+          )}
 
-      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-2xl border-t border-surface-border bg-white p-3">
+          {selected && !serviceable && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600">
+              Delivery not available to {selected.pincode}. Serviceable pincodes: {pincodes.slice(0, 3).join(", ")}.
+            </p>
+          )}
+        </section>
+
+        {/* Payment Method Section matching Stitch */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm space-y-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+            <Wallet size={18} className="text-slate-500" /> Pay Using
+          </h2>
+
+          <div
+            onClick={() => setPaymentMethod("GPAY")}
+            className={`flex cursor-pointer items-center justify-between rounded-xl border p-3.5 transition-all ${
+              paymentMethod === "GPAY"
+                ? "border-orange-500 bg-orange-50/40"
+                : "border-slate-200 bg-white hover:bg-slate-50"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-10 items-center justify-center rounded border border-slate-200 bg-white font-extrabold text-blue-600 text-2xs">
+                GPay
+              </div>
+              <span className="text-xs font-bold text-slate-900">Google Pay / UPI</span>
+            </div>
+            <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "GPAY" ? "border-orange-600 bg-orange-600 text-white" : "border-slate-300"}`}>
+              {paymentMethod === "GPAY" && <Check size={12} />}
+            </div>
+          </div>
+
+          <div
+            onClick={() => setPaymentMethod("COD")}
+            className={`flex cursor-pointer items-center justify-between rounded-xl border p-3.5 transition-all ${
+              paymentMethod === "COD"
+                ? "border-orange-500 bg-orange-50/40"
+                : "border-slate-200 bg-white hover:bg-slate-50"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Wallet size={20} className="text-slate-500" />
+              <span className="text-xs font-bold text-slate-900">Pay on Delivery (Cash/UPI)</span>
+            </div>
+            <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "COD" ? "border-orange-600 bg-orange-600 text-white" : "border-slate-300"}`}>
+              {paymentMethod === "COD" && <Check size={12} />}
+            </div>
+          </div>
+        </section>
+
+        {/* Order Items & Bill Details */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm space-y-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+            <Receipt size={18} className="text-slate-500" /> Bill Summary
+          </h2>
+          <div className="space-y-2 text-xs font-semibold text-slate-600">
+            <div className="flex justify-between">
+              <span>Item Subtotal ({lines.length} items)</span>
+              <span className="text-slate-900">{formatMoney(subtotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Delivery Charge</span>
+              <span className={deliveryFee === 0 ? "text-emerald-600 font-bold" : "text-slate-900"}>
+                {deliveryFee === 0 ? "FREE" : formatMoney(deliveryFee)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Platform & Handling Fee</span>
+              <span className="text-slate-900">{formatMoney(200)}</span>
+            </div>
+            <div className="border-t border-dashed border-slate-200 pt-2.5 flex justify-between text-sm font-black text-slate-900">
+              <span>Grand Total</span>
+              <span className="text-orange-600">{formatMoney(total + 200)}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Fixed Place Order Bar matching Stitch */}
+      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-2xl border-t border-slate-200 bg-white/95 p-4 shadow-[0_-8px_20px_-6px_rgba(0,0,0,0.1)] backdrop-blur-lg rounded-t-2xl">
         <button
           disabled={!selected || !serviceable || placing}
           onClick={placeOrder}
-          className="btn-primary w-full flex-col gap-0 py-3 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-orange-600 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-orange-700 disabled:opacity-50 active:scale-95"
         >
-          <span>{placing ? "Placing order..." : "Place Order →"}</span>
-          <span className="text-xs font-normal opacity-90">
-            Pay {formatMoney(total)} on delivery
-          </span>
+          <span>{placing ? "Placing Order..." : `Pay ${formatMoney(total + 200)} & Place Order`}</span>
+          <ArrowRight size={18} />
         </button>
       </div>
-    </div>
-  );
-}
-
-function Row({
-  label,
-  value,
-  bold,
-}: {
-  label: string;
-  value: string;
-  bold?: boolean;
-}) {
-  return (
-    <div
-      className={`flex justify-between py-0.5 text-sm ${
-        bold ? "font-bold text-ink" : "text-ink-muted"
-      }`}
-    >
-      <span>{label}</span>
-      <span>{value}</span>
     </div>
   );
 }
