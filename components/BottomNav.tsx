@@ -30,7 +30,7 @@ export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-surface-border bg-white shadow-nav"
+      className="fixed inset-x-0 bottom-0 z-40 glass-nav shadow-lg"
       style={{ paddingBottom: "var(--safe-bottom)" }}
     >
       <div className="mx-auto flex max-w-2xl">
@@ -41,17 +41,17 @@ export function BottomNav() {
             <Link
               key={t.href}
               href={t.href}
-              className="flex flex-1 flex-col items-center gap-0.5 py-2"
+              className="flex flex-1 flex-col items-center gap-0.5 py-2.5 transition-transform active:scale-90"
             >
               <Icon
                 size={22}
-                className={active ? "text-brand-dark" : "text-ink-subtle"}
-                strokeWidth={active ? 2.4 : 2}
+                className={active ? "text-orange-600" : "text-slate-400"}
+                strokeWidth={active ? 2.5 : 1.8}
               />
               <span
                 className={clsx(
-                  "text-2xs font-medium",
-                  active ? "text-brand-dark" : "text-ink-subtle"
+                  "text-2xs font-semibold",
+                  active ? "text-orange-600 font-extrabold" : "text-slate-500"
                 )}
               >
                 {t.label}

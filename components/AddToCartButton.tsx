@@ -28,7 +28,7 @@ export function AddToCartButton({
       <button
         disabled
         className={clsx(
-          "w-full rounded-md border border-surface-border bg-surface-muted font-semibold text-ink-subtle",
+          "w-full rounded-xl border border-slate-200 bg-slate-100 font-semibold text-slate-400 cursor-not-allowed",
           dims
         )}
       >
@@ -45,7 +45,7 @@ export function AddToCartButton({
           show(`${product.name} added to cart`);
         }}
         className={clsx(
-          "w-full animate-scale-in rounded-md border border-brand bg-brand-50 font-bold text-brand-dark transition active:scale-[0.97]",
+          "w-full animate-scale-in rounded-xl border border-emerald-300 bg-emerald-50/90 font-extrabold text-emerald-700 transition-all hover:bg-emerald-600 hover:text-white hover:border-emerald-600 active:scale-95 shadow-sm",
           dims
         )}
       >
@@ -57,18 +57,18 @@ export function AddToCartButton({
   return (
     <div
       className={clsx(
-        "flex w-full items-center justify-between rounded-md bg-brand font-bold text-white",
+        "flex w-full items-center justify-between rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 font-bold text-white shadow-sm",
         dims
       )}
     >
       <button
         aria-label="Decrease"
         onClick={() => setQty(product.id, qty - 1)}
-        className="flex h-full flex-1 items-center justify-center active:scale-90"
+        className="flex h-full flex-1 items-center justify-center transition active:scale-75 hover:bg-black/10 rounded-l-xl"
       >
         <Minus size={size === "sm" ? 14 : 16} />
       </button>
-      <span className="tabular-nums">{qty}</span>
+      <span className="tabular-nums font-extrabold px-1 text-sm">{qty}</span>
       <button
         aria-label="Increase"
         onClick={() =>
@@ -76,7 +76,7 @@ export function AddToCartButton({
             ? show(`Only ${product.stockQty} in stock`)
             : setQty(product.id, qty + 1)
         }
-        className="flex h-full flex-1 items-center justify-center active:scale-90"
+        className="flex h-full flex-1 items-center justify-center transition active:scale-75 hover:bg-black/10 rounded-r-xl"
       >
         <Plus size={size === "sm" ? 14 : 16} />
       </button>
