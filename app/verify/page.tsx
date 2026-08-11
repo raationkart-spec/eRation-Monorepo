@@ -9,7 +9,8 @@ function VerifyInner() {
   const router = useRouter();
   const params = useSearchParams();
   const email = params.get("email") ?? "";
-  const returnTo = params.get("returnTo") ?? "/";
+  const rawReturnTo = params.get("returnTo") ?? "/";
+  const returnTo = rawReturnTo === "/account" ? "/" : rawReturnTo;
   const loginWithEmail = useAuth((s) => s.loginWithEmail);
 
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));

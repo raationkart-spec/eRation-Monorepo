@@ -8,7 +8,8 @@ import { signIn } from "next-auth/react";
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const returnTo = params.get("returnTo") ?? "/";
+  const rawReturnTo = params.get("returnTo") ?? "/";
+  const returnTo = rawReturnTo === "/account" ? "/" : rawReturnTo;
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

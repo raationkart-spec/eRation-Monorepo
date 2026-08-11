@@ -31,7 +31,7 @@ export default function AccountPage() {
         title="Sign in to your account"
         subtitle="Manage orders, addresses and more"
         ctaLabel="Sign in"
-        ctaHref="/login?returnTo=/account"
+        ctaHref="/login"
       />
     );
   }
