@@ -46,7 +46,7 @@ export default function CategoriesPage() {
 
       <div className="flex gap-3 items-start min-h-[500px]">
         {/* Sidebar matching Stitch browse_categories.html */}
-        <aside className="w-24 shrink-0 space-y-2 rounded-2xl border border-slate-200/90 bg-white p-2 shadow-sm">
+        <aside className="sticky top-28 h-[calc(100vh-8.5rem)] w-24 shrink-0 overflow-y-auto no-scrollbar space-y-2 rounded-2xl border border-slate-200/90 bg-white p-2 shadow-sm">
           {activeCats.map((c) => {
             const isSel = (currentCategory?.slug ?? selectedSlug) === c.slug;
             return (
