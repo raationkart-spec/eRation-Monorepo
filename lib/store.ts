@@ -24,6 +24,7 @@ import type {
 // ─────────────────────────────────────────────────────────────
 interface AuthState {
   user: User | null;
+  setUser: (user: User | null) => void;
   loginWithPhone: (phone: string) => void;
   loginWithGoogle: () => void;
   loginAsAdmin: (email: string) => void;
@@ -36,6 +37,7 @@ export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      setUser: (user) => set({ user }),
       loginWithPhone: (phone) =>
         set({
           user: {
