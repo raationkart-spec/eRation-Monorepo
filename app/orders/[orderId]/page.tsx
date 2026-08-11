@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useShop } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/misc";
+import { ProductImage } from "@/components/ProductImage";
 import { useToast, ToastHost } from "@/components/toast";
 import {
   formatDateTime,
@@ -13,7 +14,7 @@ import {
 import { useHydrated } from "@/lib/useHydrated";
 import { Skel } from "@/components/skeletons";
 import type { OrderStatus } from "@/lib/types";
-import { Check } from "lucide-react";
+import { Check, XCircle } from "lucide-react";
 
 const TIMELINE: OrderStatus[] = [
   "PLACED",
@@ -38,18 +39,19 @@ function OrderDetail({ orderId }: { orderId: string }) {
 
   if (!hydrated)
     return (
-      <div className="mx-auto min-h-screen max-w-2xl bg-surface-muted">
-        <div className="flex items-center gap-3 border-b border-surface-border bg-white px-4 py-3">
+      <div className="mx-auto min-h-screen max-w-2xl bg-slate-50">
+        <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
           <Skel className="h-6 w-6 rounded-full" />
           <Skel className="h-5 w-40" />
         </div>
-        <div className="space-y-2 p-3">
-          <Skel className="h-48 w-full rounded-lg" />
-          <Skel className="h-24 w-full rounded-lg" />
-          <Skel className="h-32 w-full rounded-lg" />
+        <div className="space-y-3 p-4">
+          <Skel className="h-48 w-full rounded-2xl" />
+          <Skel className="h-24 w-full rounded-2xl" />
+          <Skel className="h-32 w-full rounded-2xl" />
         </div>
       </div>
     );
+
   const order = orders.find((o) => o.id === orderId);
 
   if (!order) {
@@ -69,164 +71,163 @@ function OrderDetail({ orderId }: { orderId: string }) {
   };
 
   return (
-    <div className="content-in mx-auto min-h-screen max-w-2xl bg-surface-muted pb-10">
+    <div className="mx-auto min-h-screen max-w-2xl bg-slate-50 pb-36">
       <PageHeader
         title={`Order #${order.orderNumber}`}
         subtitle={formatDateTime(order.createdAt)}
         fallbackHref="/orders"
       />
 
-      {/* Timeline */}
-      <section className="mt-2 bg-white p-4">
-        <h2 className="mb-3 text-sm font-semibold">
-          {cancelled ? "Order cancelled" : "Order status"}
-        </h2>
-        {cancelled ? (
-          <p className="rounded bg-red-50 px-3 py-2 text-sm font-medium text-status-error">
-            This order was cancelled. Stock has been restored.
-          </p>
-        ) : (
-          <div className="relative">
-            {TIMELINE.map((s, i) => {
-              const done = i <= currentIdx;
-              const current = i === currentIdx;
-              const at = reached(s);
-              return (
-                <div key={s} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <span
-                      className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                        done ? "bg-brand text-white" : "bg-surface-border"
-                      } ${current ? "ring-4 ring-brand-100" : ""}`}
-                    >
-                      {done && <Check size={13} />}
-                    </span>
-                    {i < TIMELINE.length - 1 && (
+      <div className="space-y-4 p-4">
+        {/* Timeline Status Card matching Stitch */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-bold text-slate-900">
+            {cancelled ? "Order Status: Cancelled" : "Tracking & Status"}
+          </h2>
+          {cancelled ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700 flex items-center gap-2">
+              <XCircle size={18} className="shrink-0 text-red-600" />
+              <span>This order was cancelled. Stock has been restored.</span>
+            </div>
+          ) : (
+            <div className="relative pl-1">
+              {TIMELINE.map((s, i) => {
+                const done = i <= currentIdx;
+                const current = i === currentIdx;
+                const at = reached(s);
+                return (
+                  <div key={s} className="flex gap-3">
+                    <div className="flex flex-col items-center">
                       <span
-                        className={`w-0.5 flex-1 ${
-                          i < currentIdx ? "bg-brand" : "bg-surface-border"
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                          done ? "bg-orange-600 text-white shadow-xs" : "bg-slate-200 text-slate-500"
+                        } ${current ? "ring-4 ring-orange-100" : ""}`}
+                      >
+                        {done && <Check size={13} />}
+                      </span>
+                      {i < TIMELINE.length - 1 && (
+                        <span
+                          className={`w-0.5 flex-1 ${
+                            i < currentIdx ? "bg-orange-600" : "bg-slate-200"
+                          }`}
+                          style={{ minHeight: 28 }}
+                        />
+                      )}
+                    </div>
+                    <div className="pb-5">
+                      <p
+                        className={`text-xs ${
+                          done ? "font-extrabold text-slate-900" : "font-medium text-slate-400"
                         }`}
-                        style={{ minHeight: 24 }}
-                      />
-                    )}
-                  </div>
-                  <div className="pb-4">
-                    <p
-                      className={`text-sm ${
-                        done ? "font-semibold text-ink" : "text-ink-subtle"
-                      }`}
-                    >
-                      {ORDER_STATUS_LABEL[s]}
-                    </p>
-                    {at && (
-                      <p className="text-2xs text-ink-subtle">
-                        {formatDateTime(at)}
+                      >
+                        {ORDER_STATUS_LABEL[s]}
                       </p>
-                    )}
+                      {at && (
+                        <p className="text-2xs font-semibold text-slate-400">
+                          {formatDateTime(at)}
+                        </p>
+                      )}
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Address Card */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm space-y-1">
+          <h2 className="text-2xs font-extrabold uppercase tracking-wider text-slate-400">Delivery Address</h2>
+          <p className="text-sm font-bold text-slate-900">{order.address.name}</p>
+          <p className="text-xs font-medium text-slate-600">
+            {order.address.line1}, {order.address.line2 ? order.address.line2 + ", " : ""}
+            {order.address.landmark ? order.address.landmark + ", " : ""}
+            {order.address.city}, {order.address.state} - {order.address.pincode}
+          </p>
+          <p className="text-xs font-semibold text-slate-500 pt-0.5">{order.address.phone}</p>
+        </section>
+
+        {/* Items List Card */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm space-y-3">
+          <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+            Items Ordered ({order.items.length})
+          </h2>
+          <div className="divide-y divide-slate-100 space-y-3">
+            {order.items.map((it, i) => (
+              <div key={i} className="flex items-center gap-3 pt-3 first:pt-0">
+                <ProductImage
+                  imageUrl={it.imageUrl}
+                  emoji={it.emoji}
+                  alt={it.name}
+                  className="h-12 w-12 rounded-xl border border-slate-100 shrink-0"
+                  size="text-2xl"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-slate-900 truncate">{it.name}</p>
+                  <p className="text-2xs font-semibold text-slate-500">
+                    {it.unit} · Qty {it.quantity}
+                  </p>
                 </div>
-              );
-            })}
+                <p className="text-xs font-black text-slate-900">{formatMoney(it.subtotal)}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Payment Summary */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm space-y-2">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div>
+              <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Payment</h2>
+              <p className="text-xs font-bold text-slate-800">
+                {order.paymentMethod === "COD" ? "Pay on Delivery (COD)" : "Google Pay / UPI"}
+              </p>
+            </div>
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-2xs font-extrabold ${
+                order.paymentStatus === "COLLECTED"
+                  ? "bg-emerald-100 text-emerald-800"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {order.paymentStatus === "COLLECTED" ? "Paid" : "Pending"}
+            </span>
+          </div>
+
+          <div className="space-y-1 text-xs font-semibold text-slate-600 pt-1">
+            <div className="flex justify-between">
+              <span>Item total</span>
+              <span className="text-slate-900">{formatMoney(order.subtotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Delivery fee</span>
+              <span className="text-slate-900">
+                {order.deliveryFee === 0 ? "FREE" : formatMoney(order.deliveryFee)}
+              </span>
+            </div>
+            <div className="border-t border-dashed border-slate-200 pt-2 flex justify-between text-sm font-black text-slate-900">
+              <span>Grand Total</span>
+              <span className="text-orange-600">{formatMoney(order.total)}</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Cancel Order Action Button - Properly Padded & Prominent */}
+        {order.status === "PLACED" && (
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                cancelOrder(order.id);
+                show("Order cancelled");
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50 py-3.5 text-sm font-bold text-red-600 shadow-sm transition hover:bg-red-100 active:scale-95"
+            >
+              <XCircle size={18} /> Cancel Order
+            </button>
           </div>
         )}
-      </section>
-
-      {/* Address */}
-      <section className="mt-2 bg-white p-4">
-        <h2 className="mb-1 text-sm font-semibold">Delivery Address</h2>
-        <p className="text-sm font-medium">{order.address.name}</p>
-        <p className="text-xs text-ink-muted">
-          {order.address.line1}, {order.address.line2 ? order.address.line2 + ", " : ""}
-          {order.address.landmark ? order.address.landmark + ", " : ""}
-          {order.address.city}, {order.address.state} - {order.address.pincode}
-        </p>
-        <p className="text-xs text-ink-subtle">{order.address.phone}</p>
-      </section>
-
-      {/* Items */}
-      <section className="mt-2 bg-white p-4">
-        <h2 className="mb-2 text-sm font-semibold">
-          Items ({order.items.length})
-        </h2>
-        <div className="space-y-2">
-          {order.items.map((it, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-surface-muted text-xl">
-                {it.emoji}
-              </span>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{it.name}</p>
-                <p className="text-2xs text-ink-subtle">
-                  {it.unit} · Qty {it.quantity}
-                </p>
-              </div>
-              <p className="text-sm font-semibold">{formatMoney(it.subtotal)}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Payment + bill */}
-      <section className="mt-2 bg-white p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold">Payment</h2>
-            <p className="text-xs text-ink-muted">Cash on Delivery</p>
-          </div>
-          <span
-            className={`rounded-full px-2 py-0.5 text-2xs font-semibold ${
-              order.paymentStatus === "COLLECTED"
-                ? "bg-green-100 text-green-700"
-                : "bg-amber-100 text-amber-700"
-            }`}
-          >
-            {order.paymentStatus === "COLLECTED" ? "Paid" : "Pending"}
-          </span>
-        </div>
-        <Row label="Item total" value={formatMoney(order.subtotal)} />
-        <Row
-          label="Delivery fee"
-          value={order.deliveryFee === 0 ? "FREE" : formatMoney(order.deliveryFee)}
-        />
-        <div className="my-2 border-t border-dashed border-surface-border" />
-        <Row label="Total" value={formatMoney(order.total)} bold />
-      </section>
-
-      {order.status === "PLACED" && (
-        <div className="p-4">
-          <button
-            onClick={() => {
-              cancelOrder(order.id);
-              show("Order cancelled");
-            }}
-            className="w-full rounded-md border border-status-error py-2.5 text-sm font-semibold text-status-error active:scale-[0.98]"
-          >
-            Cancel Order
-          </button>
-        </div>
-      )}
+      </div>
       <ToastHost />
-    </div>
-  );
-}
-
-function Row({
-  label,
-  value,
-  bold,
-}: {
-  label: string;
-  value: string;
-  bold?: boolean;
-}) {
-  return (
-    <div
-      className={`flex justify-between py-0.5 text-sm ${
-        bold ? "font-bold text-ink" : "text-ink-muted"
-      }`}
-    >
-      <span>{label}</span>
-      <span>{value}</span>
     </div>
   );
 }

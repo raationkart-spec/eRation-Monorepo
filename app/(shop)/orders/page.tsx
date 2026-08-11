@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useAuth, useShop } from "@/lib/store";
 import { EmptyState, OrderStatusBadge } from "@/components/misc";
+import { ProductImage } from "@/components/ProductImage";
 import { formatDate, formatMoney } from "@/lib/format";
 import { ListSkeleton } from "@/components/skeletons";
 import { useHydrated } from "@/lib/useHydrated";
@@ -38,47 +39,49 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="content-in">
-      <h1 className="mb-3 text-2xl font-bold">My Orders</h1>
-      <div className="space-y-3">
+    <div className="content-in pb-28 max-w-2xl mx-auto">
+      <h1 className="mb-4 text-2xl font-black text-slate-900 tracking-tight">My Orders</h1>
+      <div className="space-y-3.5">
         {orders.map((o) => {
           const count = o.items.reduce((n, i) => n + i.quantity, 0);
           return (
             <Link
               key={o.id}
               href={`/orders/${o.id}`}
-              className="block rounded-lg border border-surface-border bg-white p-3 shadow-card"
+              className="group block rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-ink-muted">
-                  #{o.orderNumber}
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <span className="text-xs font-extrabold text-slate-500">
+                  Order #{o.orderNumber}
                 </span>
                 <OrderStatusBadge status={o.status} />
               </div>
-              <div className="mt-2 flex items-center gap-1">
+              <div className="mt-3 flex items-center gap-2">
                 {o.items.slice(0, 4).map((it, idx) => (
-                  <span
+                  <ProductImage
                     key={idx}
-                    className="flex h-10 w-10 items-center justify-center rounded-md bg-surface-muted text-xl"
-                  >
-                    {it.emoji}
-                  </span>
+                    imageUrl={it.imageUrl}
+                    emoji={it.emoji}
+                    alt={it.name}
+                    className="h-12 w-12 rounded-xl border border-slate-100 shrink-0"
+                    size="text-2xl"
+                  />
                 ))}
                 {o.items.length > 4 && (
-                  <span className="text-xs text-ink-subtle">
+                  <span className="text-2xs font-extrabold text-slate-400">
                     +{o.items.length - 4} more
                   </span>
                 )}
               </div>
-              <div className="mt-2 flex items-center justify-between">
+              <div className="mt-3 flex items-center justify-between pt-1">
                 <div>
-                  <p className="text-sm font-bold">{formatMoney(o.total)}</p>
-                  <p className="text-2xs text-ink-subtle">
+                  <p className="text-base font-black text-slate-900">{formatMoney(o.total)}</p>
+                  <p className="text-2xs font-semibold text-slate-400">
                     {count} items · {formatDate(o.createdAt)}
                   </p>
                 </div>
-                <span className="flex items-center text-sm font-semibold text-brand-dark">
-                  View <ChevronRight size={16} />
+                <span className="flex items-center text-xs font-bold text-orange-600 group-hover:translate-x-0.5 transition-transform">
+                  View Details <ChevronRight size={16} />
                 </span>
               </div>
             </Link>
