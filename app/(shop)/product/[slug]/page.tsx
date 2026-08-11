@@ -62,7 +62,9 @@ export default function ProductPage({
           </span>
         )}
         <ProductImage
+          imageUrl={product.imageUrl}
           emoji={product.emoji}
+          alt={product.name}
           className="aspect-square"
           size="text-[120px]"
         />

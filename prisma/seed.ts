@@ -50,6 +50,7 @@ async function main() {
       update: {
         name: cat.name,
         emoji: cat.emoji,
+        imageUrl: cat.imageUrl,
         sortOrder: cat.sortOrder,
         isActive: cat.isActive,
       },
@@ -58,6 +59,7 @@ async function main() {
         name: cat.name,
         slug: cat.slug,
         emoji: cat.emoji,
+        imageUrl: cat.imageUrl,
         sortOrder: cat.sortOrder,
         isActive: cat.isActive,
       },
@@ -80,6 +82,7 @@ async function main() {
         stockQty: prod.stockQty,
         lowStockThreshold: prod.lowStockThreshold,
         emoji: prod.emoji,
+        imageUrl: prod.imageUrl,
         tags: prod.tags,
         isActive: prod.isActive,
         isFeatured: prod.isFeatured,
@@ -98,6 +101,7 @@ async function main() {
         stockQty: prod.stockQty,
         lowStockThreshold: prod.lowStockThreshold,
         emoji: prod.emoji,
+        imageUrl: prod.imageUrl,
         tags: prod.tags,
         isActive: prod.isActive,
         isFeatured: prod.isFeatured,
@@ -108,47 +112,35 @@ async function main() {
   console.log(`✅ ${PRODUCTS.length} Products seeded.`);
 
   // 5. Seed Banners
-  for (const banner of BANNERS) {
+  for (const b of BANNERS) {
     await db.banner.upsert({
-      where: { id: banner.id },
+      where: { id: b.id },
       update: {
-        title: banner.title,
-        subtitle: banner.subtitle,
-        emoji: banner.emoji,
-        bg: banner.bg,
-        linkUrl: banner.linkUrl ?? null,
-        isActive: banner.isActive,
-        sortOrder: banner.sortOrder,
+        title: b.title,
+        subtitle: b.subtitle,
+        emoji: b.emoji,
+        imageUrl: b.imageUrl,
+        bg: b.bg,
+        linkUrl: b.linkUrl ?? null,
+        isActive: b.isActive,
+        sortOrder: b.sortOrder,
       },
       create: {
-        id: banner.id,
-        title: banner.title,
-        subtitle: banner.subtitle,
-        emoji: banner.emoji,
-        bg: banner.bg,
-        linkUrl: banner.linkUrl ?? null,
-        isActive: banner.isActive,
-        sortOrder: banner.sortOrder,
+        id: b.id,
+        title: b.title,
+        subtitle: b.subtitle,
+        emoji: b.emoji,
+        imageUrl: b.imageUrl,
+        bg: b.bg,
+        linkUrl: b.linkUrl ?? null,
+        isActive: b.isActive,
+        sortOrder: b.sortOrder,
       },
     });
   }
   console.log(`✅ ${BANNERS.length} Banners seeded.`);
 
-  // 6. Seed Default Admin Account
-  await db.user.upsert({
-    where: { email: "admin@quickcart.com" },
-    update: { role: "ADMIN" },
-    create: {
-      id: "admin_demo",
-      name: "Store Admin",
-      email: "admin@quickcart.com",
-      phone: "+919999999999",
-      role: "ADMIN",
-    },
-  });
-  console.log("✅ Admin user seeded.");
-
-  console.log("🎉 Database seeding completed successfully!");
+  console.log("🎉 Seeding completed successfully!");
 }
 
 main()

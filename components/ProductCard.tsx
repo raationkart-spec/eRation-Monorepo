@@ -18,7 +18,9 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         )}
         <ProductImage
+          imageUrl={product.imageUrl}
           emoji={product.emoji}
+          alt={product.name}
           className="aspect-square rounded-xl transition-transform duration-300 group-hover:scale-105"
           size="text-6xl"
         />

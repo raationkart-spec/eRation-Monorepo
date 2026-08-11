@@ -90,6 +90,7 @@ model Category {
   name      String
   slug      String    @unique
   emoji     String
+  imageUrl  String?
   sortOrder Int       @default(0)
   isActive  Boolean   @default(true)
   products  Product[]
@@ -111,6 +112,7 @@ model Product {
   stockQty          Int         @default(0)
   lowStockThreshold Int         @default(5)
   emoji             String
+  imageUrl          String?
   tags              String[]
   isActive          Boolean     @default(true)
   isFeatured        Boolean     @default(false)
@@ -125,6 +127,7 @@ model Banner {
   title     String
   subtitle  String
   emoji     String
+  imageUrl  String?
   bg        String
   linkUrl   String?
   isActive  Boolean  @default(true)

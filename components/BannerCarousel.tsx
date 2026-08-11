@@ -10,7 +10,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
 
   useEffect(() => {
     if (active.length <= 1) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % active.length), 4000);
+    const t = setInterval(() => setIdx((i) => (i + 1) % active.length), 4500);
     return () => clearInterval(t);
   }, [active.length]);
 
@@ -18,7 +18,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
 
   return (
     <div className="relative">
-      <div className="overflow-hidden rounded-xl">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 shadow-md">
         <div
           className="flex transition-transform duration-500 ease-out"
           style={{ transform: `translateX(-${idx * 100}%)` }}
@@ -27,15 +27,42 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
             const inner = (
               <div
                 className={clsx(
-                  "flex h-40 w-full items-center justify-between bg-gradient-to-r px-5 text-white",
+                  "relative flex h-44 w-full items-center overflow-hidden px-6 text-white bg-gradient-to-r",
                   b.bg
                 )}
               >
-                <div className="max-w-[65%]">
-                  <p className="text-xl font-bold leading-tight">{b.title}</p>
-                  <p className="mt-1 text-sm opacity-90">{b.subtitle}</p>
+                {b.imageUrl && (
+                  <div
+                    className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
+                    style={{ backgroundImage: `url('${b.imageUrl}')` }}
+                  />
+                )}
+                <div className="relative z-10 max-w-[65%] space-y-1">
+                  <span className="inline-block rounded-full bg-white/20 backdrop-blur-md px-2.5 py-0.5 text-2xs font-extrabold text-white">
+                    SPECIAL OFFER
+                  </span>
+                  <p className="text-xl font-extrabold tracking-tight leading-tight drop-shadow-sm">
+                    {b.title}
+                  </p>
+                  <p className="text-xs font-medium text-white/90 drop-shadow-sm">
+                    {b.subtitle}
+                  </p>
+                  <button className="mt-2 inline-flex items-center gap-1 rounded-full bg-white px-3.5 py-1 text-xs font-bold text-slate-900 shadow-sm transition hover:bg-slate-100 active:scale-95">
+                    Shop Now →
+                  </button>
                 </div>
-                <span className="text-6xl drop-shadow">{b.emoji}</span>
+                {b.imageUrl ? (
+                  <div className="absolute right-0 top-0 h-full w-1/2 overflow-hidden">
+                    <img
+                      src={b.imageUrl}
+                      alt={b.title}
+                      className="h-full w-full object-cover object-center"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 to-transparent" />
+                  </div>
+                ) : (
+                  <span className="relative z-10 text-6xl drop-shadow">{b.emoji}</span>
+                )}
               </div>
             );
             return (
@@ -47,7 +74,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
         </div>
       </div>
       {active.length > 1 && (
-        <div className="mt-2 flex justify-center gap-1.5">
+        <div className="mt-2.5 flex justify-center gap-1.5">
           {active.map((_, i) => (
             <button
               key={i}
@@ -55,7 +82,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
               onClick={() => setIdx(i)}
               className={clsx(
                 "h-1.5 rounded-full transition-all",
-                i === idx ? "w-4 bg-brand-dark" : "w-1.5 bg-surface-border"
+                i === idx ? "w-5 bg-orange-600" : "w-1.5 bg-slate-300"
               )}
             />
           ))}

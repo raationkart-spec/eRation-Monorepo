@@ -57,8 +57,10 @@ export default function CartPage() {
               <div className="flex items-center gap-3">
                 <Link href={`/product/${line.product.slug}`}>
                   <ProductImage
+                    imageUrl={line.product.imageUrl}
                     emoji={line.product.emoji}
-                    className="h-14 w-14 rounded-md"
+                    alt={line.product.name}
+                    className="h-14 w-14 rounded-xl"
                     size="text-3xl"
                   />
                 </Link>

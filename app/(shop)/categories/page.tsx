@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCatalog } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { Skel } from "@/components/skeletons";
+import { ProductImage } from "@/components/ProductImage";
 
 export default function CategoriesPage() {
   const hydrated = useHydrated();
@@ -15,7 +16,7 @@ export default function CategoriesPage() {
         <Skel className="h-7 w-48" />
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skel key={i} className="h-36 rounded-xl" />
+            <Skel key={i} className="h-36 rounded-2xl" />
           ))}
         </div>
       </div>
@@ -27,8 +28,8 @@ export default function CategoriesPage() {
 
   return (
     <div className="content-in">
-      <h1 className="mb-3 text-2xl font-bold">Shop by category</h1>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <h1 className="mb-4 text-2xl font-extrabold text-slate-900 tracking-tight">Explore Categories</h1>
+      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3">
         {active.map((c) => {
           const count = products.filter(
             (p) => p.categorySlug === c.slug && p.isActive
@@ -37,15 +38,24 @@ export default function CategoriesPage() {
             <Link
               key={c.id}
               href={`/category/${c.slug}`}
-              className="flex flex-col items-center gap-2 rounded-xl border border-surface-border bg-white p-4 shadow-card transition active:scale-[0.98]"
+              className="group flex flex-col items-center gap-2 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
             >
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-4xl">
-                {c.emoji}
-              </span>
-              <span className="text-center text-sm font-semibold text-ink">
+              <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 shadow-2xs group-hover:scale-105 transition-transform">
+                {c.imageUrl ? (
+                  <ProductImage
+                    imageUrl={c.imageUrl}
+                    emoji={c.emoji}
+                    alt={c.name}
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <span className="text-4xl select-none">{c.emoji}</span>
+                )}
+              </div>
+              <span className="text-center text-sm font-bold text-slate-800 group-hover:text-orange-600 transition-colors">
                 {c.name}
               </span>
-              <span className="text-2xs text-ink-subtle">{count} items</span>
+              <span className="text-2xs font-semibold text-slate-400">{count} items</span>
             </Link>
           );
         })}

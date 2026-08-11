@@ -17,7 +17,8 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
-  emoji: string; // stands in for R2 image in the demo
+  emoji: string;
+  imageUrl?: string | null;
   sortOrder: number;
   isActive: boolean;
 }
@@ -34,7 +35,8 @@ export interface Product {
   price: number; // paise
   stockQty: number;
   lowStockThreshold: number;
-  emoji: string; // stands in for product image
+  emoji: string;
+  imageUrl?: string | null;
   tags: string[];
   isActive: boolean;
   isFeatured: boolean;
@@ -46,6 +48,7 @@ export interface Banner {
   title: string;
   subtitle: string;
   emoji: string;
+  imageUrl?: string | null;
   bg: string; // tailwind gradient classes
   linkUrl?: string;
   isActive: boolean;
@@ -76,6 +79,7 @@ export interface OrderItem {
   name: string;
   unit: string;
   emoji: string;
+  imageUrl?: string | null;
   price: number;
   mrp: number;
   quantity: number;
