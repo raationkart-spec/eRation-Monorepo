@@ -25,7 +25,7 @@ import type {
 interface AuthState {
   user: User | null;
   setUser: (user: User | null) => void;
-  loginWithPhone: (phone: string) => void;
+  loginWithEmail: (email: string) => void;
   loginWithGoogle: () => void;
   loginAsAdmin: (email: string) => void;
   logout: () => void;
@@ -38,12 +38,12 @@ export const useAuth = create<AuthState>()(
     (set) => ({
       user: null,
       setUser: (user) => set({ user }),
-      loginWithPhone: (phone) =>
+      loginWithEmail: (email) =>
         set({
           user: {
-            id: "u_" + phone.replace(/\D/g, ""),
-            name: "Guest User",
-            phone,
+            id: "u_" + Date.now(),
+            name: email.split("@")[0],
+            email,
             role: "CUSTOMER",
           },
         }),

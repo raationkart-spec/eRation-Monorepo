@@ -215,3 +215,12 @@ model ServiceablePincode {
   pincode   String   @id
   createdAt DateTime @default(now())
 }
+
+model EmailOtp {
+  id        String   @id @default(cuid())
+  email     String
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+

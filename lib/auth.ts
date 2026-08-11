@@ -21,26 +21,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
-      id: "phone",
-      name: "Phone Number OTP",
+      id: "email-otp",
+      name: "Email OTP",
       credentials: {
-        phone: { label: "Phone Number", type: "text" },
+        email: { label: "Email Address", type: "email" },
+        otp: { label: "OTP Code", type: "text" },
       },
       async authorize(credentials) {
-        const phone = credentials?.phone as string;
-        if (!phone) return null;
+        const email = credentials?.email as string;
+        const otp = credentials?.otp as string;
+        if (!email || !otp) return null;
 
-        const cleanPhone = phone.replace(/\D/g, "");
-        if (cleanPhone.length < 10) return null;
+        const cleanEmail = email.toLowerCase().trim();
 
-        // Upsert user by phone
-        let user = await db.user.findUnique({ where: { phone: cleanPhone } });
+        // Check DB for matching OTP or demo OTP (123456)
+        const validRecord = await db.emailOtp.findFirst({
+          where: {
+            email: cleanEmail,
+            otp,
+            expiresAt: { gt: new Date() },
+          },
+        });
+
+        const isDemoOtp = otp === "123456";
+
+        if (!validRecord && !isDemoOtp) return null;
+
+        if (validRecord) {
+          await db.emailOtp.delete({ where: { id: validRecord.id } });
+        }
+
+        let user = await db.user.findUnique({ where: { email: cleanEmail } });
 
         if (!user) {
           user = await db.user.create({
             data: {
-              phone: cleanPhone,
-              name: `Customer ${cleanPhone.slice(-4)}`,
+              email: cleanEmail,
+              name: cleanEmail.split("@")[0],
               role: "CUSTOMER",
             },
           });

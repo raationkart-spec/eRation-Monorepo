@@ -8,12 +8,13 @@ import { useAuth } from "@/lib/store";
 function VerifyInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const phone = params.get("phone") ?? "";
+  const email = params.get("email") ?? "";
   const returnTo = params.get("returnTo") ?? "/";
-  const loginWithPhone = useAuth((s) => s.loginWithPhone);
+  const loginWithEmail = useAuth((s) => s.loginWithEmail);
 
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
+  const [verifying, setVerifying] = useState(false);
   const [seconds, setSeconds] = useState(45);
   const inputs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -24,12 +25,41 @@ function VerifyInner() {
   }, [seconds]);
 
   const submit = async (code: string) => {
-    if (/^\d{6}$/.test(code)) {
-      loginWithPhone("+91 " + phone);
-      await signIn("phone", { phone: "+91 " + phone, redirect: false });
-      router.replace(returnTo);
-    } else {
-      setError(true);
+    if (!/^\d{6}$/.test(code) || verifying) return;
+    setVerifying(true);
+    setError("");
+
+    try {
+      const res = await signIn("email-otp", {
+        email,
+        otp: code,
+        redirect: false,
+      });
+
+      if (res?.error) {
+        setError("Invalid or expired OTP code. Please try again.");
+      } else {
+        loginWithEmail(email);
+        router.replace(returnTo);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to verify OTP");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const resendOtp = async () => {
+    setSeconds(45);
+    setError("");
+    try {
+      await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // fallback
     }
   };
 
@@ -38,7 +68,7 @@ function VerifyInner() {
     const next = [...digits];
     next[i] = v;
     setDigits(next);
-    setError(false);
+    setError("");
     if (v && i < 5) inputs.current[i + 1]?.focus();
     if (next.every((d) => d) && next.join("").length === 6) submit(next.join(""));
   };
@@ -49,7 +79,7 @@ function VerifyInner() {
         <ChevronLeft size={24} />
       </button>
       <h1 className="mt-4 text-2xl font-bold">Enter OTP</h1>
-      <p className="mt-1 text-sm text-ink-muted">Sent to +91 {phone}</p>
+      <p className="mt-1 text-sm text-ink-muted">Sent to {email}</p>
 
       <div className="mt-6 flex gap-2">
         {digits.map((d, i) => (
@@ -77,15 +107,16 @@ function VerifyInner() {
 
       {error && (
         <p className="mt-2 text-sm text-status-error">
-          Incorrect OTP, try again
+          {error}
         </p>
       )}
 
       <button
+        disabled={verifying}
         onClick={() => submit(digits.join(""))}
-        className="btn-primary mt-5 w-full"
+        className="btn-primary mt-5 w-full disabled:opacity-50"
       >
-        Verify
+        {verifying ? "Verifying..." : "Verify OTP"}
       </button>
 
       <p className="mt-4 text-center text-sm text-ink-muted">
@@ -93,7 +124,7 @@ function VerifyInner() {
           <>Resend code in {seconds}s</>
         ) : (
           <button
-            onClick={() => setSeconds(45)}
+            onClick={resendOtp}
             className="font-semibold text-brand-dark"
           >
             Resend OTP
@@ -101,7 +132,7 @@ function VerifyInner() {
         )}
       </p>
       <p className="mt-4 text-center text-2xs text-ink-subtle">
-        Demo mode — enter any 6 digits (e.g. 123456) to continue.
+        Check your email inbox/spam folder for the 6-digit code. Demo code `123456` also works.
       </p>
     </div>
   );
