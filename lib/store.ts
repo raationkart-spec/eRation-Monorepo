@@ -328,3 +328,65 @@ export function makeOrderNumber(seq: number): string {
   ).padStart(2, "0")}`;
   return `QC-${dateStr}-${String(seq).padStart(4, "0")}`;
 }
+
+// ─────────────────────────────────────────────────────────────
+// LOCATION — Pincode auto-detection & location management
+// ─────────────────────────────────────────────────────────────
+interface LocationState {
+  pincode: string;
+  city: string;
+  isDetecting: boolean;
+  setPincode: (pincode: string, city?: string) => void;
+  detectLocation: () => Promise<{ pincode: string; city: string } | null>;
+}
+
+export const useLocation = create<LocationState>()(
+  persist(
+    (set) => ({
+      pincode: "560001",
+      city: "Bengaluru",
+      isDetecting: false,
+      setPincode: (pincode, city = "Selected Area") => set({ pincode, city }),
+      detectLocation: async () => {
+        set({ isDetecting: true });
+        return new Promise((resolve) => {
+          if (typeof window === "undefined" || !navigator.geolocation) {
+            set({ isDetecting: false });
+            resolve(null);
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              try {
+                const res = await fetch(
+                  `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`
+                );
+                const data = await res.json();
+                const postcode = data.address?.postcode?.replace(/\s/g, "");
+                const city =
+                  data.address?.city ||
+                  data.address?.town ||
+                  data.address?.suburb ||
+                  data.address?.state ||
+                  "Detected Area";
+                const finalPin = postcode && /^\d{6}$/.test(postcode) ? postcode : "560001";
+                set({ pincode: finalPin, city, isDetecting: false });
+                resolve({ pincode: finalPin, city });
+              } catch {
+                set({ pincode: "560001", city: "Bengaluru", isDetecting: false });
+                resolve({ pincode: "560001", city: "Bengaluru" });
+              }
+            },
+            () => {
+              set({ isDetecting: false });
+              resolve(null);
+            },
+            { timeout: 8000 }
+          );
+        });
+      },
+    }),
+    { name: "qc-location" }
+  )
+);
+
