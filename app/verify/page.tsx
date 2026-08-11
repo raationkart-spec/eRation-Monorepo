@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ArrowRight } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useAuth } from "@/lib/store";
 
@@ -75,67 +75,94 @@ function VerifyInner() {
   };
 
   return (
-    <div className="mx-auto min-h-screen max-w-md px-6 pt-6">
-      <button onClick={() => router.back()} className="-ml-1 p-1">
-        <ChevronLeft size={24} />
-      </button>
-      <h1 className="mt-4 text-2xl font-bold">Enter OTP</h1>
-      <p className="mt-1 text-sm text-ink-muted">Sent to {email}</p>
-
-      <div className="mt-6 flex gap-2">
-        {digits.map((d, i) => (
-          <input
-            key={i}
-            ref={(el) => {
-              inputs.current[i] = el;
-            }}
-            inputMode="numeric"
-            maxLength={1}
-            value={d}
-            onChange={(e) => onChange(i, e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Backspace" && !digits[i] && i > 0)
-                inputs.current[i - 1]?.focus();
-            }}
-            className={`h-12 w-12 rounded-md border text-center text-xl font-bold outline-none focus:border-brand ${
-              error
-                ? "animate-bump border-status-error"
-                : "border-surface-border"
-            }`}
-          />
-        ))}
+    <main className="relative flex min-h-screen w-full flex-col justify-between overflow-hidden bg-slate-900 font-sans antialiased">
+      {/* Top Hero Header */}
+      <div
+        className="relative h-[320px] w-full overflow-hidden"
+        style={{ clipPath: "ellipse(120% 80% at 50% 0%)" }}
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=80')",
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-slate-950" />
+        
+        <div className="absolute inset-x-0 top-0 flex items-center justify-between p-6">
+          <button
+            onClick={() => router.back()}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition hover:bg-white/30"
+          >
+            <ChevronLeft size={22} />
+          </button>
+          <span className="text-xl font-black text-white">QuickCart</span>
+          <div className="w-10" />
+        </div>
       </div>
 
-      {error && (
-        <p className="mt-2 text-sm text-status-error">
-          {error}
+      {/* Verification Card */}
+      <div className="relative z-10 -mt-24 flex flex-1 flex-col items-center rounded-t-3xl border-t border-white/20 bg-white/95 px-6 pb-8 pt-8 shadow-2xl backdrop-blur-xl">
+        <div className="max-w-sm text-center">
+          <h1 className="text-2xl font-extrabold text-slate-900">Verify your Email</h1>
+          <p className="mt-1 text-sm font-medium text-slate-600">
+            Enter 6-digit code sent to <span className="font-bold text-slate-900">{email}</span>
+          </p>
+        </div>
+
+        <div className="mt-8 flex gap-2 sm:gap-3">
+          {digits.map((d, i) => (
+            <input
+              key={i}
+              ref={(el) => {
+                inputs.current[i] = el;
+              }}
+              inputMode="numeric"
+              maxLength={1}
+              value={d}
+              onChange={(e) => onChange(i, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace" && !digits[i] && i > 0)
+                  inputs.current[i - 1]?.focus();
+              }}
+              className={`h-12 w-11 sm:h-14 sm:w-12 rounded-xl border text-center text-xl font-black outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 ${
+                error
+                  ? "border-red-500 bg-red-50 text-red-900"
+                  : "border-slate-300 bg-white text-slate-900"
+              }`}
+            />
+          ))}
+        </div>
+
+        {error && <p className="mt-3 text-xs font-bold text-red-600">{error}</p>}
+
+        <button
+          disabled={verifying}
+          onClick={() => submit(digits.join(""))}
+          className="mt-6 flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-orange-600 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-orange-700 disabled:opacity-50 active:scale-95"
+        >
+          {verifying ? "Verifying..." : "Verify & Continue"} <ArrowRight size={18} />
+        </button>
+
+        <p className="mt-4 text-center text-sm font-medium text-slate-600">
+          {seconds > 0 ? (
+            <>Resend code in <span className="font-bold text-slate-900">{seconds}s</span></>
+          ) : (
+            <button
+              onClick={resendOtp}
+              className="font-bold text-orange-600 hover:underline"
+            >
+              Resend OTP Code
+            </button>
+          )}
         </p>
-      )}
 
-      <button
-        disabled={verifying}
-        onClick={() => submit(digits.join(""))}
-        className="btn-primary mt-5 w-full disabled:opacity-50"
-      >
-        {verifying ? "Verifying..." : "Verify OTP"}
-      </button>
-
-      <p className="mt-4 text-center text-sm text-ink-muted">
-        {seconds > 0 ? (
-          <>Resend code in {seconds}s</>
-        ) : (
-          <button
-            onClick={resendOtp}
-            className="font-semibold text-brand-dark"
-          >
-            Resend OTP
-          </button>
-        )}
-      </p>
-      <p className="mt-4 text-center text-2xs text-ink-subtle">
-        Check your email inbox/spam folder for the 6-digit code. Demo code `123456` also works.
-      </p>
-    </div>
+        <p className="mt-4 text-center text-2xs font-medium text-slate-500">
+          Check spam folder if email isn&apos;t in inbox. Demo code <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-slate-800">123456</code> also works.
+        </p>
+      </div>
+    </main>
   );
 }
 
