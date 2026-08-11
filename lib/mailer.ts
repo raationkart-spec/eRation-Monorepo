@@ -1,20 +1,15 @@
 import nodemailer from "nodemailer";
 
 export async function sendOtpEmail(email: string, otp: string): Promise<boolean> {
-  const user = process.env.APP_EMAIL || process.env.SMTP_USER;
-  const pass = process.env.APP_PASSWORD || process.env.SMTP_PASS;
+  const user = process.env.APP_EMAIL || process.env.SMTP_USER || "devilrngr@gmail.com";
+  const pass = process.env.APP_PASSWORD || process.env.SMTP_PASS || "tznowozavibfpglo";
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = Number(process.env.SMTP_PORT || 465);
   const fromName = process.env.SMTP_FROM_NAME || "QuickCart Verification";
-  const fromEmail = user || "noreply@quickcart.com";
+  const fromEmail = user;
   const from = `"${fromName}" <${fromEmail}>`;
 
-  console.log(`[OTP DEBUG] Verification OTP for ${email}: ${otp}`);
-
-  if (!user || !pass) {
-    console.log("ℹ️ APP_EMAIL or APP_PASSWORD not set. Using console log fallback.");
-    return true;
-  }
+  console.log(`[OTP DEBUG] Sending verification OTP for ${email}: ${otp}`);
 
   try {
     const transporter = nodemailer.createTransport({
@@ -90,17 +85,17 @@ export async function sendOtpEmail(email: string, otp: string): Promise<boolean>
     </html>
     `;
 
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from,
       to: email,
       subject: `${otp} is your QuickCart verification code`,
       html: htmlContent,
     });
 
-    console.log(`✅ Email OTP successfully sent to ${email} via Nodemailer`);
+    console.log(`✅ Email OTP successfully sent to ${email} via Nodemailer. Message ID: ${info.messageId}`);
     return true;
   } catch (error) {
     console.error("❌ Failed to send SMTP email:", error);
-    return true;
+    throw error;
   }
 }
