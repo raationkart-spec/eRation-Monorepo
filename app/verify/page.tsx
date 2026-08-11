@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useAuth } from "@/lib/store";
 
 function VerifyInner() {
@@ -22,10 +23,10 @@ function VerifyInner() {
     return () => clearTimeout(t);
   }, [seconds]);
 
-  const submit = (code: string) => {
-    // Demo: any 6-digit code is accepted.
+  const submit = async (code: string) => {
     if (/^\d{6}$/.test(code)) {
       loginWithPhone("+91 " + phone);
+      await signIn("phone", { phone: "+91 " + phone, redirect: false });
       router.replace(returnTo);
     } else {
       setError(true);

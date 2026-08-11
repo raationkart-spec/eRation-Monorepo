@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Lock, ShieldCheck } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useAuth } from "@/lib/store";
 
 export default function AdminLoginPage() {
@@ -12,8 +13,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const submit = () => {
-    // Demo auth: any non-empty password is accepted for the admin account.
+  const submit = async () => {
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError("Enter a valid email");
       return;
@@ -23,6 +23,7 @@ export default function AdminLoginPage() {
       return;
     }
     loginAsAdmin(email);
+    await signIn("admin", { email, redirect: false });
     router.replace("/admin");
   };
 

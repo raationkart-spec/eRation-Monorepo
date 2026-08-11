@@ -3,6 +3,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useAuth } from "@/lib/store";
 
 function LoginInner() {
@@ -57,8 +58,7 @@ function LoginInner() {
 
         <button
           onClick={() => {
-            loginWithGoogle();
-            router.replace(returnTo);
+            signIn("google", { callbackUrl: returnTo });
           }}
           className="btn-secondary w-full"
         >
