@@ -235,12 +235,12 @@ const seedAddress: Address = {
   label: "Home",
   name: "Demo Shopper",
   phone: "9000000000",
-  line1: "42, Green Residency",
-  line2: "MG Road",
-  landmark: "Near Metro Station",
-  city: "Bengaluru",
-  state: "Karnataka",
-  pincode: "560001",
+  line1: "142, Hill Cart Road",
+  line2: "Pradhan Nagar",
+  landmark: "Near Air View Complex",
+  city: "Siliguri",
+  state: "West Bengal",
+  pincode: "734001",
   isDefault: true,
 };
 
@@ -343,10 +343,10 @@ interface LocationState {
 export const useLocation = create<LocationState>()(
   persist(
     (set) => ({
-      pincode: "560001",
-      city: "Bengaluru",
+      pincode: "734001",
+      city: "Siliguri",
       isDetecting: false,
-      setPincode: (pincode, city = "Selected Area") => set({ pincode, city }),
+      setPincode: (pincode, city = "Siliguri Area") => set({ pincode, city }),
       detectLocation: async () => {
         set({ isDetecting: true });
         return new Promise((resolve) => {
@@ -368,13 +368,13 @@ export const useLocation = create<LocationState>()(
                   data.address?.town ||
                   data.address?.suburb ||
                   data.address?.state ||
-                  "Detected Area";
-                const finalPin = postcode && /^\d{6}$/.test(postcode) ? postcode : "560001";
+                  "Siliguri";
+                const finalPin = postcode && /^\d{6}$/.test(postcode) ? postcode : "734001";
                 set({ pincode: finalPin, city, isDetecting: false });
                 resolve({ pincode: finalPin, city });
               } catch {
-                set({ pincode: "560001", city: "Bengaluru", isDetecting: false });
-                resolve({ pincode: "560001", city: "Bengaluru" });
+                set({ pincode: "734001", city: "Siliguri", isDetecting: false });
+                resolve({ pincode: "734001", city: "Siliguri" });
               }
             },
             () => {

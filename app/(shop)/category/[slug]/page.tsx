@@ -60,7 +60,7 @@ export default function CategoryPage({
           <span className="select-none">{category.emoji}</span>
           {category.name}
         </h1>
-        <p className="text-xs font-semibold text-slate-400 mt-0.5">{list.length} products available</p>
+        <p className="text-2xs font-semibold text-slate-400">Fresh items delivered all across Siliguri</p>
       </div>
 
       {/* Sticky Filter Bar pinned directly under top header (top-14) */}

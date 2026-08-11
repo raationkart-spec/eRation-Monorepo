@@ -145,14 +145,17 @@ export const BANNERS: Banner[] = [
 ];
 
 export const DEFAULT_CONFIG = {
-  store_name: "QuickCart",
-  store_phone: "+91 98765 43210",
-  store_address: "12 MG Road, Bengaluru, Karnataka 560001",
+  store_name: "QuickCart Siliguri",
+  store_phone: "+91 98000 12345",
+  store_email: "support@quickcart.in",
+  store_address: "Hill Cart Road, Siliguri, West Bengal 734001",
+  support_whatsapp: "+91 98000 12345",
   delivery_fee: 4900,
   free_delivery_above: 49900,
+  tax_rate: 0,
 };
 
-export const SERVICEABLE_PINCODES = ["560001", "560002", "560034", "110001", "400001", "500001"];
+export const SERVICEABLE_PINCODES = ["734001", "734003", "734004", "734005", "734006", "734008"];
 
 export const INDIA_STATES = [
   "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa", "Gujarat",

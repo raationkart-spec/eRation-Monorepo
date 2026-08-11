@@ -46,10 +46,10 @@ function LoginInner() {
   };
 
   return (
-    <main className="relative flex min-h-screen w-full flex-col justify-between overflow-hidden bg-slate-900 font-sans antialiased">
-      {/* Top Hero Section with Arch Clip */}
+    <main className="relative flex h-screen max-h-screen w-full flex-col justify-between overflow-hidden bg-slate-950 font-sans antialiased">
+      {/* Hero Section with Arch Ellipse Clip taking ~58% of viewport */}
       <div
-        className="relative h-[480px] w-full overflow-hidden"
+        className="relative h-[58vh] w-full shrink-0 overflow-hidden"
         style={{ clipPath: "ellipse(120% 80% at 50% 0%)" }}
       >
         <div
@@ -59,13 +59,13 @@ function LoginInner() {
               "url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=80')",
           }}
         />
-        {/* Glassmorphism Dark Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-slate-950/90" />
-        
-        {/* Brand Header */}
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-slate-950/90" />
+
+        {/* Brand Header Badge */}
         <div className="absolute inset-x-0 top-0 flex flex-col items-center justify-start pt-10">
-          <span className="rounded-full bg-white/20 px-3 py-1 text-2xs font-extrabold tracking-widest text-white backdrop-blur-md">
-            ⚡ 10 MINUTE DELIVERY
+          <span className="rounded-full bg-white/20 px-3.5 py-1 text-2xs font-extrabold tracking-widest text-white backdrop-blur-md border border-white/20 shadow-sm">
+            ⚡ DELIVERED ALL ACROSS SILIGURI
           </span>
           <h1 className="mt-2 text-4xl font-black tracking-tight text-white drop-shadow-md">
             QuickCart
@@ -73,24 +73,24 @@ function LoginInner() {
         </div>
       </div>
 
-      {/* Bottom Sheet Card */}
-      <div className="relative z-10 -mt-16 flex flex-1 flex-col items-center rounded-t-3xl border-t border-white/20 bg-white/95 px-6 pb-8 pt-8 shadow-2xl backdrop-blur-xl">
-        <div className="mb-6 max-w-sm text-center">
-          <h2 className="text-3xl font-extrabold leading-tight text-slate-900">
-            Groceries in <br />
-            <span className="font-black text-orange-600">10 minutes.</span>
+      {/* Bottom Sheet Card - Perfectly Proportioned without excess white gap */}
+      <div className="relative z-10 -mt-10 flex flex-1 flex-col items-center justify-between rounded-t-3xl border-t border-white/20 bg-slate-900/95 px-6 pb-6 pt-6 shadow-2xl backdrop-blur-2xl text-white">
+        <div className="w-full max-w-sm text-center">
+          <h2 className="text-2xl xs:text-3xl font-extrabold leading-tight text-white">
+            Groceries delivered <br />
+            <span className="font-black text-orange-500">across Siliguri.</span>
           </h2>
-          <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
-            Freshness delivered at the speed of life. Sign in to start your instant grocery journey.
+          <p className="mt-1.5 text-xs xs:text-sm font-medium leading-relaxed text-slate-300">
+            Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
           </p>
         </div>
 
         {/* CTA Section */}
-        <div className="mt-auto w-full max-w-sm space-y-3">
+        <div className="w-full max-w-sm space-y-2.5 my-auto pt-3">
           {/* Google Sign-in Button */}
           <button
             onClick={() => signIn("google", { callbackUrl: returnTo })}
-            className="group flex w-full items-center justify-center gap-3 rounded-full border border-slate-300 bg-white py-3.5 text-sm font-bold text-slate-800 shadow-sm transition-all duration-200 hover:bg-slate-50 hover:shadow active:scale-95"
+            className="group flex w-full items-center justify-center gap-3 rounded-full border border-slate-700 bg-white py-3.5 text-sm font-bold text-slate-900 shadow-md transition-all duration-200 hover:bg-slate-100 active:scale-95"
           >
             <svg className="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
               <path
@@ -116,14 +116,14 @@ function LoginInner() {
           {!showEmailInput ? (
             <button
               onClick={() => setShowEmailInput(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-orange-600 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-200 hover:bg-orange-700 active:scale-95"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-600 py-3.5 text-sm font-extrabold text-white shadow-lg transition-all duration-200 hover:from-orange-600 hover:to-amber-700 active:scale-95"
             >
               <Mail size={18} /> Login using Email
             </button>
           ) : (
             <div className="space-y-2 transition-all">
-              <div className="flex items-center rounded-full border border-orange-500 bg-orange-50/50 px-4 focus-within:ring-2 focus-within:ring-orange-500">
-                <Mail size={18} className="text-orange-600" />
+              <div className="flex items-center rounded-full border border-orange-500/80 bg-slate-800/80 px-4 focus-within:ring-2 focus-within:ring-orange-500">
+                <Mail size={18} className="text-orange-500" />
                 <input
                   type="email"
                   value={email}
@@ -133,17 +133,17 @@ function LoginInner() {
                   }}
                   onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
                   placeholder="Enter your email address"
-                  className="w-full bg-transparent px-3 py-3.5 text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
+                  className="w-full bg-transparent px-3 py-3 text-sm font-semibold text-white outline-none placeholder:text-slate-400"
                   autoFocus
                 />
               </div>
 
-              {error && <p className="px-3 text-xs font-semibold text-red-600">{error}</p>}
+              {error && <p className="px-3 text-xs font-semibold text-red-400">{error}</p>}
 
               <button
                 disabled={!valid || loading}
                 onClick={handleSendOtp}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-orange-600 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-200 hover:bg-orange-700 disabled:opacity-50 active:scale-95"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-600 py-3 text-sm font-extrabold text-white shadow-md transition-all duration-200 hover:from-orange-600 hover:to-amber-700 disabled:opacity-50 active:scale-95"
               >
                 {loading ? "Sending OTP..." : "Get OTP Code"} <ArrowRight size={16} />
               </button>
@@ -151,17 +151,19 @@ function LoginInner() {
           )}
         </div>
 
-        <p className="mt-4 text-center text-2xs font-medium text-slate-500">
-          By continuing, you agree to our Terms of Service & Privacy Policy.
-        </p>
+        <div className="w-full text-center pt-2">
+          <p className="text-2xs font-medium text-slate-400">
+            By continuing, you agree to our Terms of Service & Privacy Policy.
+          </p>
 
-        <div className="mt-4 border-t border-slate-200 pt-3 text-center">
-          <Link
-            href="/admin/login"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900"
-          >
-            <ShieldCheck size={14} /> Admin Access
-          </Link>
+          <div className="mt-2 pt-2 border-t border-slate-800">
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center gap-1.5 text-2xs font-extrabold text-slate-400 hover:text-white transition"
+            >
+              <ShieldCheck size={13} /> Admin Access
+            </Link>
+          </div>
         </div>
       </div>
     </main>

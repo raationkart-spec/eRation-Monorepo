@@ -8,13 +8,13 @@ import { useHydrated } from "@/lib/useHydrated";
 import { useToast, ToastHost } from "@/components/toast";
 import { SearchBar } from "./SearchBar";
 
-const POPULAR_PINCODES = [
-  { pin: "560001", area: "Indiranagar, Bengaluru" },
-  { pin: "110001", area: "Connaught Place, New Delhi" },
-  { pin: "400001", area: "Fort, Mumbai" },
-  { pin: "500001", area: "Abids, Hyderabad" },
-  { pin: "600001", area: "George Town, Chennai" },
-  { pin: "700001", area: "BBD Bagh, Kolkata" },
+const SILIGURI_PINCODES = [
+  { pin: "734001", area: "Hill Cart Road, Siliguri" },
+  { pin: "734003", area: "Hakim Para, Siliguri" },
+  { pin: "734004", area: "Deshbandhu Para, Siliguri" },
+  { pin: "734005", area: "Pradhan Nagar, Siliguri" },
+  { pin: "734006", area: "Sevoke Road, Siliguri" },
+  { pin: "734008", area: "Matigara, Siliguri" },
 ];
 
 export function TopBar() {
@@ -29,8 +29,8 @@ export function TopBar() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const count = hydrated ? items.reduce((n, i) => n + i.quantity, 0) : 0;
-  const displayPin = hydrated ? pincode : "560001";
-  const displayCity = hydrated ? city : "Bengaluru";
+  const displayPin = hydrated ? (pincode || "734001") : "734001";
+  const displayCity = hydrated ? (city || "Siliguri") : "Siliguri";
   const isHome = pathname === "/";
 
   const handleAutoDetect = async () => {
@@ -50,7 +50,7 @@ export function TopBar() {
       setErrorMsg("Please enter a valid 6-digit pincode");
       return;
     }
-    setPincode(inputPin.trim(), "Custom Area");
+    setPincode(inputPin.trim(), "Siliguri Area");
     showToast(`Pincode set to ${inputPin.trim()} 👍`);
     setModalOpen(false);
     setInputPin("");
@@ -80,7 +80,7 @@ export function TopBar() {
               </div>
             </Link>
             <div className="hidden items-center gap-1 rounded-full bg-orange-50 px-2.5 py-0.5 text-2xs font-extrabold text-orange-600 sm:flex border border-orange-200">
-              <Sparkles size={12} className="text-orange-500" /> 10 MINS
+              <Sparkles size={12} className="text-orange-500" /> SILIGURI
             </div>
           </div>
 
@@ -92,7 +92,7 @@ export function TopBar() {
             >
               <MapPin size={13} className="text-orange-500 shrink-0" />
               <span className="font-extrabold text-slate-900">{displayPin}</span>
-              <span className="max-w-[70px] truncate text-2xs font-semibold text-slate-500 hidden xs:inline">
+              <span className="max-w-[75px] truncate text-2xs font-semibold text-slate-500 hidden xs:inline">
                 ({displayCity})
               </span>
               <ChevronDown size={13} className="text-slate-400" />
@@ -140,7 +140,7 @@ export function TopBar() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-black text-slate-900">Delivery Location</h3>
-                <p className="text-2xs font-semibold text-slate-400">Select your area for 10-minute delivery</p>
+                <p className="text-2xs font-semibold text-slate-400">Delivered All Across Siliguri</p>
               </div>
               <button
                 onClick={() => {
@@ -200,11 +200,11 @@ export function TopBar() {
               </button>
             </form>
 
-            {/* Popular Pincodes Chips */}
+            {/* Siliguri Service Areas */}
             <div>
-              <p className="mb-2 text-2xs font-extrabold uppercase tracking-wider text-slate-400">Popular Service Areas</p>
+              <p className="mb-2 text-2xs font-extrabold uppercase tracking-wider text-slate-400">Siliguri Service Areas</p>
               <div className="grid grid-cols-2 gap-2">
-                {POPULAR_PINCODES.map((item) => (
+                {SILIGURI_PINCODES.map((item) => (
                   <button
                     key={item.pin}
                     onClick={() => handleSelectPopular(item.pin, item.area)}
