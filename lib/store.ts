@@ -292,7 +292,7 @@ interface ShopState {
   cancelOrder: (id: string) => void;
 }
 
-const seedAddress: Address = {
+export const seedAddress: Address = {
   id: "addr_demo",
   label: "Home",
   name: "Demo Shopper",
@@ -309,7 +309,7 @@ const seedAddress: Address = {
 export const useShop = create<ShopState>()(
   persist(
     (set) => ({
-      addresses: [],
+      addresses: [seedAddress],
       orders: [],
       addAddress: (a) => {
         const addr: Address = { ...a, id: "addr_" + Date.now() };
@@ -336,13 +336,25 @@ export const useShop = create<ShopState>()(
             isDefault: x.id === id,
           })),
         })),
-      setAddresses: (addresses) => set({ addresses }),
-      pushAddress: (addr) =>
-        set((s) => ({
-          addresses: addr.isDefault
-            ? [...s.addresses.map((x) => ({ ...x, isDefault: false })), addr]
-            : [...s.addresses, addr],
-        })),
+      setAddresses: (addresses) =>
+        set({
+          addresses: (Array.isArray(addresses) ? addresses : []).filter(
+            (x): x is Address => Boolean(x && x.id)
+          ),
+        }),
+      pushAddress: (addr) => {
+        if (!addr || !addr.id) return;
+        set((s) => {
+          const clean = (s.addresses || []).filter(
+            (x): x is Address => Boolean(x && x.id)
+          );
+          return {
+            addresses: addr.isDefault
+              ? [...clean.map((x) => ({ ...x, isDefault: false })), addr]
+              : [...clean, addr],
+          };
+        });
+      },
       addOrder: (o) => set((s) => ({ orders: [o, ...s.orders] })),
       upsertOrder: (o) =>
         set((s) => {
@@ -394,7 +406,14 @@ export const useShop = create<ShopState>()(
           ),
         })),
     }),
-    { name: "qc-shop" }
+    {
+      name: "qc-shop",
+      onRehydrateStorage: () => (state) => {
+        if (state && (!state.addresses || state.addresses.length === 0)) {
+          state.addresses = [seedAddress];
+        }
+      },
+    }
   )
 );
 

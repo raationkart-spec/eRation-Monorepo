@@ -14,7 +14,7 @@ import {
 import { useHydrated } from "@/lib/useHydrated";
 import { Skel } from "@/components/skeletons";
 import type { OrderStatus } from "@/lib/types";
-import { Check, XCircle } from "lucide-react";
+import { Check, Phone, XCircle } from "lucide-react";
 
 const TIMELINE: OrderStatus[] = [
   "PLACED",
@@ -198,6 +198,37 @@ function OrderDetail({ orderId }: { orderId: string }) {
             </div>
           )}
         </section>
+
+        {/* Delivery Partner Card matching Stitch */}
+        {!cancelled && (
+          <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <img
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+                    alt="Rahul Delivery Partner"
+                    className="h-12 w-12 rounded-full object-cover border-2 border-orange-500 shadow-xs"
+                  />
+                  <div className="absolute -bottom-1 -right-1 bg-emerald-600 rounded-full px-1.5 py-0.5 text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs">
+                    <span>4.8</span> ★
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">Rahul</h3>
+                  <p className="text-2xs font-semibold text-slate-500">Your Delivery Partner • QuickCart Siliguri</p>
+                </div>
+              </div>
+              <a
+                href={`tel:${order.customerPhone || "9800012345"}`}
+                aria-label="Call delivery partner"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition active:scale-95 border border-orange-200"
+              >
+                <Phone size={18} />
+              </a>
+            </div>
+          </section>
+        )}
 
         {/* Address Card */}
         <section className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm space-y-1">

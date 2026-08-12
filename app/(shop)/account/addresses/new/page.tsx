@@ -179,7 +179,10 @@ function AddressForm() {
             ⚡ Serviceable Siliguri Pincodes:
           </p>
           <p className="font-bold flex flex-wrap gap-1">
-            {pincodes.map((pin) => (
+            {(pincodes.filter((p) => p.startsWith("734")).length > 0
+              ? pincodes.filter((p) => p.startsWith("734"))
+              : ["734001", "734003", "734004", "734005", "734006", "734008"]
+            ).map((pin) => (
               <span
                 key={pin}
                 onClick={() => set("pincode", pin)}
