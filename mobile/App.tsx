@@ -21,6 +21,16 @@ const WEB_URL = 'https://quickcart-nu-nine.vercel.app';
 const CHROME_USER_AGENT =
   'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
 
+// Flags every page as loaded inside the app so the site can skip the
+// Google button (its device-account picker never works in a WebView) and
+// default straight to Email OTP login instead. Injected before content
+// loads and set via localStorage since it must survive the client-side
+// redirect from "/" to "/login", which drops any query params.
+const INJECTED_APP_FLAG_SCRIPT = `
+  try { window.localStorage.setItem('quickcart_is_app', '1'); } catch (e) {}
+  true;
+`;
+
 const isAuthUrl = (url: string) =>
   url.includes('accounts.google.com') ||
   url.includes('/api/auth') ||
@@ -114,6 +124,7 @@ export default function App() {
           }}
           style={styles.webview}
           userAgent={CHROME_USER_AGENT}
+          injectedJavaScriptBeforeContentLoaded={INJECTED_APP_FLAG_SCRIPT}
           javaScriptEnabled
           domStorageEnabled
           thirdPartyCookiesEnabled
