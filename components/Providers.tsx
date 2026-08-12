@@ -11,6 +11,7 @@ function CatalogSync() {
   const setBanners = useCatalog((s) => s.setBanners);
   const setConfig = useCatalog((s) => s.setConfig);
   const setPincodesFull = useCatalog((s) => s.setPincodesFull);
+  const setFlashDeals = useCatalog((s) => s.setFlashDeals);
   const isAdmin = (session?.user as any)?.role === "ADMIN";
 
   useEffect(() => {
@@ -18,14 +19,16 @@ function CatalogSync() {
       fetch("/api/categories").then((r) => r.json()),
       fetch("/api/banners").then((r) => r.json()),
       fetch("/api/config").then((r) => r.json()),
+      fetch("/api/flash-deals").then((r) => r.json()),
       isAdmin
         ? fetch("/api/admin/products").then((r) => r.json())
         : fetch("/api/products").then((r) => r.json()),
     ])
-      .then(([categoriesRes, bannersRes, configRes, productsRes]) => {
+      .then(([categoriesRes, bannersRes, configRes, flashDealsRes, productsRes]) => {
         if (Array.isArray(categoriesRes.categories)) setCategories(categoriesRes.categories);
         if (Array.isArray(bannersRes.banners)) setBanners(bannersRes.banners);
         if (Array.isArray(productsRes.products)) setProducts(productsRes.products);
+        if (Array.isArray(flashDealsRes.deals)) setFlashDeals(flashDealsRes.deals);
         if (configRes.config) {
           setConfig({
             store_name: configRes.config.storeName,
@@ -39,7 +42,7 @@ function CatalogSync() {
         }
       })
       .catch((err) => console.warn("Catalog sync failed, using local seed data:", err));
-  }, [isAdmin, setProducts, setCategories, setBanners, setConfig, setPincodesFull]);
+  }, [isAdmin, setProducts, setCategories, setBanners, setConfig, setPincodesFull, setFlashDeals]);
 
   return null;
 }

@@ -145,8 +145,23 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        const itemPrice = item.price || product.price;
-        const itemMrp = item.mrp || product.mrp;
+        // Never trust client-sent price. Use the catalog price, unless the
+        // item references an active flash deal for this exact product.
+        let itemPrice = product.price;
+        if (item.dealId) {
+          const deal = await tx.flashDeal.findUnique({ where: { id: item.dealId } });
+          const now = new Date();
+          if (
+            deal &&
+            deal.productId === product.id &&
+            deal.isActive &&
+            deal.startsAt <= now &&
+            deal.endsAt > now
+          ) {
+            itemPrice = deal.salePrice;
+          }
+        }
+        const itemMrp = product.mrp;
         const itemSubtotal = itemPrice * item.quantity;
         subtotal += itemSubtotal;
 

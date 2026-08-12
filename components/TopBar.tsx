@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Crosshair, MapPin, Loader2, Search, ShoppingBag, Sparkles, User, X } from "lucide-react";
+import { ChevronDown, Crosshair, Loader2, Search, User, X, Zap } from "lucide-react";
 import { useCart, useCatalog, useLocation } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useToast, ToastHost } from "@/components/toast";
@@ -72,43 +72,32 @@ export function TopBar() {
 
   return (
     <>
-      <header className="glass-header">
-        <div className="flex h-14 items-center justify-between gap-2 px-4">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 shadow-sm">
-                <span className="text-xl select-none">🛒</span>
-              </div>
-              <div>
-                <span className="text-xl font-black tracking-tight text-slate-900">
-                  QuickCart
-                </span>
-              </div>
-            </Link>
-            <div className="hidden items-center gap-1 rounded-full bg-orange-50 px-2.5 py-0.5 text-2xs font-extrabold text-orange-600 sm:flex border border-orange-200">
-              <Sparkles size={12} className="text-orange-500" /> SILIGURI
+      <header className="sticky top-0 z-50 w-full border-b border-orange-100/60 bg-white/80 backdrop-blur-md">
+        <div className="flex h-16 items-center justify-between gap-2 px-4">
+          <button
+            onClick={() => setModalOpen(true)}
+            className="flex items-center gap-2 active:scale-95 transition"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-orange-200 bg-white shadow-sm">
+              <Zap size={19} className="text-orange-600 fill-orange-600/20" />
             </div>
-          </div>
+            <div className="flex flex-col items-start">
+              <span className="text-sm font-black leading-tight text-slate-900">10 mins</span>
+              <div className="flex items-center gap-0.5 text-slate-500">
+                <span className="max-w-[130px] truncate text-2xs font-semibold">
+                  {displayPin} · {displayCity}
+                </span>
+                <ChevronDown size={13} className="text-slate-400 shrink-0" />
+              </div>
+            </div>
+          </button>
 
           <div className="flex items-center gap-2.5">
-            {/* Auto Detect / Change Pincode Button */}
-            <button
-              onClick={() => setModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100 active:scale-95 transition shadow-xs"
-            >
-              <MapPin size={13} className="text-orange-500 shrink-0" />
-              <span className="font-extrabold text-slate-900">{displayPin}</span>
-              <span className="max-w-[75px] truncate text-2xs font-semibold text-slate-500 hidden xs:inline">
-                ({displayCity})
-              </span>
-              <ChevronDown size={13} className="text-slate-400" />
-            </button>
-
             {!isHome && (
               <Link
                 href="/search"
                 aria-label="Search products"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-95 transition shadow-sm"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-orange-600 shadow-sm hover:bg-orange-50 active:scale-95 transition"
               >
                 <Search size={18} />
               </Link>
@@ -117,7 +106,7 @@ export function TopBar() {
             <Link
               href="/account"
               aria-label="Account Profile"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 active:scale-95 transition shadow-sm"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-orange-600 shadow-sm hover:bg-orange-50 active:scale-95 transition"
             >
               <User size={19} />
             </Link>
@@ -125,7 +114,7 @@ export function TopBar() {
         </div>
 
         {isHome && (
-          <div className="border-t border-slate-100 px-4 py-2.5">
+          <div className="bg-white/90 px-4 pb-3 pt-1 backdrop-blur-md">
             <SearchBar />
           </div>
         )}

@@ -6,6 +6,10 @@ import { ProductCard } from "@/components/ProductCard";
 import { SectionHeader } from "@/components/misc";
 import { HomeSkeleton } from "@/components/skeletons";
 import { useHydrated } from "@/lib/useHydrated";
+import { QuickStories } from "@/components/QuickStories";
+import { BuyItAgain } from "@/components/BuyItAgain";
+import { FlashDeals } from "@/components/FlashDeals";
+import { ChefsChoiceBundle } from "@/components/ChefsChoiceBundle";
 
 export default function HomePage() {
   const hydrated = useHydrated();
@@ -29,14 +33,22 @@ export default function HomePage() {
   if (!hydrated) return <HomeSkeleton />;
 
   return (
-    <div className="content-in space-y-1">
+    <div className="content-in space-y-6">
+      <QuickStories />
+
       <BannerCarousel banners={banners} />
 
-      <div className="no-scrollbar -mx-4 mt-4 flex gap-1 overflow-x-auto px-4 pb-1">
+      <div className="no-scrollbar -mx-4 -mt-3 flex gap-1 overflow-x-auto px-4 pb-1">
         {activeCats.map((c) => (
           <CategoryChip key={c.id} category={c} />
         ))}
       </div>
+
+      <BuyItAgain />
+
+      <FlashDeals />
+
+      <ChefsChoiceBundle />
 
       {sections.map((section) => (
         <section key={section.category.id}>

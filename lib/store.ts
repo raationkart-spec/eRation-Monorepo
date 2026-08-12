@@ -14,6 +14,7 @@ import type {
   CartItem,
   Category,
   Coupon,
+  FlashDeal,
   Order,
   OrderStatus,
   Product,
@@ -88,6 +89,8 @@ interface CatalogState {
   config: typeof DEFAULT_CONFIG;
   pincodes: string[];
   coupons: Coupon[];
+  flashDeals: FlashDeal[];
+  setFlashDeals: (d: FlashDeal[]) => void;
   upsertProduct: (p: Product) => void;
   deleteProduct: (id: string) => void;
   adjustStock: (id: string, changeQty: number) => void;
@@ -142,6 +145,8 @@ export const useCatalog = create<CatalogState>()(
       config: DEFAULT_CONFIG,
       pincodes: SERVICEABLE_PINCODES,
       coupons: INITIAL_COUPONS,
+      flashDeals: [],
+      setFlashDeals: (flashDeals) => set({ flashDeals }),
       upsertProduct: (p) =>
         set((s) => {
           const exists = s.products.some((x) => x.id === p.id);
@@ -216,9 +221,10 @@ export const useCatalog = create<CatalogState>()(
           config: DEFAULT_CONFIG,
           pincodes: SERVICEABLE_PINCODES,
           coupons: INITIAL_COUPONS,
+          flashDeals: [],
         }),
     }),
-    { name: "qc-catalog", version: 4 }
+    { name: "qc-catalog", version: 5 }
   )
 );
 
@@ -228,7 +234,7 @@ export const useCatalog = create<CatalogState>()(
 interface CartState {
   items: CartItem[];
   setQty: (productId: string, quantity: number) => void;
-  add: (productId: string) => void;
+  add: (productId: string, dealId?: string) => void;
   clear: () => void;
 }
 
@@ -249,18 +255,18 @@ export const useCart = create<CartState>()(
               : [...s.items, { productId, quantity }],
           };
         }),
-      add: (productId) =>
+      add: (productId, dealId) =>
         set((s) => {
           const item = s.items.find((i) => i.productId === productId);
           if (item)
             return {
               items: s.items.map((i) =>
                 i.productId === productId
-                  ? { ...i, quantity: Math.min(20, i.quantity + 1) }
+                  ? { ...i, quantity: Math.min(20, i.quantity + 1), dealId: dealId ?? i.dealId }
                   : i
               ),
             };
-          return { items: [...s.items, { productId, quantity: 1 }] };
+          return { items: [...s.items, { productId, quantity: 1, dealId }] };
         }),
       clear: () => set({ items: [] }),
     }),

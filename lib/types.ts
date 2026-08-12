@@ -42,6 +42,35 @@ export interface Product {
   isActive: boolean;
   isFeatured: boolean;
   sortOrder: number;
+  createdAt?: string;
+}
+
+export interface FlashDeal {
+  id: string;
+  productId: string;
+  product: Product;
+  salePrice: number; // paise
+  startsAt: string;
+  endsAt: string;
+  isActive: boolean;
+}
+
+export interface BundleItem {
+  id: string;
+  productId: string;
+  product: Product;
+  quantity: number;
+}
+
+export interface Bundle {
+  id: string;
+  name: string;
+  description?: string;
+  tag?: string;
+  imageUrl?: string | null;
+  price: number; // paise
+  isActive: boolean;
+  items: BundleItem[];
 }
 
 export interface Coupon {
@@ -88,6 +117,7 @@ export interface Address {
 export interface CartItem {
   productId: string;
   quantity: number;
+  dealId?: string;
 }
 
 export interface OrderItem {

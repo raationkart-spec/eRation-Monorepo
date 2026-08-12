@@ -5,7 +5,9 @@ import type { Product } from "./types";
 export interface CartLine {
   product: Product;
   quantity: number;
+  unitPrice: number;
   lineTotal: number;
+  dealId?: string;
 }
 
 export interface CartComputed {
@@ -23,15 +25,31 @@ export function useCartComputed(): CartComputed {
   const items = useCart((s) => s.items);
   const products = useCatalog((s) => s.products);
   const config = useCatalog((s) => s.config);
+  const flashDeals = useCatalog((s) => s.flashDeals);
+
+  const now = Date.now();
 
   const lines: CartLine[] = items
-    .map((i) => {
+    .map((i): CartLine | null => {
       const product = products.find((p) => p.id === i.productId);
       if (!product) return null;
+
+      const deal = i.dealId
+        ? flashDeals.find(
+            (d) =>
+              d.id === i.dealId &&
+              d.productId === i.productId &&
+              new Date(d.endsAt).getTime() > now
+          )
+        : undefined;
+      const unitPrice = deal ? deal.salePrice : product.price;
+
       return {
         product,
         quantity: i.quantity,
-        lineTotal: product.price * i.quantity,
+        unitPrice,
+        lineTotal: unitPrice * i.quantity,
+        dealId: deal?.id,
       };
     })
     .filter((x): x is CartLine => x !== null);

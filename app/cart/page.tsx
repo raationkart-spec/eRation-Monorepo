@@ -37,7 +37,7 @@ export default function CartPage() {
   }
 
   const remaining = freeDeliveryAbove - subtotal;
-  const savings = lines.reduce((sum, l) => sum + (l.product.mrp - l.product.price) * l.quantity, 0);
+  const savings = lines.reduce((sum, l) => sum + (l.product.mrp - l.unitPrice) * l.quantity, 0);
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl bg-slate-50 pb-28">
@@ -75,7 +75,12 @@ export default function CartPage() {
                       </h3>
                       <p className="text-xs font-medium text-slate-500">{line.product.unit}</p>
                       <p className="mt-1 text-sm font-black text-slate-900">
-                        {formatMoney(line.product.price)}
+                        {formatMoney(line.unitPrice)}
+                        {line.dealId && (
+                          <span className="ml-1.5 text-xs font-semibold text-slate-400 line-through">
+                            {formatMoney(line.product.price)}
+                          </span>
+                        )}
                       </p>
                     </div>
 

@@ -5,9 +5,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { EmptyState } from "@/components/misc";
 import { CategorySkeleton } from "@/components/skeletons";
 import { useHydrated } from "@/lib/useHydrated";
+import { FilterBar, type SortOption } from "@/components/FilterBar";
 import type { Product } from "@/lib/types";
-
-type Sort = "popular" | "price_asc" | "price_desc" | "newest";
 
 export default function CategoryPage({
   params,
@@ -18,8 +17,10 @@ export default function CategoryPage({
   const hydrated = useHydrated();
   const categories = useCatalog((s) => s.categories);
   const products = useCatalog((s) => s.products);
-  const [sort, setSort] = useState<Sort>("popular");
+  const [sort, setSort] = useState<SortOption>("popular");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [under99, setUnder99] = useState(false);
+  const [discountedOnly, setDiscountedOnly] = useState(false);
 
   if (!hydrated) return <CategorySkeleton />;
 
@@ -39,6 +40,8 @@ export default function CategoryPage({
     (p) => p.categorySlug === slug && p.isActive
   );
   if (inStockOnly) list = list.filter((p) => p.stockQty > 0);
+  if (under99) list = list.filter((p) => p.price < 9900);
+  if (discountedOnly) list = list.filter((p) => p.mrp > p.price);
 
   list = [...list].sort((a, b) => {
     switch (sort) {
@@ -46,6 +49,11 @@ export default function CategoryPage({
         return a.price - b.price;
       case "price_desc":
         return b.price - a.price;
+      case "discount_desc": {
+        const da = a.mrp > 0 ? (a.mrp - a.price) / a.mrp : 0;
+        const db = b.mrp > 0 ? (b.mrp - b.price) / b.mrp : 0;
+        return db - da;
+      }
       case "newest":
         return b.sortOrder - a.sortOrder;
       default:
@@ -63,30 +71,16 @@ export default function CategoryPage({
         <p className="text-2xs font-semibold text-slate-400">Fresh items delivered all across Siliguri</p>
       </div>
 
-      {/* Sticky Filter Bar pinned directly under top header (top-14) */}
-      <div className="sticky top-14 z-30 -mx-4 mb-4 flex items-center gap-2 border-b border-slate-200/80 bg-white/95 backdrop-blur-md px-4 py-2.5 shadow-2xs">
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as Sort)}
-          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-orange-500 transition"
-        >
-          <option value="popular">Popular</option>
-          <option value="price_asc">Price: Low to High</option>
-          <option value="price_desc">Price: High to Low</option>
-          <option value="newest">Newest</option>
-        </select>
-
-        <button
-          onClick={() => setInStockOnly((v) => !v)}
-          className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
-            inStockOnly
-              ? "border-orange-200 bg-orange-50 text-orange-600 shadow-2xs"
-              : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          In stock
-        </button>
-      </div>
+      <FilterBar
+        sort={sort}
+        onSortChange={setSort}
+        inStockOnly={inStockOnly}
+        onToggleInStock={() => setInStockOnly((v) => !v)}
+        under99={under99}
+        onToggleUnder99={() => setUnder99((v) => !v)}
+        discountedOnly={discountedOnly}
+        onToggleDiscounted={() => setDiscountedOnly((v) => !v)}
+      />
 
       {list.length === 0 ? (
         <EmptyState emoji="📦" title="No products here yet" />

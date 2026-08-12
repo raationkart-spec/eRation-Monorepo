@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>QuickCart Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#261813",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#5a4138",
+                    "tertiary-fixed-dim": "#a4c9ff",
+                    "surface-container-lowest": "#ffffff",
+                    "text-muted": "#64748B",
+                    "primary-light": "#F97316",
+                    "secondary-container": "#6cf8bb",
+                    "surface": "#fff8f6",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "outline": "#8e7166",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-container": "#00714d",
+                    "surface-container-highest": "#f8ddd4",
+                    "primary": "#a33900",
+                    "surface-container-high": "#fee2d9",
+                    "on-tertiary-container": "#fdfcff",
+                    "on-surface": "#261813",
+                    "tertiary": "#005da8",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "surface-container-low": "#fff1ec",
+                    "surface-variant": "#f8ddd4",
+                    "primary-fixed-dim": "#ffb599",
+                    "primary-fixed": "#ffdbce",
+                    "surface-bright": "#fff8f6",
+                    "surface-tint": "#a73a00",
+                    "warning": "#D97706",
+                    "secondary-light": "#D1FAE5",
+                    "secondary-fixed-dim": "#4edea3",
+                    "text-subtitle": "#94A3B8",
+                    "on-tertiary-fixed": "#001c39",
+                    "error": "#DC2626",
+                    "inverse-primary": "#ffb599",
+                    "secondary-dark": "#059669",
+                    "inverse-on-surface": "#ffede7",
+                    "surface-dim": "#efd4cb",
+                    "surface-glass": "rgba(255, 255, 255, 0.8)",
+                    "primary-dark": "#C2410C",
+                    "on-primary-container": "#fffbff",
+                    "outline-variant": "#e2bfb2",
+                    "on-secondary-fixed-variant": "#005236",
+                    "primary-container": "#cc4900",
+                    "tertiary-fixed": "#d4e3ff",
+                    "secondary": "#006c49",
+                    "on-tertiary-fixed-variant": "#004883",
+                    "background": "#fff8f6",
+                    "on-secondary-fixed": "#002113",
+                    "success": "#16A34A",
+                    "inverse-surface": "#3d2d27",
+                    "bg-main": "#F8FAFC",
+                    "surface-container": "#ffe9e2",
+                    "secondary-fixed": "#6ffbbe",
+                    "tertiary-container": "#0076d2",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#370e00",
+                    "on-error-container": "#93000a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px",
+                    "2xl": "1rem"
+            },
+            "spacing": {
+                    "gutter": "1rem",
+                    "stack-lg": "1.5rem",
+                    "margin-desktop": "2rem",
+                    "margin-mobile": "1rem",
+                    "stack-sm": "0.5rem",
+                    "stack-md": "1rem",
+                    "stack-xs": "0.25rem"
+            },
+            "fontFamily": {
+                    "display-sm": [
+                            "Inter"
+                    ],
+                    "heading-sm": [
+                            "Inter"
+                    ],
+                    "subheading": [
+                            "Inter"
+                    ],
+                    "caption": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+        .gradient-top {
+            background: linear-gradient(180deg, rgba(234, 88, 12, 0.1) 0%, rgba(255, 248, 246, 0) 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased pb-24 selection:bg-primary-container selection:text-on-primary-container">
+<div class="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[#EA580C]/10 to-transparent pointer-events-none z-0"></div>
+<!-- TopAppBar -->
+<header class="bg-surface-glass backdrop-blur-md docked full-width top-0 sticky z-50 flex justify-between items-center px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-[#EA580C]/20">
+<span class="material-symbols-outlined text-[#EA580C] text-display-sm" data-icon="timer" data-weight="fill" style="font-variation-settings: 'FILL' 1;">timer</span>
+</div>
+<div class="flex flex-col">
+<span class="font-subheading text-subheading font-bold text-on-background">10 mins</span>
+<div class="flex items-center text-text-muted gap-0.5">
+<span class="font-caption text-[11px] truncate max-w-[120px]">Bandra West, Mumbai</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</div>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-outline-variant/20 hover:bg-surface-container transition-colors active:scale-95 duration-200 ease-in-out text-[#EA580C]">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</header>
+<main class="px-margin-mobile pt-2 pb-8 space-y-8 max-w-7xl mx-auto relative z-10">
+<!-- Search -->
+<section class="sticky top-16 z-40 bg-background/90 backdrop-blur-md py-3 -mx-margin-mobile px-margin-mobile">
+<div class="relative w-full shadow-md rounded-xl bg-white border border-[#EA580C]/10 overflow-hidden">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#EA580C]" data-icon="search">search</span>
+<input class="w-full bg-transparent pl-10 pr-10 py-3.5 focus:outline-none transition-all font-body-md text-body-md text-on-background placeholder:text-text-muted" placeholder="Search for fresh milk, bread..." type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-[#EA580C] transition-colors">
+<span class="material-symbols-outlined" data-icon="mic">mic</span>
+</button>
+</div>
+</section>
+<!-- Quick Stories -->
+<section class="-mt-2">
+<div class="flex overflow-x-auto gap-5 pb-4 pt-2 no-scrollbar -mx-margin-mobile px-margin-mobile">
+<button class="flex flex-col items-center gap-2 min-w-[72px] group">
+<div class="w-16 h-16 rounded-full p-[3px] bg-gradient-to-tr from-[#EA580C] to-warning shadow-md group-active:scale-95 transition-transform">
+<div class="w-full h-full rounded-full border-2 border-white bg-white overflow-hidden flex items-center justify-center relative">
+<img class="w-full h-full object-cover" data-alt="New Arrivals" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqbWIHg1dUt5ovqS7BJcMfUzPUrEbmicgSJwFlJuOHvBaLuUZnfUeiTZb1d4hXECsK4xIp12mi5tJ7CCsfpA70PmrddZCITJDn9ImnhCfSyXdUVtXfIxV1QWwg5BB9ZqFl-3F5WtuLMo46QeFZeM1TI_tFfy_o6jif_ucdweioB7CO5djtSj32akZK4MhuwcVKDkLhh62ADfnYJCqCy0SiQptqUvdXbLD0hui9orPwZcPP3JPFUsCITA"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<span class="material-symbols-outlined absolute text-white" style="font-variation-settings: 'FILL' 1">new_releases</span>
+</div>
+</div>
+<span class="font-caption text-[11px] font-semibold text-on-background">New Arrivals</span>
+</button>
+<button class="flex flex-col items-center gap-2 min-w-[72px] group">
+<div class="w-16 h-16 rounded-full p-[3px] bg-gradient-to-tr from-[#EA580C] to-warning shadow-md group-active:scale-95 transition-transform">
+<div class="w-full h-full rounded-full border-2 border-white bg-white overflow-hidden flex items-center justify-center relative">
+<img class="w-full h-full object-cover" data-alt="Best Deals" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCneZNxaqHO5uj8UywwzMk8DsIMT0-g4ejREAuCdHA4BRZU0foBNnpB2hCx2ydb12yxeK_RxEBSXz_ZbjxeRc8XslMYD4Fzs68adsiSMmgdOrGh8XftWhO6BvqlynhGtYD47qXeluzv3xPAXZzqi2-MIgtPh1QJOJqTuUa9zmaCKUch1gmDznbclFEsYbr-DtmvQrXSoFt0-90Bu1-pryowW63zpQZTvHycIkNFBitII4cvgiwJqKxF7A"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<span class="material-symbols-outlined absolute text-white" style="font-variation-settings: 'FILL' 1">sell</span>
+</div>
+</div>
+<span class="font-caption text-[11px] font-semibold text-on-background">Best Deals</span>
+</button>
+<button class="flex flex-col items-center gap-2 min-w-[72px] group">
+<div class="w-16 h-16 rounded-full p-[3px] bg-gradient-to-tr from-[#EA580C] to-warning shadow-md group-active:scale-95 transition-transform">
+<div class="w-full h-full rounded-full border-2 border-white bg-white overflow-hidden flex items-center justify-center relative">
+<img class="w-full h-full object-cover" data-alt="Trending" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOL_eDiZ_DP6sdrJZag2XiD77THJPZN7_dHSmCM2cpkfbBC1T4g3prpwNdTNyKtg_9dkqQREafNKVt_rHI6ilCG5Xhj_N8GVfodDcolRtQJU8ZyOrfsgHiA-LYiexGnvJW7neYozl5rVZmwDndh95hiANFjY7cHFpL7mdjCA7NLU3gSFAPT23teXn9fD0E5_cO1j3C6CJESZa6n8v_16Tpy7DjVpzldJI7jUv1_wBFcXM0nXYm08b6Gw"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<span class="material-symbols-outlined absolute text-white" style="font-variation-settings: 'FILL' 1">trending_up</span>
+</div>
+</div>
+<span class="font-caption text-[11px] font-semibold text-on-background">Trending</span>
+</button>
+<button class="flex flex-col items-center gap-2 min-w-[72px] group">
+<div class="w-16 h-16 rounded-full p-[3px] bg-surface-container-highest shadow-sm group-active:scale-95 transition-transform">
+<div class="w-full h-full rounded-full border-2 border-white bg-white overflow-hidden flex items-center justify-center relative">
+<img class="w-full h-full object-cover" data-alt="Organic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIW29esc4d4dofqfKkXXg_OQcDMLHxPHGe9JLxnJoHgItLtXxo2dK2gDBWvQzSLQF1WbgqTPN2mMwdx6hQ4PVM4mXuH-Zcbem0xUUh_qULI7ZlOIYXT71SazHfIq2DC1yKbDAyiOkFhNvVsrt3ygl1xwZlEMoYBNDhwFX0uf4Xtc02qAgfLKEdjSR8NanEhX1U-76bbrZB6G0IqJ5udmwNEpZAF7iFss5OkWuysNGLhAZnv1l4bGoMLQ"/>
+</div>
+</div>
+<span class="font-caption text-[11px] font-medium text-text-muted">Organic</span>
+</button>
+<button class="flex flex-col items-center gap-2 min-w-[72px] group">
+<div class="w-16 h-16 rounded-full p-[3px] bg-surface-container-highest shadow-sm group-active:scale-95 transition-transform">
+<div class="w-full h-full rounded-full border-2 border-white bg-white overflow-hidden flex items-center justify-center relative">
+<img class="w-full h-full object-cover" data-alt="Snacks" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTooaMxfHmn0vVu08kzdMYEnAzcaYbOsbDBXNMdR8yc0f9XtzKtleQExpvZPylynUSKgleeLw_e1wrOrpZOD-3ZeGujEEqeAlOAIrQLL1G_1qXfmV-jPp_lsUwPqznBmseBMGq6DYhUj0szanKppKbJe2jlOipCol9WH2g7scQtM5AghcXmAjeEj7lHjtTiv4NU3Dek-OTBAB1UGibwOmZt3w07oAHj7tqlE6Rbmbe8ricoYg4zItNmg"/>
+</div>
+</div>
+<span class="font-caption text-[11px] font-medium text-text-muted">Snacks</span>
+</button>
+</div>
+</section>
+<!-- Hero Banner -->
+<section class="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#EA580C] to-warning text-white shadow-xl h-48 flex items-center p-8 group">
+<div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&amp;fit=crop&amp;q=80&amp;w=1000')] bg-cover bg-center mix-blend-overlay opacity-40"></div>
+<div class="absolute -right-8 -top-8 w-48 h-48 bg-white/20 rounded-full blur-3xl"></div>
+<div class="relative z-10 w-2/3 space-y-3">
+<div class="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30 text-[10px] font-bold tracking-widest uppercase mb-1">Premium Farm Fresh</div>
+<h2 class="font-display-sm text-3xl font-black tracking-tight leading-tight drop-shadow-md">Exotic<br/>Vegetables</h2>
+<button class="bg-white text-[#EA580C] font-subheading text-subheading px-5 py-2 rounded-full mt-2 hover:bg-surface-container-lowest active:scale-95 transition-all shadow-lg w-fit inline-flex items-center gap-2 font-bold">Explore <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span></button>
+</div>
+</section>
+<!-- Buy It Again -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-heading-sm text-[18px] font-bold text-on-background flex items-center gap-2">
+<span class="material-symbols-outlined text-[#EA580C]" style="font-variation-settings: 'FILL' 1">history</span> Buy it Again
+</h3>
+</div>
+<div class="flex overflow-x-auto gap-4 pb-4 no-scrollbar -mx-margin-mobile px-margin-mobile snap-x snap-mandatory">
+<div class="snap-start min-w-[120px] bg-white rounded-2xl p-3 shadow-[0_4px_12px_-4px_rgba(234,88,12,0.1)] border border-[#EA580C]/5">
+<div class="aspect-square bg-surface-container-low rounded-xl mb-2 overflow-hidden flex items-center justify-center p-2 relative">
+<img class="object-contain w-full h-full mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-5CGL9xbKBOnKdVjzGm8lnbeTertY2S12OSzSsm2K-ONa4VhaPF7ytKnwzB6Os2xH4O4cXO1mvVTrbe6ZbhRG28zDWb32xxefO9C8AcrdneRSnhcAyhAYb6a7zg80v5hKAfHZis5Nz3gGlLNRI368MoJyNQyVnQbcuXq_6NWhZcgkHwADbDUoO8GLhImUyrjiFQdeqHn_H-CECZCOHb4iaZDFRhC4fG8e7Ss1HYOuRxVilSEPaM64Zg"/>
+<button class="absolute bottom-1 right-1 w-6 h-6 bg-[#EA580C] text-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+</div>
+<h4 class="font-body-md text-[12px] font-medium text-on-background line-clamp-1">Amul Gold Milk</h4>
+<span class="font-subheading text-[13px] font-bold text-on-background mt-1 block">₹34</span>
+</div>
+<div class="snap-start min-w-[120px] bg-white rounded-2xl p-3 shadow-[0_4px_12px_-4px_rgba(234,88,12,0.1)] border border-[#EA580C]/5">
+<div class="aspect-square bg-surface-container-low rounded-xl mb-2 overflow-hidden flex items-center justify-center p-2 relative">
+<img class="object-contain w-full h-full mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx5yGtiD21goaxA04GXatn1J87ViBtYojm2jKCfNoatkQ1voOHzOixuNcnJ4NevDCL58nOA7IKxBUQ1VD8RodpWBjksNa0_KiI5jsQxOowTQgon51U2lCtRM3w8KnJJHRm2HpDpM2yNKt5IbfBOr9-wIljisqpbiaWWqXFwGjZWMJG9EldIArHp0ItRvbiTO80mKAI2wSnXbAYhJTabtE2E5he1SwayhiJJuFiVgYty1_0qZ_IO7rg1g"/>
+<button class="absolute bottom-1 right-1 w-6 h-6 bg-[#EA580C] text-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+</div>
+<h4 class="font-body-md text-[12px] font-medium text-on-background line-clamp-1">White Bread</h4>
+<span class="font-subheading text-[13px] font-bold text-on-background mt-1 block">₹45</span>
+</div>
+<div class="snap-start min-w-[120px] bg-white rounded-2xl p-3 shadow-[0_4px_12px_-4px_rgba(234,88,12,0.1)] border border-[#EA580C]/5">
+<div class="aspect-square bg-surface-container-low rounded-xl mb-2 overflow-hidden flex items-center justify-center p-2 relative">
+<img class="object-contain w-full h-full mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBR0jGUU3g5bo809hlYtyB04RtCHG8yDKqx4lgz7zEo7m7NeyH3fqAelgRTnUsSiaYoCr7uqTEO2G6RqRdJPBaksvgDM_feNWv6rxD7RtBbfe5SMYd1_z42kD02S0oDRytaXkEizN_7WEdp43V2v3Ce8aTImHfUDRRhq3BZNtRHj4nOqJwYfkXOqcYWUds4mNfcMCB65dmNgdtrY-BorEC89FYkZm7B9ciUj5FvTVEUy5VkE6Ag-L6U6Q"/>
+<button class="absolute bottom-1 right-1 w-6 h-6 bg-[#EA580C] text-white rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+</div>
+<h4 class="font-body-md text-[12px] font-medium text-on-background line-clamp-1">Bananas</h4>
+<span class="font-subheading text-[13px] font-bold text-on-background mt-1 block">₹55</span>
+</div>
+</div>
+</section>
+<!-- Flash Deals -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<h3 class="font-heading-sm text-[18px] font-bold text-on-background flex items-center gap-2">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1">flash_on</span> Flash Deals
+</h3>
+<div class="bg-error/10 text-error px-2 py-0.5 rounded flex items-center gap-1 font-bold text-[11px]">
+<span class="material-symbols-outlined text-[12px]">schedule</span> 02:14:59
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+<!-- Product 1 -->
+<article class="bg-white border border-error/10 rounded-2xl p-3 flex flex-col relative shadow-[0_8px_16px_-6px_rgba(220,38,38,0.08)] hover:shadow-lg transition-shadow">
+<div class="absolute top-0 right-0 bg-error text-white font-caption text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-xl shadow-sm z-10">-20%</div>
+<div class="aspect-square bg-surface-container-low rounded-xl mb-3 overflow-hidden flex items-center justify-center p-3">
+<img class="object-contain w-full h-full mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3WhKWwhkoxqtsxZteIHo3h6MhloA76DNE_SJdtzFB1EbNvfp7CmdIhlAglPL7kSsOM-oe6r6ukPziT1KSUjjKX4CY7aVoVUjObJ-UmLZy1L1Us4sFVGX-Y1GZkbmvcf_lXlQAkBbfGp0z01jQQmjovn5uUwLB6zrv1mdQzLq01dEK0esYtNqz0gk-Rqb4_5KPhbcpTxtsaVL0eo3Vxxh1nHIZGzI0s3lhZsNFWyggFFf1Zypxhhk_PQ"/>
+</div>
+<div class="flex-1 flex flex-col justify-between space-y-2">
+<div>
+<h4 class="font-body-md text-body-md text-on-background font-medium line-clamp-2 leading-snug">Fortune Sunflower Oil 1L</h4>
+</div>
+<div class="flex items-center justify-between mt-auto pt-2">
+<div>
+<span class="font-subheading text-[15px] font-black text-[#EA580C]">₹145</span>
+<span class="text-[11px] text-text-muted line-through block">₹181</span>
+</div>
+<button class="bg-[#EA580C] text-white font-subheading text-[13px] font-bold px-4 py-2 rounded-xl active:scale-95 transition-transform shadow-md flex items-center justify-center">
+                                ADD
+                            </button>
+</div>
+</div>
+</article>
+<!-- Product 2 -->
+<article class="bg-white border border-error/10 rounded-2xl p-3 flex flex-col relative shadow-[0_8px_16px_-6px_rgba(220,38,38,0.08)] hover:shadow-lg transition-shadow">
+<div class="absolute top-0 right-0 bg-error text-white font-caption text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-xl shadow-sm z-10">-15%</div>
+<div class="aspect-square bg-surface-container-low rounded-xl mb-3 overflow-hidden flex items-center justify-center p-3">
+<img class="object-contain w-full h-full mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZHsts3J3DNuab1tgc7e3jDftvJF53o2aw66vbgJ1IBLWzmItXAAKYu0a2dTEquSR6EPmRDc_snu2X0hDhBFCvbRrZkiBsi9XRDsxZqr8kZmfeVpNOGeggkitWaIXgz062Era4Bfp014fBGXOLW3VwlaLrSgWveLBRIxAerHDHm88hZ-eQRH1Wp8kdcTfFDA_83xrHWzpfXlldOR2GOZXZizlJ2ZXNGdaut7t99ho4X8dMIoCXb2Ro5Q"/>
+</div>
+<div class="flex-1 flex flex-col justify-between space-y-2">
+<div>
+<h4 class="font-body-md text-body-md text-on-background font-medium line-clamp-2 leading-snug">Assorted Party Snacks</h4>
+</div>
+<div class="flex items-center justify-between mt-auto pt-2">
+<div>
+<span class="font-subheading text-[15px] font-black text-[#EA580C]">₹250</span>
+<span class="text-[11px] text-text-muted line-through block">₹295</span>
+</div>
+<button class="bg-[#EA580C] text-white font-subheading text-[13px] font-bold px-4 py-2 rounded-xl active:scale-95 transition-transform shadow-md flex items-center justify-center">
+                                ADD
+                            </button>
+</div>
+</div>
+</article>
+</div>
+</section>
+<!-- Chef's Choice -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-heading-sm text-[18px] font-bold text-on-background flex items-center gap-2">
+<span class="material-symbols-outlined text-[#EA580C]" style="font-variation-settings: 'FILL' 1">restaurant_menu</span> Chef's Choice
+</h3>
+</div>
+<div class="bg-white rounded-[2rem] p-4 shadow-[0_8px_24px_-8px_rgba(234,88,12,0.15)] border border-[#EA580C]/10 flex flex-col gap-4 relative overflow-hidden">
+<div class="absolute right-0 top-0 w-32 h-32 bg-[#EA580C]/5 rounded-bl-full pointer-events-none"></div>
+<div class="flex gap-4 items-center relative z-10">
+<div class="w-24 h-24 rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpu9ZYTMji2s4IKWs_BsChX4S8uclvilqMae0nRTFYpqobbf9MV9sw3azFxcF4Z8GfJ6x6Vd6jyMsQ3sRT7Q-2pKwv71anxwXcCvfBL3kW3Xa1o0wwg_YgpcteQvcm_K9RFK4v9MUiVyKkKo98oC1rp1hvctZQXCcTEG2hH0PbDyknqIs1dMoyck1irTZ3M-tu4cmQHLO1dOo_LndyD9PI2T9omI_nzDaxAaS1jKD_C3pZT0KeLVCuHA"/>
+</div>
+<div>
+<div class="bg-primary-container text-on-primary-container text-[10px] font-bold px-2 py-0.5 rounded-full w-fit mb-1">Bundle Save 15%</div>
+<h4 class="font-subheading text-[15px] font-bold text-on-background">Sunday Breakfast Bundle</h4>
+<p class="font-caption text-text-muted mt-1 leading-snug">Eggs, Bread, Butter, and fresh Orange Juice.</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/20 relative z-10">
+<div>
+<span class="font-subheading text-[16px] font-black text-[#EA580C]">₹299</span>
+<span class="text-[12px] text-text-muted line-through ml-2">₹350</span>
+</div>
+<button class="bg-[#EA580C] text-white font-subheading text-[14px] font-bold px-6 py-2 rounded-xl active:scale-95 transition-transform shadow-md flex items-center justify-center">
+        ADD BUNDLE
+    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-white/90 backdrop-blur-xl border-t border-outline-variant/10 shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.05)] fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe md:hidden rounded-t-[2rem]">
+<button class="flex flex-col items-center justify-center text-[#EA580C] px-4 py-2 active:scale-90 transition-transform duration-150 group relative">
+<div class="absolute inset-0 bg-[#EA580C]/10 rounded-xl"></div>
+<span class="material-symbols-outlined text-xl mb-1 relative z-10" data-icon="home" data-weight="fill" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-caption text-[10px] font-bold relative z-10">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-text-muted hover:text-[#EA580C] transition-all active:scale-90 duration-150 group px-4 py-2">
+<span class="material-symbols-outlined text-xl mb-1 group-hover:text-[#EA580C] transition-all" data-icon="grid_view">grid_view</span>
+<span class="font-caption text-[10px] font-medium">Categories</span>
+</button>
+<button class="flex flex-col items-center justify-center text-text-muted hover:text-[#EA580C] transition-all active:scale-90 duration-150 group px-4 py-2">
+<span class="material-symbols-outlined text-xl mb-1 group-hover:text-[#EA580C] transition-all" data-icon="search">search</span>
+<span class="font-caption text-[10px] font-medium">Search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-text-muted hover:text-[#EA580C] transition-all active:scale-90 duration-150 group px-4 py-2">
+<span class="material-symbols-outlined text-xl mb-1 group-hover:text-[#EA580C] transition-all" data-icon="person">person</span>
+<span class="font-caption text-[10px] font-medium">Account</span>
+</button>
+</nav>
+</body></html>

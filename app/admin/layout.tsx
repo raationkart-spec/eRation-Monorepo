@@ -14,6 +14,8 @@ import {
   ExternalLink,
   LogOut,
   Shield,
+  Zap,
+  UtensilsCrossed,
 } from "lucide-react";
 import clsx from "clsx";
 import { ToastHost } from "@/components/toast";
@@ -26,6 +28,8 @@ const NAV = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
   { href: "/admin/discounts", label: "Discounts & Coupons", icon: Tag },
+  { href: "/admin/flash-deals", label: "Flash Deals", icon: Zap },
+  { href: "/admin/bundles", label: "Bundles", icon: UtensilsCrossed },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/banners", label: "Banners", icon: ImageIcon },
   { href: "/admin/settings", label: "Settings", icon: Settings },
