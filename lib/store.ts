@@ -233,8 +233,8 @@ export const useCatalog = create<CatalogState>()(
 // ─────────────────────────────────────────────────────────────
 interface CartState {
   items: CartItem[];
-  setQty: (productId: string, quantity: number) => void;
-  add: (productId: string, dealId?: string) => void;
+  setQty: (productId: string, quantity: number, overridePrice?: number) => void;
+  add: (productId: string, dealId?: string, overridePrice?: number, bundleId?: string) => void;
   clear: () => void;
 }
 
@@ -242,7 +242,7 @@ export const useCart = create<CartState>()(
   persist(
     (set) => ({
       items: [],
-      setQty: (productId, quantity) =>
+      setQty: (productId, quantity, overridePrice) =>
         set((s) => {
           if (quantity <= 0)
             return { items: s.items.filter((i) => i.productId !== productId) };
@@ -250,23 +250,31 @@ export const useCart = create<CartState>()(
           return {
             items: exists
               ? s.items.map((i) =>
-                  i.productId === productId ? { ...i, quantity } : i
+                  i.productId === productId
+                    ? { ...i, quantity, overridePrice: overridePrice ?? i.overridePrice }
+                    : i
                 )
-              : [...s.items, { productId, quantity }],
+              : [...s.items, { productId, quantity, overridePrice }],
           };
         }),
-      add: (productId, dealId) =>
+      add: (productId, dealId, overridePrice, bundleId) =>
         set((s) => {
           const item = s.items.find((i) => i.productId === productId);
           if (item)
             return {
               items: s.items.map((i) =>
                 i.productId === productId
-                  ? { ...i, quantity: Math.min(20, i.quantity + 1), dealId: dealId ?? i.dealId }
+                  ? {
+                      ...i,
+                      quantity: Math.min(20, i.quantity + 1),
+                      dealId: dealId ?? i.dealId,
+                      overridePrice: overridePrice ?? i.overridePrice,
+                      bundleId: bundleId ?? i.bundleId,
+                    }
                   : i
               ),
             };
-          return { items: [...s.items, { productId, quantity: 1, dealId }] };
+          return { items: [...s.items, { productId, quantity: 1, dealId, overridePrice, bundleId }] };
         }),
       clear: () => set({ items: [] }),
     }),
@@ -275,11 +283,13 @@ export const useCart = create<CartState>()(
 );
 
 // ─────────────────────────────────────────────────────────────
-// SHOP — addresses + orders
+// SHOP — addresses + orders + applied coupon
 // ─────────────────────────────────────────────────────────────
 interface ShopState {
   addresses: Address[];
   orders: Order[];
+  appliedCoupon: { code: string; discount: number } | null;
+  setAppliedCoupon: (coupon: { code: string; discount: number } | null) => void;
   addAddress: (a: Omit<Address, "id">) => Address;
   updateAddress: (a: Address) => void;
   deleteAddress: (id: string) => void;
@@ -311,6 +321,8 @@ export const useShop = create<ShopState>()(
     (set) => ({
       addresses: [seedAddress],
       orders: [],
+      appliedCoupon: null,
+      setAppliedCoupon: (appliedCoupon) => set({ appliedCoupon }),
       addAddress: (a) => {
         const addr: Address = { ...a, id: "addr_" + Date.now() };
         set((s) => ({

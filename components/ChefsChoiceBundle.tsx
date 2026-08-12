@@ -25,11 +25,25 @@ export function ChefsChoiceBundle() {
   if (bundles.length === 0) return null;
 
   const addBundle = (bundle: Bundle) => {
-    for (const item of bundle.items) {
-      const existing = items.find((i) => i.productId === item.productId)?.quantity ?? 0;
-      setQty(item.productId, existing + item.quantity);
-    }
-    show(`${bundle.name} added to cart`);
+    const originalTotal = bundle.items.reduce(
+      (sum, i) => sum + i.product.price * i.quantity,
+      0
+    );
+    const ratio = originalTotal > 0 ? bundle.price / originalTotal : 1;
+
+    let cumulativeDiscountedPriceSum = 0;
+    bundle.items.forEach((item, index) => {
+      let discountedUnitPrice = Math.round(item.product.price * ratio);
+      if (index === bundle.items.length - 1) {
+        const previousTotal = cumulativeDiscountedPriceSum;
+        discountedUnitPrice = Math.max(0, Math.floor((bundle.price - previousTotal) / item.quantity));
+      }
+      cumulativeDiscountedPriceSum += discountedUnitPrice * item.quantity;
+
+      const existingQty = items.find((i) => i.productId === item.productId)?.quantity ?? 0;
+      setQty(item.productId, existingQty + item.quantity, discountedUnitPrice);
+    });
+    show(`${bundle.name} added to cart for ${formatMoney(bundle.price)}! 🍳`);
   };
 
   return (

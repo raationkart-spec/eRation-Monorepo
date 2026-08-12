@@ -118,6 +118,8 @@ export interface CartItem {
   productId: string;
   quantity: number;
   dealId?: string;
+  overridePrice?: number;
+  bundleId?: string;
 }
 
 export interface OrderItem {

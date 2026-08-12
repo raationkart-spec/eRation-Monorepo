@@ -34,8 +34,9 @@ export default function CheckoutPage() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "GPAY">("COD");
   const [placing, setPlacing] = useState(false);
+  const appliedCoupon = useShop((s) => s.appliedCoupon);
+  const setAppliedCoupon = useShop((s) => s.setAppliedCoupon);
   const [couponInput, setCouponInput] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [couponError, setCouponError] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
 
@@ -249,10 +250,12 @@ export default function CheckoutPage() {
             customerPhone: dbOrder.customerPhone,
           };
           addOrder(formatted);
+          setAppliedCoupon(null);
           clearCart();
           router.replace(`/orders/${formatted.id}?placed=true`);
         } else {
           addOrder(order);
+          setAppliedCoupon(null);
           clearCart();
           router.replace(`/orders/${order.id}?placed=true`);
         }

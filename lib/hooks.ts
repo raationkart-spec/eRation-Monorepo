@@ -42,7 +42,11 @@ export function useCartComputed(): CartComputed {
               new Date(d.endsAt).getTime() > now
           )
         : undefined;
-      const unitPrice = deal ? deal.salePrice : product.price;
+      const unitPrice = deal
+        ? deal.salePrice
+        : typeof i.overridePrice === "number"
+        ? i.overridePrice
+        : product.price;
 
       return {
         product,
