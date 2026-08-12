@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useAuth, useShop } from "@/lib/store";
@@ -7,13 +8,66 @@ import { ProductImage } from "@/components/ProductImage";
 import { formatDate, formatMoney } from "@/lib/format";
 import { ListSkeleton } from "@/components/skeletons";
 import { useHydrated } from "@/lib/useHydrated";
+import type { Order } from "@/lib/types";
 
 export default function OrdersPage() {
   const hydrated = useHydrated();
   const user = useAuth((s) => s.user);
-  const orders = useShop((s) => s.orders);
+  const localOrders = useShop((s) => s.orders);
+  const [dbOrders, setDbOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!hydrated) return <ListSkeleton rows={4} />;
+  useEffect(() => {
+    fetch("/api/orders")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.orders && Array.isArray(data.orders)) {
+          const formatted: Order[] = data.orders.map((o: any) => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            items: o.items.map((i: any) => ({
+              productId: i.productId || i.id,
+              name: i.name,
+              unit: i.unit,
+              emoji: i.emoji,
+              imageUrl: i.imageUrl,
+              price: i.price,
+              mrp: i.mrp,
+              quantity: i.quantity,
+              subtotal: i.subtotal,
+            })),
+            address: {
+              name: o.customerName || "Customer",
+              phone: o.customerPhone || "",
+              line1: o.addressLine || "Siliguri Address",
+              city: "Siliguri",
+              state: "West Bengal",
+              pincode: o.addressLine?.slice(-6) || "734001",
+            },
+            status: o.status,
+            paymentMethod: o.paymentMethod || "COD",
+            paymentStatus: o.paymentStatus || "PENDING",
+            subtotal: o.subtotal,
+            deliveryFee: o.deliveryFee,
+            discount: o.discount || 0,
+            total: o.total,
+            createdAt: o.createdAt,
+            statusHistory: o.statusHistory?.map((h: any) => ({
+              status: h.status,
+              at: h.at,
+              note: h.note,
+            })) || [],
+            customerName: o.customerName,
+            customerPhone: o.customerPhone,
+          }));
+          setDbOrders(formatted);
+        }
+      })
+      .catch((err) => console.warn("Failed to fetch DB orders:", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (!hydrated || loading) return <ListSkeleton rows={4} />;
 
   if (!user) {
     return (
@@ -25,6 +79,14 @@ export default function OrdersPage() {
       />
     );
   }
+
+  // Combine local and DB orders without duplicates
+  const orderMap = new Map<string, Order>();
+  localOrders.forEach((o) => orderMap.set(o.id, o));
+  dbOrders.forEach((o) => orderMap.set(o.id, o));
+  const orders = Array.from(orderMap.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   if (orders.length === 0) {
     return (

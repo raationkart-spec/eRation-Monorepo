@@ -13,6 +13,7 @@ import type {
   Banner,
   CartItem,
   Category,
+  Coupon,
   Order,
   OrderStatus,
   Product,
@@ -86,17 +87,46 @@ interface CatalogState {
   banners: Banner[];
   config: typeof DEFAULT_CONFIG;
   pincodes: string[];
+  coupons: Coupon[];
   upsertProduct: (p: Product) => void;
   deleteProduct: (id: string) => void;
   adjustStock: (id: string, changeQty: number) => void;
   upsertCategory: (c: Category) => void;
   upsertBanner: (b: Banner) => void;
   deleteBanner: (id: string) => void;
+  upsertCoupon: (c: Coupon) => void;
+  deleteCoupon: (id: string) => void;
   setConfig: (c: Partial<typeof DEFAULT_CONFIG>) => void;
   addPincodes: (codes: string[]) => void;
   removePincode: (code: string) => void;
   resetCatalog: () => void;
 }
+
+export const INITIAL_COUPONS: Coupon[] = [
+  {
+    id: "c_welcome20",
+    code: "WELCOME20",
+    description: "20% off on your first order above ₹299",
+    discountType: "PERCENTAGE",
+    discountValue: 20,
+    minOrderValue: 29900,
+    maxDiscount: 10000,
+    usedCount: 14,
+    isActive: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    id: "c_flat50",
+    code: "QUICK50",
+    description: "Flat ₹50 off on orders above ₹499",
+    discountType: "FLAT",
+    discountValue: 5000,
+    minOrderValue: 49900,
+    usedCount: 28,
+    isActive: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
+  },
+];
 
 export const useCatalog = create<CatalogState>()(
   persist(
@@ -106,6 +136,7 @@ export const useCatalog = create<CatalogState>()(
       banners: BANNERS,
       config: DEFAULT_CONFIG,
       pincodes: SERVICEABLE_PINCODES,
+      coupons: INITIAL_COUPONS,
       upsertProduct: (p) =>
         set((s) => {
           const exists = s.products.some((x) => x.id === p.id);
@@ -149,6 +180,17 @@ export const useCatalog = create<CatalogState>()(
         }),
       deleteBanner: (id) =>
         set((s) => ({ banners: s.banners.filter((x) => x.id !== id) })),
+      upsertCoupon: (c) =>
+        set((s) => {
+          const exists = (s.coupons || []).some((x) => x.id === c.id);
+          return {
+            coupons: exists
+              ? s.coupons.map((x) => (x.id === c.id ? c : x))
+              : [...(s.coupons || []), c],
+          };
+        }),
+      deleteCoupon: (id) =>
+        set((s) => ({ coupons: (s.coupons || []).filter((x) => x.id !== id) })),
       setConfig: (c) => set((s) => ({ config: { ...s.config, ...c } })),
       addPincodes: (codes) =>
         set((s) => ({
@@ -163,9 +205,10 @@ export const useCatalog = create<CatalogState>()(
           banners: BANNERS,
           config: DEFAULT_CONFIG,
           pincodes: SERVICEABLE_PINCODES,
+          coupons: INITIAL_COUPONS,
         }),
     }),
-    { name: "qc-catalog", version: 3 }
+    { name: "qc-catalog", version: 4 }
   )
 );
 
@@ -247,7 +290,7 @@ const seedAddress: Address = {
 export const useShop = create<ShopState>()(
   persist(
     (set) => ({
-      addresses: [seedAddress],
+      addresses: [],
       orders: [],
       addAddress: (a) => {
         const addr: Address = { ...a, id: "addr_" + Date.now() };
@@ -320,14 +363,7 @@ export const useShop = create<ShopState>()(
   )
 );
 
-// ─── Order number generator: QC-YYYYMMDD-NNNN ───
-export function makeOrderNumber(seq: number): string {
-  const d = new Date();
-  const dateStr = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
-  return `QC-${dateStr}-${String(seq).padStart(4, "0")}`;
-}
+export { makeOrderNumber } from "./orderNumber";
 
 // ─────────────────────────────────────────────────────────────
 // LOCATION — Pincode auto-detection & location management

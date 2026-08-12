@@ -1,5 +1,6 @@
 import { TopBar } from "@/components/TopBar";
 import { BottomNav } from "@/components/BottomNav";
+import { FloatingCartBar } from "@/components/FloatingCartBar";
 import { ToastHost } from "@/components/toast";
 import { AuthGate } from "@/components/AuthGate";
 
@@ -14,6 +15,7 @@ export default function ShopLayout({
       <main className="px-4 pb-24 pt-3">
         <AuthGate>{children}</AuthGate>
       </main>
+      <FloatingCartBar />
       <BottomNav />
       <ToastHost />
     </div>

@@ -2,8 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Crosshair, MapPin, Loader2, Search, ShoppingBag, Sparkles, X } from "lucide-react";
-import { useCart, useLocation } from "@/lib/store";
+import { ChevronDown, Crosshair, MapPin, Loader2, Search, ShoppingBag, Sparkles, User, X } from "lucide-react";
+import { useCart, useCatalog, useLocation } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { useToast, ToastHost } from "@/components/toast";
 import { SearchBar } from "./SearchBar";
@@ -21,6 +21,7 @@ export function TopBar() {
   const pathname = usePathname();
   const hydrated = useHydrated();
   const items = useCart((s) => s.items);
+  const pincodes = useCatalog((s) => s.pincodes);
   const { pincode, city, isDetecting, setPincode, detectLocation } = useLocation();
   const showToast = useToast((s) => s.show);
 
@@ -46,12 +47,17 @@ export function TopBar() {
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^\d{6}$/.test(inputPin.trim())) {
+    const pin = inputPin.trim();
+    if (!/^\d{6}$/.test(pin)) {
       setErrorMsg("Please enter a valid 6-digit pincode");
       return;
     }
-    setPincode(inputPin.trim(), "Siliguri Area");
-    showToast(`Pincode set to ${inputPin.trim()} 👍`);
+    if (pincodes.length > 0 && !pincodes.includes(pin)) {
+      setErrorMsg(`🚫 Pincode ${pin} is unserviceable. Delivery available only to Siliguri pincodes: ${pincodes.join(", ")}`);
+      return;
+    }
+    setPincode(pin, "Siliguri Area");
+    showToast(`Pincode set to ${pin} 👍`);
     setModalOpen(false);
     setInputPin("");
     setErrorMsg("");
@@ -109,19 +115,11 @@ export function TopBar() {
             )}
 
             <Link
-              href="/cart"
-              aria-label="Cart"
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 active:scale-95 transition shadow-sm"
+              href="/account"
+              aria-label="Account Profile"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 active:scale-95 transition shadow-sm"
             >
-              <ShoppingBag size={19} />
-              {count > 0 && (
-                <span
-                  key={count}
-                  className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 animate-bump items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-amber-600 px-1 text-2xs font-extrabold text-white shadow-sm"
-                >
-                  {count}
-                </span>
-              )}
+              <User size={19} />
             </Link>
           </div>
         </div>

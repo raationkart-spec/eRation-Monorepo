@@ -37,10 +37,26 @@ export interface Product {
   lowStockThreshold: number;
   emoji: string;
   imageUrl?: string | null;
+  images?: string[];
   tags: string[];
   isActive: boolean;
   isFeatured: boolean;
   sortOrder: number;
+}
+
+export interface Coupon {
+  id: string;
+  code: string;
+  description?: string;
+  discountType: "PERCENTAGE" | "FLAT";
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscount?: number;
+  expiresAt?: string;
+  usageLimit?: number;
+  usedCount: number;
+  isActive: boolean;
+  createdAt?: string;
 }
 
 export interface Banner {

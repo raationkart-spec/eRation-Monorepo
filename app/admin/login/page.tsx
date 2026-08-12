@@ -9,22 +9,37 @@ import { useAuth } from "@/lib/store";
 export default function AdminLoginPage() {
   const router = useRouter();
   const loginAsAdmin = useAuth((s) => s.loginAsAdmin);
-  const [email, setEmail] = useState("admin@quickcart.com");
+  const defaultEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "admin@quickcart.com";
+  const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const submit = async () => {
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError("Enter a valid email");
       return;
     }
-    if (password.trim().length < 4) {
-      setError("Password must be at least 4 characters");
+    if (!password) {
+      setError("Please enter password");
       return;
     }
-    loginAsAdmin(email);
-    await signIn("admin", { email, redirect: false });
-    router.replace("/admin");
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await signIn("admin", { email, password, redirect: false });
+      if (res?.error) {
+        setError("Invalid admin email or password");
+      } else {
+        loginAsAdmin(email);
+        router.replace("/admin");
+      }
+    } catch {
+      setError("Failed to sign in. Please check credentials.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,21 +88,19 @@ export default function AdminLoginPage() {
           />
         </div>
 
-        {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-xs font-semibold text-red-600">{error}</p>}
 
-        <button onClick={submit} className="btn-primary mt-4 w-full">
-          Sign in to Admin
+        <button
+          onClick={submit}
+          disabled={loading}
+          className="btn-primary mt-4 w-full disabled:opacity-50"
+        >
+          {loading ? "Signing in..." : "Sign in to Admin"}
         </button>
 
         <p className="mt-4 text-center text-2xs text-slate-400">
-          Demo mode — enter any email &amp; a 4+ character password.
+          Staff sign-in endpoint — authorized personnel only.
         </p>
-        <Link
-          href="/login"
-          className="mt-3 block text-center text-xs font-medium text-slate-500"
-        >
-          ← Back to store login
-        </Link>
       </div>
     </div>
   );

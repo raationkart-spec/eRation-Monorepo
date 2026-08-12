@@ -6,10 +6,12 @@ export function PageHeader({
   title,
   subtitle,
   fallbackHref = "/",
+  onBack,
 }: {
   title: string;
   subtitle?: string;
   fallbackHref?: string;
+  onBack?: () => void;
 }) {
   const router = useRouter();
   return (
@@ -17,8 +19,13 @@ export function PageHeader({
       <button
         aria-label="Back"
         onClick={() => {
-          if (window.history.length > 1) router.back();
-          else router.push(fallbackHref);
+          if (onBack) {
+            onBack();
+          } else if (window.history.length > 1) {
+            router.back();
+          } else {
+            router.push(fallbackHref);
+          }
         }}
         className="-ml-1 p-1 active:scale-90"
       >

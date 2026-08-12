@@ -103,9 +103,87 @@ export default function CheckoutPage() {
       customerName: user.name,
       customerPhone: user.phone ?? selected.phone,
     };
-    addOrder(order);
-    clearCart();
-    setTimeout(() => router.replace(`/orders/${order.id}?placed=true`), 400);
+    fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: lines.map((l) => ({
+          productId: l.product.id,
+          name: l.product.name,
+          unit: l.product.unit,
+          emoji: l.product.emoji,
+          imageUrl: l.product.imageUrl,
+          price: l.product.price,
+          mrp: l.product.mrp,
+          quantity: l.quantity,
+          subtotal: l.lineTotal,
+          categorySlug: l.product.categorySlug,
+        })),
+        address: {
+          label: selected.label,
+          name: selected.name,
+          phone: selected.phone,
+          line1: selected.line1,
+          line2: selected.line2,
+          landmark: selected.landmark,
+          city: selected.city,
+          state: selected.state,
+          pincode: selected.pincode,
+        },
+        paymentMethod: paymentMethod === "GPAY" ? "UPI" : "COD",
+        customerName: user.name,
+        customerPhone: user.phone ?? selected.phone,
+      }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          const dbOrder = data.order;
+          const formatted: Order = {
+            id: dbOrder.id,
+            orderNumber: dbOrder.orderNumber,
+            items: dbOrder.items.map((i: any) => ({
+              productId: i.productId || i.id,
+              name: i.name,
+              unit: i.unit,
+              emoji: i.emoji,
+              imageUrl: i.imageUrl,
+              price: i.price,
+              mrp: i.mrp,
+              quantity: i.quantity,
+              subtotal: i.subtotal,
+            })),
+            address: order.address,
+            status: dbOrder.status,
+            paymentMethod: dbOrder.paymentMethod,
+            paymentStatus: dbOrder.paymentStatus,
+            subtotal: dbOrder.subtotal,
+            deliveryFee: dbOrder.deliveryFee,
+            discount: dbOrder.discount,
+            total: dbOrder.total,
+            createdAt: dbOrder.createdAt,
+            statusHistory: dbOrder.statusHistory?.map((h: any) => ({
+              status: h.status,
+              at: h.at,
+              note: h.note,
+            })) || [{ status: "PLACED", at: new Date().toISOString() }],
+            customerName: dbOrder.customerName,
+            customerPhone: dbOrder.customerPhone,
+          };
+          addOrder(formatted);
+          clearCart();
+          router.replace(`/orders/${formatted.id}?placed=true`);
+        } else {
+          addOrder(order);
+          clearCart();
+          router.replace(`/orders/${order.id}?placed=true`);
+        }
+      })
+      .catch(() => {
+        addOrder(order);
+        clearCart();
+        router.replace(`/orders/${order.id}?placed=true`);
+      });
   };
 
   return (
@@ -177,9 +255,16 @@ export default function CheckoutPage() {
           )}
 
           {selected && !serviceable && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600">
-              Delivery not available to {selected.pincode}. Serviceable pincodes: {pincodes.slice(0, 3).join(", ")}.
-            </p>
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-700 space-y-1">
+              <p className="font-extrabold text-red-800 flex items-center gap-1.5 text-sm">
+                🚫 Delivery Blocked: Pincode {selected.pincode} Unserviceable
+              </p>
+              <p className="text-2xs font-medium text-red-600">
+                We currently deliver only to serviceable Siliguri pincodes:{" "}
+                <span className="font-bold">{pincodes.join(", ")}</span>.
+                Please select or add a Siliguri address to place your order.
+              </p>
+            </div>
           )}
         </section>
 

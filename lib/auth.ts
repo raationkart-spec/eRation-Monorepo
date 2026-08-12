@@ -77,17 +77,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       name: "Admin Login",
       credentials: {
         email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         const email = credentials?.email as string;
-        if (!email) return null;
+        const password = credentials?.password as string;
+        if (!email || !password) return null;
 
-        let user = await db.user.findUnique({ where: { email } });
+        const expectedEmail = process.env.ADMIN_EMAIL || "admin@quickcart.com";
+        const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
+
+        if (
+          email.toLowerCase().trim() !== expectedEmail.toLowerCase().trim() ||
+          password !== expectedPassword
+        ) {
+          return null;
+        }
+
+        let user = await db.user.findUnique({
+          where: { email: expectedEmail },
+        });
 
         if (!user) {
           user = await db.user.create({
             data: {
-              email,
+              email: expectedEmail,
               name: "Store Admin",
               role: "ADMIN",
             },

@@ -2,7 +2,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Mail, ShieldCheck, ArrowRight } from "lucide-react";
+import { Mail, ArrowRight } from "lucide-react";
 import { signIn } from "next-auth/react";
 
 function LoginInner() {
@@ -155,15 +155,6 @@ function LoginInner() {
           <p className="text-2xs font-medium text-slate-400">
             By continuing, you agree to our Terms of Service & Privacy Policy.
           </p>
-
-          <div className="mt-2 pt-2 border-t border-slate-800">
-            <Link
-              href="/admin/login"
-              className="inline-flex items-center gap-1.5 text-2xs font-extrabold text-slate-400 hover:text-white transition"
-            >
-              <ShieldCheck size={13} /> Admin Access
-            </Link>
-          </div>
         </div>
       </div>
     </main>

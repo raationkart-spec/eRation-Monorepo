@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, use, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useShop } from "@/lib/store";
+import { useCart, useShop } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/misc";
 import { ProductImage } from "@/components/ProductImage";
@@ -30,12 +30,23 @@ function OrderDetail({ orderId }: { orderId: string }) {
   const params = useSearchParams();
   const orders = useShop((s) => s.orders);
   const cancelOrder = useShop((s) => s.cancelOrder);
+  const clearCart = useCart((s) => s.clear);
   const show = useToast((s) => s.show);
   const placed = params.get("placed") === "true";
 
   useEffect(() => {
-    if (placed) show("Order placed! 🎉");
-  }, [placed, show]);
+    if (placed) {
+      clearCart();
+      show("Order placed! 🎉");
+      // Replace history state so pressing browser back takes user straight to Home
+      window.history.pushState(null, "", window.location.href);
+      const handlePopState = () => {
+        router.push("/");
+      };
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
+    }
+  }, [placed, show, clearCart, router]);
 
   if (!hydrated)
     return (
@@ -75,7 +86,8 @@ function OrderDetail({ orderId }: { orderId: string }) {
       <PageHeader
         title={`Order #${order.orderNumber}`}
         subtitle={formatDateTime(order.createdAt)}
-        fallbackHref="/orders"
+        onBack={() => router.push(placed ? "/" : "/orders")}
+        fallbackHref={placed ? "/" : "/orders"}
       />
 
       <div className="space-y-4 p-4">
