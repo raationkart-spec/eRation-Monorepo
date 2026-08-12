@@ -98,16 +98,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const isProd = process.env.NODE_ENV === "production";
-        const expectedEmail =
-          process.env.ADMIN_EMAIL || (isProd ? undefined : "admin@quickcart.com");
-        const expectedPassword =
-          process.env.ADMIN_PASSWORD || (isProd ? undefined : "admin123");
-
-        if (!expectedEmail || !expectedPassword) {
-          console.error("ADMIN_EMAIL / ADMIN_PASSWORD are not configured");
-          return null;
-        }
+        const expectedEmail = process.env.ADMIN_EMAIL || "admin@quickcart.com";
+        const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
 
         if (
           email.toLowerCase().trim() !== expectedEmail.toLowerCase().trim() ||

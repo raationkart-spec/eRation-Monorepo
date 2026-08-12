@@ -28,15 +28,25 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
-      const res = await signIn("admin", { email, password, redirect: false });
+      const res = await signIn("admin", {
+        email,
+        password,
+        redirect: false,
+        redirectTo: "/admin",
+        callbackUrl: "/admin",
+      });
       if (res?.error) {
         setError("Invalid admin email or password");
       } else {
         loginAsAdmin(email);
         router.replace("/admin");
       }
-    } catch {
-      setError("Failed to sign in. Please check credentials.");
+    } catch (err: any) {
+      if (err?.message?.includes("CredentialsSignin") || err?.name === "CredentialsSignin") {
+        setError("Invalid admin email or password");
+      } else {
+        setError("Failed to sign in. Please check credentials.");
+      }
     } finally {
       setLoading(false);
     }
