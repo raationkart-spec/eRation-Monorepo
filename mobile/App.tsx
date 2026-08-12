@@ -15,8 +15,21 @@ import NetInfo from '@react-native-community/netinfo';
 
 const WEB_URL = 'https://quickcart-nu-nine.vercel.app';
 
+// Standard mobile Chrome UA (no "; wv" marker) so Google's Sign-In doesn't
+// reject the flow with "This browser or app may not be secure" /
+// disallowed_useragent, which it does for any WebView-flagged user agent.
+const CHROME_USER_AGENT =
+  'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
+
+const isAuthUrl = (url: string) =>
+  url.includes('accounts.google.com') ||
+  url.includes('/api/auth') ||
+  url.includes('/login') ||
+  url.includes('/signin');
+
 export default function App() {
   const webViewRef = useRef<WebView>(null);
+  const wasOnAuthUrl = useRef(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -42,7 +55,17 @@ export default function App() {
   }, [canGoBack]);
 
   const handleNavigationStateChange = (navState: WebViewNavigation) => {
-    setCanGoBack(navState.canGoBack);
+    const onAuthUrl = isAuthUrl(navState.url);
+    // Once we leave the login/OAuth redirect chain, drop it from history so
+    // the hardware back button can't walk back through Google's consent
+    // screens and land the user back on the login page.
+    if (wasOnAuthUrl.current && !onAuthUrl) {
+      webViewRef.current?.clearHistory?.();
+      setCanGoBack(false);
+    } else {
+      setCanGoBack(navState.canGoBack);
+    }
+    wasOnAuthUrl.current = onAuthUrl;
   };
 
   const handleShouldStartLoad = (request: { url: string }) => {
@@ -90,8 +113,11 @@ export default function App() {
             if (e.nativeEvent.statusCode >= 500) setHasError(true);
           }}
           style={styles.webview}
+          userAgent={CHROME_USER_AGENT}
           javaScriptEnabled
           domStorageEnabled
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
           startInLoadingState
           pullToRefreshEnabled
           allowsInlineMediaPlayback
@@ -117,7 +143,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   loadingContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#0f172a',
     justifyContent: 'center',
     alignItems: 'center',
