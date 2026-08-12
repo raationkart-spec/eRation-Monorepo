@@ -2,15 +2,6 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'Build Type (release or debug)'
-        required: true
-        default: 'release'
-        type: choice
-        options:
-          - release
-          - debug
   push:
     branches:
       - main
@@ -43,30 +34,24 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Install Mobile Dependencies
-        run: |
-          cd mobile
-          npm ci || npm install
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci
 
-      - name: Make Gradle Wrapper Executable
+      - name: Prebuild native Android project
+        working-directory: mobile
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Make Gradle wrapper executable
         run: chmod +x mobile/android/gradlew
 
-      - name: Build Android APK
-        env:
-          BUILD_TYPE: ${{ github.event.inputs.build_type || 'release' }}
-        run: |
-          cd mobile/android
-          if [ "$BUILD_TYPE" = "debug" ]; then
-            ./gradlew assembleDebug --stacktrace
-          else
-            ./gradlew assembleRelease --stacktrace
-          fi
+      - name: Build debug APK
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug --stacktrace
 
-      - name: Upload APK Artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: quickcart-apk-${{ github.event.inputs.build_type || 'release' }}
-          path: |
-            mobile/android/app/build/outputs/apk/release/*.apk
-            mobile/android/app/build/outputs/apk/debug/*.apk
+          name: quickcart-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/*.apk
           retention-days: 14

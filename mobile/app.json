@@ -1,26 +1,48 @@
 {
   "expo": {
     "name": "QuickCart",
-    "slug": "quickcart-mobile",
+    "slug": "darwix",
     "version": "1.0.0",
-    "sdkVersion": "54.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "resizeMode": "contain",
-      "backgroundColor": "#0f172a"
-    },
+    "backgroundColor": "#0f172a",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.quickcart.app"
     },
     "android": {
       "package": "com.quickcart.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
       "permissions": [
         "INTERNET",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
       ]
-    }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": false
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "14786b1c-dfee-4bc6-a494-04bdcbae9866"
+      }
+    },
+    "owner": "amaannns-team"
   }
 }
