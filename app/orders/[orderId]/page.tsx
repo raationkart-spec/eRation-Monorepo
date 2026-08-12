@@ -90,10 +90,9 @@ function OrderDetail({ orderId }: { orderId: string }) {
     if (placed) {
       clearCart();
       show("Order placed! 🎉");
-      // Replace history state so pressing browser back takes user straight to Home
-      window.history.pushState(null, "", window.location.href);
-      const handlePopState = () => {
-        router.push("/");
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        router.replace("/");
       };
       window.addEventListener("popstate", handlePopState);
       return () => window.removeEventListener("popstate", handlePopState);

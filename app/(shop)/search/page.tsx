@@ -32,25 +32,60 @@ function SearchResults() {
       )
     : [];
 
+  const popularTags = ["Milk", "Mangoes", "Atta", "Bread", "Paneer", "Organic", "Snacks"];
+  const featuredPicks = products.filter((p) => p.isFeatured && p.isActive).slice(0, 6);
+
   return (
-    <div className="content-in">
-      <h1 className="mb-1 text-xl font-bold">
-        {q ? `Results for "${q}"` : "Search"}
-      </h1>
-      {q && (
-        <p className="mb-3 text-sm text-ink-muted">{results.length} products</p>
-      )}
-      {q && results.length === 0 ? (
-        <EmptyState
-          emoji="🔎"
-          title={`No results for "${q}"`}
-          subtitle="Try a different keyword"
-        />
+    <div className="content-in pb-24">
+      {q ? (
+        <>
+          <h1 className="mb-1 text-xl font-black text-slate-900">
+            Results for &quot;{q}&quot;
+          </h1>
+          <p className="mb-4 text-2xs font-semibold text-slate-400">
+            {results.length} {results.length === 1 ? "product" : "products"} found
+          </p>
+          {results.length === 0 ? (
+            <EmptyState
+              emoji="🔎"
+              title={`No results for "${q}"`}
+              subtitle="Try searching for milk, bread, or mangoes"
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {results.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )}
+        </>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {results.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
+        <div className="space-y-6">
+          <div>
+            <h2 className="mb-2.5 text-sm font-extrabold uppercase tracking-wider text-slate-400">
+              Popular Searches
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {popularTags.map((tag) => (
+                <a
+                  key={tag}
+                  href={`/search?q=${encodeURIComponent(tag)}`}
+                  className="rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition"
+                >
+                  🔍 {tag}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h2 className="mb-3 text-base font-black text-slate-900">Trending Right Now</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {featuredPicks.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

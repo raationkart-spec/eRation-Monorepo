@@ -205,6 +205,26 @@ export default function ProductPage({
           </section>
         )}
       </section>
+
+      {/* Sticky Bottom Action Bar matching Stitch */}
+      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-2xl border-t border-slate-200/90 bg-white/95 p-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur-md">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-black text-slate-900">{formatMoney(product.price)}</span>
+              {discount > 0 && (
+                <span className="text-xs font-semibold text-slate-400 line-through">
+                  {formatMoney(product.mrp)}
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] font-bold text-slate-400">Unit: {product.unit}</p>
+          </div>
+          <div className="w-36">
+            <AddToCartButton product={product} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

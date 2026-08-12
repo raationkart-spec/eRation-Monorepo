@@ -15,13 +15,15 @@ export function FloatingCartBar() {
 
   const count = hydrated ? items.reduce((n, i) => n + i.quantity, 0) : 0;
 
-  // Only show on the home screen and category browsing screens
-  const isVisiblePage =
-    pathname === "/" ||
-    pathname.startsWith("/categories") ||
-    pathname.startsWith("/category");
+  // Hide floating bar on cart, checkout, login, verify, or admin pages
+  const isHiddenPage =
+    pathname === "/cart" ||
+    pathname === "/checkout" ||
+    pathname === "/login" ||
+    pathname === "/verify" ||
+    pathname.startsWith("/admin");
 
-  if (!hydrated || count === 0 || !isVisiblePage) return null;
+  if (!hydrated || count === 0 || isHiddenPage) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-16 z-40 mx-auto max-w-2xl px-4 pointer-events-none">

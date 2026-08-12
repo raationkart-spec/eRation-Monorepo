@@ -36,8 +36,14 @@ export function BottomNav() {
 
   const cartCount = hydrated ? items.reduce((n, i) => n + i.quantity, 0) : 0;
 
-  // Hide bottom nav on login & verify flows
-  if (pathname === "/login" || pathname === "/verify" || pathname.startsWith("/admin")) return null;
+  // Hide bottom nav on login, verify, checkout & admin flows
+  if (
+    pathname === "/login" ||
+    pathname === "/verify" ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/admin")
+  )
+    return null;
 
   return (
     <nav
