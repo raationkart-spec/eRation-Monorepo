@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   loadingContainer: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "#0f172a",
     justifyContent: "center",
     alignItems: "center",
