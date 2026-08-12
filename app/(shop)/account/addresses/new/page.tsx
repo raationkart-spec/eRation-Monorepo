@@ -9,7 +9,9 @@ function AddressForm() {
   const params = useSearchParams();
   const returnTo = params.get("returnTo") ?? "/account/addresses";
   const addAddress = useShop((s) => s.addAddress);
+  const pushAddress = useShop((s) => s.pushAddress);
   const pincodes = useCatalog((s) => s.pincodes);
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     label: "Home",
@@ -43,9 +45,9 @@ function AddressForm() {
     return Object.keys(e).length === 0;
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!validate()) return;
-    addAddress({
+    const payload = {
       label: form.label,
       name: form.name.trim(),
       phone: form.phone,
@@ -56,8 +58,25 @@ function AddressForm() {
       state: form.state,
       pincode: form.pincode,
       isDefault: form.isDefault,
-    });
-    router.replace(returnTo);
+    };
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/user/addresses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      pushAddress(data.address);
+    } catch {
+      // Fall back to a local-only address if the API call fails (e.g. offline)
+      addAddress(payload);
+    } finally {
+      setSaving(false);
+      router.replace(returnTo);
+    }
   };
 
   return (
@@ -197,9 +216,10 @@ function AddressForm() {
         <button
           type="button"
           onClick={submit}
-          className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 py-3 text-xs font-extrabold text-white shadow-md hover:from-orange-600 hover:to-amber-700 active:scale-95 transition"
+          disabled={saving}
+          className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 py-3 text-xs font-extrabold text-white shadow-md hover:from-orange-600 hover:to-amber-700 active:scale-95 transition disabled:opacity-60"
         >
-          Save Siliguri Delivery Address
+          {saving ? "Saving..." : "Save Siliguri Delivery Address"}
         </button>
       </div>
 

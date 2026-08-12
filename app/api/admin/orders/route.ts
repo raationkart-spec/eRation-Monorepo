@@ -5,8 +5,9 @@ import { db } from "@/lib/db";
 export async function GET() {
   try {
     const session = await auth();
-    // Allow admin access
-    const isDbAdmin = (session?.user as any)?.role === "ADMIN";
+    if ((session?.user as any)?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     const orders = await db.order.findMany({
       include: {

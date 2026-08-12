@@ -14,6 +14,23 @@ export default function AddressesPage() {
 
   if (!hydrated) return <ListSkeleton rows={2} />;
 
+  const handleDelete = (id: string) => {
+    deleteAddress(id);
+    fetch(`/api/user/addresses?id=${id}`, { method: "DELETE" }).catch(() => {});
+  };
+
+  const handleSetDefault = (id: string) => {
+    setDefault(id);
+    const addr = addresses.find((a) => a.id === id);
+    if (addr) {
+      fetch("/api/user/addresses", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...addr, isDefault: true }),
+      }).catch(() => {});
+    }
+  };
+
   return (
     <div className="content-in">
       <div className="mb-3 flex items-center justify-between">
@@ -52,7 +69,7 @@ export default function AddressesPage() {
                   )}
                 </div>
                 <button
-                  onClick={() => deleteAddress(a.id)}
+                  onClick={() => handleDelete(a.id)}
                   aria-label="Delete"
                   className="text-ink-subtle active:scale-90"
                 >
@@ -68,7 +85,7 @@ export default function AddressesPage() {
               <p className="text-xs text-ink-subtle">{a.phone}</p>
               {!a.isDefault && (
                 <button
-                  onClick={() => setDefault(a.id)}
+                  onClick={() => handleSetDefault(a.id)}
                   className="mt-2 text-xs font-semibold text-brand-dark"
                 >
                   Set as default

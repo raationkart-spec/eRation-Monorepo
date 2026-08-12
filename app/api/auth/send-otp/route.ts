@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendOtpEmail } from "@/lib/mailer";
+import { rateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +15,13 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+
+    if (!rateLimit(`send-otp:${cleanEmail}`, 5, 15 * 60 * 1000)) {
+      return NextResponse.json(
+        { error: "Too many OTP requests. Please try again later." },
+        { status: 429 }
+      );
+    }
 
     // Generate random 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();

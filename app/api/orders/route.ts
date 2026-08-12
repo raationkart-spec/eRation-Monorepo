@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { makeOrderNumber } from "@/lib/orderNumber";
+import { computeCouponDiscount } from "@/lib/coupon";
 
 export async function GET() {
   try {
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
       customerName,
       customerPhone,
       notes,
+      couponCode,
     } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -81,6 +83,7 @@ export async function POST(request: NextRequest) {
     });
     const deliveryFeeRate = config?.deliveryFee ?? 2900;
     const freeThreshold = config?.freeDeliveryThreshold ?? 29900;
+    const platformFee = config?.platformFee ?? 200;
 
     // Use interactive transaction for atomic stock check + order creation
     const order = await db.$transaction(async (tx) => {
@@ -170,7 +173,29 @@ export async function POST(request: NextRequest) {
       }
 
       const deliveryFee = subtotal >= freeThreshold ? 0 : deliveryFeeRate;
-      const total = subtotal + deliveryFee;
+
+      let discount = 0;
+      let appliedCouponCode: string | null = null;
+      if (couponCode) {
+        const coupon = await tx.coupon.findUnique({
+          where: { code: String(couponCode).trim().toUpperCase() },
+        });
+        if (!coupon) {
+          throw new Error("Invalid coupon code");
+        }
+        const result = computeCouponDiscount(coupon, subtotal);
+        if ("error" in result) {
+          throw new Error(result.error);
+        }
+        discount = result.discount;
+        appliedCouponCode = coupon.code;
+        await tx.coupon.update({
+          where: { id: coupon.id },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+
+      const total = subtotal + deliveryFee + platformFee - discount;
 
       const orderCount = await tx.order.count();
       const orderNumber = makeOrderNumber(orderCount + 1);
@@ -191,7 +216,9 @@ export async function POST(request: NextRequest) {
           paymentStatus: paymentMethod === "COD" ? "PENDING" : "COLLECTED",
           subtotal,
           deliveryFee,
-          discount: 0,
+          platformFee,
+          discount,
+          couponCode: appliedCouponCode,
           total,
           notes,
           items: {

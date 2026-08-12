@@ -37,6 +37,7 @@ export function ProductForm({ existing }: { existing?: Product }) {
     isFeatured: existing?.isFeatured ?? false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   const set = (k: string, v: string | boolean) =>
     setF((s) => ({ ...s, [k]: v }));
@@ -56,7 +57,7 @@ export function ProductForm({ existing }: { existing?: Product }) {
     set("price", (Math.round(discountedPrice * 100) / 100).toFixed(2));
   };
 
-  const submit = () => {
+  const submit = async () => {
     const e: Record<string, string> = {};
     if (f.name.trim().length < 2) e.name = "Name required";
     if (!f.unit.trim()) e.unit = "Unit required";
@@ -72,8 +73,8 @@ export function ProductForm({ existing }: { existing?: Product }) {
       existing?.slug ??
       f.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-    const product: Product = {
-      id: existing?.id ?? "p_" + Date.now(),
+    const payload = {
+      id: existing?.id,
       name: f.name.trim(),
       slug,
       categorySlug: f.categorySlug,
@@ -94,9 +95,25 @@ export function ProductForm({ existing }: { existing?: Product }) {
       isFeatured: f.isFeatured,
       sortOrder: existing?.sortOrder ?? 0,
     };
-    upsertProduct(product);
-    show(existing ? "Product updated" : "Product created");
-    router.push("/admin/products");
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: existing ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save product");
+
+      upsertProduct(data.product as Product);
+      show(existing ? "Product updated" : "Product created");
+      router.push("/admin/products");
+    } catch (err: any) {
+      show(err.message || "Failed to save product");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -309,8 +326,8 @@ export function ProductForm({ existing }: { existing?: Product }) {
 
       {/* Form Action Buttons */}
       <div className="flex items-center gap-3 pt-2">
-        <button onClick={submit} className="btn-primary py-2.5 px-6">
-          {existing ? "Save product changes" : "Publish new product"}
+        <button onClick={submit} disabled={saving} className="btn-primary py-2.5 px-6 disabled:opacity-60">
+          {saving ? "Saving..." : existing ? "Save product changes" : "Publish new product"}
         </button>
         <button
           onClick={() => router.push("/admin/products")}

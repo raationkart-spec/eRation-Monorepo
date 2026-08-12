@@ -2,6 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+export async function GET() {
+  try {
+    const session = await auth();
+    if ((session?.user as any)?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const products = await db.product.findMany({
+      orderBy: { sortOrder: "asc" },
+    });
+
+    return NextResponse.json({ products });
+  } catch (error) {
+    console.error("GET /api/admin/products error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch products" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();

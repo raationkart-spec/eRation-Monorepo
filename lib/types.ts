@@ -118,7 +118,9 @@ export interface Order {
   paymentStatus: PaymentStatus;
   subtotal: number;
   deliveryFee: number;
+  platformFee: number;
   discount: number;
+  couponCode?: string;
   total: number;
   notes?: string;
   createdAt: string;

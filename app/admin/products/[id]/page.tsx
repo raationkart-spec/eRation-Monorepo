@@ -25,8 +25,7 @@ export default function EditProductPage({
   const hydrated = useHydrated();
   const router = useRouter();
   const products = useCatalog((s) => s.products);
-  const adjustStock = useCatalog((s) => s.adjustStock);
-  const deleteProduct = useCatalog((s) => s.deleteProduct);
+  const upsertProduct = useCatalog((s) => s.upsertProduct);
   const show = useToast((s) => s.show);
 
   const [change, setChange] = useState("");
@@ -37,12 +36,41 @@ export default function EditProductPage({
   if (!product)
     return <p className="text-slate-500">Product not found.</p>;
 
-  const applyStock = (sign: number) => {
+  const applyStock = async (sign: number) => {
     const n = parseInt(change);
     if (!n) return;
-    adjustStock(product.id, sign * n);
-    show(`Stock ${sign > 0 ? "added" : "removed"}: ${n} (${reason})`);
-    setChange("");
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: product.id,
+          stockQty: Math.max(0, product.stockQty + sign * n),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update stock");
+      upsertProduct(data.product);
+      show(`Stock ${sign > 0 ? "added" : "removed"}: ${n} (${reason})`);
+      setChange("");
+    } catch (err: any) {
+      show(err.message || "Failed to update stock");
+    }
+  };
+
+  const hideProduct = async () => {
+    try {
+      const res = await fetch(`/api/admin/products?id=${product.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to hide product");
+      upsertProduct(data.product);
+      show("Product hidden from store");
+      router.push("/admin/products");
+    } catch (err: any) {
+      show(err.message || "Failed to hide product");
+    }
   };
 
   return (
@@ -56,11 +84,7 @@ export default function EditProductPage({
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Edit Product</h1>
         <button
-          onClick={() => {
-            deleteProduct(product.id);
-            show("Product hidden from store");
-            router.push("/admin/products");
-          }}
+          onClick={hideProduct}
           className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600"
         >
           <Trash2 size={15} /> Hide

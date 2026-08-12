@@ -28,11 +28,15 @@ export default function CheckoutPage() {
   const addOrder = useShop((s) => s.addOrder);
   const pincodes = useCatalog((s) => s.pincodes);
   const clearCart = useCart((s) => s.clear);
-  const { lines, subtotal, deliveryFee, total } = useCartComputed();
+  const { lines, subtotal, deliveryFee, platformFee, total } = useCartComputed();
 
   const [selectedId, setSelectedId] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "GPAY">("COD");
   const [placing, setPlacing] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -62,6 +66,35 @@ export default function CheckoutPage() {
 
   const selected = addresses.find((a) => a.id === selectedId);
   const serviceable = selected ? pincodes.includes(selected.pincode) : false;
+  const discount = appliedCoupon?.discount ?? 0;
+  const grandTotal = total - discount;
+
+  const applyCoupon = () => {
+    if (!couponInput.trim()) return;
+    setApplyingCoupon(true);
+    setCouponError("");
+    fetch("/api/coupons/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: couponInput.trim(), subtotal }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Invalid coupon");
+        setAppliedCoupon({ code: data.coupon.code, discount: data.discount });
+      })
+      .catch((err) => {
+        setAppliedCoupon(null);
+        setCouponError(err.message || "Failed to apply coupon");
+      })
+      .finally(() => setApplyingCoupon(false));
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+  };
 
   const placeOrder = () => {
     if (!selected || !serviceable) return;
@@ -96,8 +129,10 @@ export default function CheckoutPage() {
       paymentStatus: "PENDING",
       subtotal,
       deliveryFee,
-      discount: 0,
-      total: total + 200,
+      platformFee,
+      discount,
+      couponCode: appliedCoupon?.code,
+      total: grandTotal,
       createdAt: new Date().toISOString(),
       statusHistory: [{ status: "PLACED", at: new Date().toISOString() }],
       customerName: user.name,
@@ -133,6 +168,7 @@ export default function CheckoutPage() {
         paymentMethod: paymentMethod === "GPAY" ? "UPI" : "COD",
         customerName: user.name,
         customerPhone: user.phone ?? selected.phone,
+        couponCode: appliedCoupon?.code,
       }),
     })
       .then(async (res) => {
@@ -159,7 +195,9 @@ export default function CheckoutPage() {
             paymentStatus: dbOrder.paymentStatus,
             subtotal: dbOrder.subtotal,
             deliveryFee: dbOrder.deliveryFee,
+            platformFee: dbOrder.platformFee,
             discount: dbOrder.discount,
+            couponCode: dbOrder.couponCode ?? undefined,
             total: dbOrder.total,
             createdAt: dbOrder.createdAt,
             statusHistory: dbOrder.statusHistory?.map((h: any) => ({
@@ -311,6 +349,48 @@ export default function CheckoutPage() {
           </div>
         </section>
 
+        {/* Coupon Section */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm space-y-2.5">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+            🏷️ Apply Coupon
+          </h2>
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+              <div>
+                <p className="text-xs font-extrabold text-emerald-800">{appliedCoupon.code} applied</p>
+                <p className="text-2xs text-emerald-600 font-semibold">
+                  You saved {formatMoney(appliedCoupon.discount)}
+                </p>
+              </div>
+              <button
+                onClick={removeCoupon}
+                className="text-2xs font-bold text-red-600 hover:underline"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                placeholder="Enter coupon code"
+                className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold uppercase outline-none focus:border-orange-500"
+              />
+              <button
+                onClick={applyCoupon}
+                disabled={applyingCoupon || !couponInput.trim()}
+                className="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50"
+              >
+                {applyingCoupon ? "Checking..." : "Apply"}
+              </button>
+            </div>
+          )}
+          {couponError && (
+            <p className="text-2xs font-semibold text-red-600">{couponError}</p>
+          )}
+        </section>
+
         {/* Order Items & Bill Details */}
         <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm space-y-3">
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
@@ -329,11 +409,17 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between">
               <span>Platform & Handling Fee</span>
-              <span className="text-slate-900">{formatMoney(200)}</span>
+              <span className="text-slate-900">{formatMoney(platformFee)}</span>
             </div>
+            {discount > 0 && (
+              <div className="flex justify-between">
+                <span>Coupon Discount ({appliedCoupon?.code})</span>
+                <span className="text-emerald-600 font-bold">-{formatMoney(discount)}</span>
+              </div>
+            )}
             <div className="border-t border-dashed border-slate-200 pt-2.5 flex justify-between text-sm font-black text-slate-900">
               <span>Grand Total</span>
-              <span className="text-orange-600">{formatMoney(total + 200)}</span>
+              <span className="text-orange-600">{formatMoney(grandTotal)}</span>
             </div>
           </div>
         </section>
@@ -346,7 +432,7 @@ export default function CheckoutPage() {
           onClick={placeOrder}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-orange-600 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-orange-700 disabled:opacity-50 active:scale-95"
         >
-          <span>{placing ? "Placing Order..." : `Pay ${formatMoney(total + 200)} & Place Order`}</span>
+          <span>{placing ? "Placing Order..." : `Pay ${formatMoney(grandTotal)} & Place Order`}</span>
           <ArrowRight size={18} />
         </button>
       </div>

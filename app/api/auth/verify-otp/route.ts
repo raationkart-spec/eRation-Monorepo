@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { rateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +15,13 @@ export async function POST(request: NextRequest) {
 
     const cleanEmail = email.toLowerCase().trim();
 
+    if (!rateLimit(`verify-otp:${cleanEmail}`, 10, 15 * 60 * 1000)) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     // Check valid OTP in DB (or accept demo OTP 123456 if testing)
     const validRecord = await db.emailOtp.findFirst({
       where: {
@@ -23,7 +31,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const isDemoOtp = otp === "123456";
+    const isDemoOtp = process.env.NODE_ENV !== "production" && otp === "123456";
 
     if (!validRecord && !isDemoOtp) {
       return NextResponse.json(

@@ -14,6 +14,7 @@ export interface CartComputed {
   subtotal: number;
   deliveryFee: number;
   freeDeliveryAbove: number;
+  platformFee: number;
   total: number;
   hasIssues: boolean;
 }
@@ -40,7 +41,8 @@ export function useCartComputed(): CartComputed {
   const freeDeliveryAbove = config.free_delivery_above;
   const deliveryFee =
     subtotal === 0 || subtotal >= freeDeliveryAbove ? 0 : config.delivery_fee;
-  const total = subtotal + deliveryFee;
+  const platformFee = subtotal === 0 ? 0 : config.platform_fee ?? 0;
+  const total = subtotal + deliveryFee + platformFee;
   const hasIssues = lines.some(
     (l) => !l.product.isActive || l.product.stockQty < l.quantity
   );
@@ -51,6 +53,7 @@ export function useCartComputed(): CartComputed {
     subtotal,
     deliveryFee,
     freeDeliveryAbove,
+    platformFee,
     total,
     hasIssues,
   };

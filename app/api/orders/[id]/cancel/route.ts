@@ -19,6 +19,10 @@ export async function POST(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    if ((session?.user as any)?.role !== "ADMIN" && order.userId && order.userId !== session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     if (order.status !== "PLACED") {
       return NextResponse.json(
         { error: `Order cannot be cancelled as it is already ${order.status}` },

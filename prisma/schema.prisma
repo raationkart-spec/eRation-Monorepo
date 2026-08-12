@@ -34,6 +34,11 @@ enum PaymentMethod {
   UPI
 }
 
+enum DiscountType {
+  PERCENTAGE
+  FLAT
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -170,7 +175,9 @@ model Order {
   paymentStatus PaymentStatus      @default(PENDING)
   subtotal      Int
   deliveryFee   Int
+  platformFee   Int                @default(0)
   discount      Int                @default(0)
+  couponCode    String?
   total         Int
   notes         String?
   items         OrderItem[]
@@ -209,9 +216,26 @@ model StoreConfig {
   deliveryFee          Int      @default(2900)
   freeDeliveryThreshold Int     @default(29900)
   minOrderValue        Int      @default(9900)
+  platformFee          Int      @default(200)
   storeName            String   @default("QuickCart")
   isStoreOpen          Boolean  @default(true)
   updatedAt            DateTime @updatedAt
+}
+
+model Coupon {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  description   String?
+  discountType  DiscountType
+  discountValue Int
+  minOrderValue Int          @default(0)
+  maxDiscount   Int?
+  expiresAt     DateTime?
+  usageLimit    Int?
+  usedCount     Int          @default(0)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model ServiceablePincode {

@@ -29,10 +29,62 @@ function OrderDetail({ orderId }: { orderId: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const orders = useShop((s) => s.orders);
-  const cancelOrder = useShop((s) => s.cancelOrder);
+  const updateOrderStatus = useShop((s) => s.updateOrderStatus);
+  const upsertOrder = useShop((s) => s.upsertOrder);
   const clearCart = useCart((s) => s.clear);
   const show = useToast((s) => s.show);
   const placed = params.get("placed") === "true";
+
+  useEffect(() => {
+    fetch(`/api/orders/${orderId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const o = data?.order;
+        if (!o) return;
+        upsertOrder({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          items: o.items.map((i: any) => ({
+            productId: i.productId || i.id,
+            name: i.name,
+            unit: i.unit,
+            emoji: i.emoji,
+            imageUrl: i.imageUrl,
+            price: i.price,
+            mrp: i.mrp,
+            quantity: i.quantity,
+            subtotal: i.subtotal,
+          })),
+          address: {
+            name: o.customerName || "Customer",
+            phone: o.customerPhone || "",
+            line1: o.addressLine || "Siliguri Address",
+            city: "Siliguri",
+            state: "West Bengal",
+            pincode: o.addressLine?.slice(-6) || "734001",
+          },
+          status: o.status,
+          paymentMethod: o.paymentMethod,
+          paymentStatus: o.paymentStatus,
+          subtotal: o.subtotal,
+          deliveryFee: o.deliveryFee,
+          platformFee: o.platformFee ?? 0,
+          discount: o.discount ?? 0,
+          couponCode: o.couponCode ?? undefined,
+          total: o.total,
+          createdAt: o.createdAt,
+          deliveredAt: o.deliveredAt ?? undefined,
+          statusHistory: o.statusHistory?.map((h: any) => ({
+            status: h.status,
+            at: h.at,
+            note: h.note,
+          })) || [],
+          customerName: o.customerName,
+          customerPhone: o.customerPhone,
+        });
+      })
+      .catch(() => {});
+  }, [orderId, upsertOrder]);
 
   useEffect(() => {
     if (placed) {
@@ -217,6 +269,18 @@ function OrderDetail({ orderId }: { orderId: string }) {
                 {order.deliveryFee === 0 ? "FREE" : formatMoney(order.deliveryFee)}
               </span>
             </div>
+            {order.platformFee > 0 && (
+              <div className="flex justify-between">
+                <span>Platform & handling fee</span>
+                <span className="text-slate-900">{formatMoney(order.platformFee)}</span>
+              </div>
+            )}
+            {order.discount > 0 && (
+              <div className="flex justify-between">
+                <span>Coupon discount{order.couponCode ? ` (${order.couponCode})` : ""}</span>
+                <span className="text-emerald-600 font-bold">-{formatMoney(order.discount)}</span>
+              </div>
+            )}
             <div className="border-t border-dashed border-slate-200 pt-2 flex justify-between text-sm font-black text-slate-900">
               <span>Grand Total</span>
               <span className="text-orange-600">{formatMoney(order.total)}</span>
@@ -228,9 +292,18 @@ function OrderDetail({ orderId }: { orderId: string }) {
         {order.status === "PLACED" && (
           <div className="pt-2">
             <button
-              onClick={() => {
-                cancelOrder(order.id);
-                show("Order cancelled");
+              onClick={async () => {
+                try {
+                  const res = await fetch(`/api/orders/${order.id}/cancel`, {
+                    method: "POST",
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error || "Failed to cancel order");
+                  updateOrderStatus(order.id, "CANCELLED");
+                  show("Order cancelled");
+                } catch (err: any) {
+                  show(err.message || "Failed to cancel order");
+                }
               }}
               className="flex w-full items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50 py-3.5 text-sm font-bold text-red-600 shadow-sm transition hover:bg-red-100 active:scale-95"
             >

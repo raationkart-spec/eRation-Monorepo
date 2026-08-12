@@ -152,6 +152,7 @@ export const DEFAULT_CONFIG = {
   support_whatsapp: "+91 98000 12345",
   delivery_fee: 4900,
   free_delivery_above: 49900,
+  platform_fee: 200,
   tax_rate: 0,
 };
 

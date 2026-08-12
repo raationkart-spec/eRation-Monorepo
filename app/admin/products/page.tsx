@@ -90,25 +90,34 @@ export default function AdminProducts() {
     );
   };
 
-  const handleBulkToggleActive = (activeState: boolean) => {
-    selectedIds.forEach((id) => {
-      const prod = products.find((p) => p.id === id);
-      if (prod) {
-        upsertProduct({ ...prod, isActive: activeState });
-      }
+  const updateProductRemote = async (id: string, data: Record<string, unknown>) => {
+    const res = await fetch("/api/admin/products", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, ...data }),
     });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "Update failed");
+    upsertProduct(json.product);
+  };
+
+  const handleBulkToggleActive = async (activeState: boolean) => {
+    await Promise.all(
+      selectedIds.map((id) => updateProductRemote(id, { isActive: activeState }))
+    );
     showToast(`Updated ${selectedIds.length} items to ${activeState ? "Active" : "Hidden"}`);
     setSelectedIds([]);
   };
 
-  const handleBulkApplyDiscount = (pct: number) => {
-    selectedIds.forEach((id) => {
-      const prod = products.find((p) => p.id === id);
-      if (prod && prod.mrp > 0) {
-        const discountedPrice = Math.round(prod.mrp * (1 - pct / 100));
-        upsertProduct({ ...prod, price: discountedPrice });
-      }
-    });
+  const handleBulkApplyDiscount = async (pct: number) => {
+    const targets = selectedIds
+      .map((id) => products.find((p) => p.id === id))
+      .filter((p): p is (typeof products)[number] => !!p && p.mrp > 0);
+    await Promise.all(
+      targets.map((prod) =>
+        updateProductRemote(prod.id, { price: Math.round(prod.mrp * (1 - pct / 100)) })
+      )
+    );
     showToast(`Applied ${pct}% discount to ${selectedIds.length} items`);
     setSelectedIds([]);
   };

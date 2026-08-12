@@ -97,6 +97,11 @@ interface CatalogState {
   upsertCoupon: (c: Coupon) => void;
   deleteCoupon: (id: string) => void;
   setConfig: (c: Partial<typeof DEFAULT_CONFIG>) => void;
+  setProducts: (p: Product[]) => void;
+  setCategories: (c: Category[]) => void;
+  setBanners: (b: Banner[]) => void;
+  setPincodesFull: (codes: string[]) => void;
+  setCoupons: (c: Coupon[]) => void;
   addPincodes: (codes: string[]) => void;
   removePincode: (code: string) => void;
   resetCatalog: () => void;
@@ -192,6 +197,11 @@ export const useCatalog = create<CatalogState>()(
       deleteCoupon: (id) =>
         set((s) => ({ coupons: (s.coupons || []).filter((x) => x.id !== id) })),
       setConfig: (c) => set((s) => ({ config: { ...s.config, ...c } })),
+      setProducts: (products) => set({ products }),
+      setCategories: (categories) => set({ categories }),
+      setBanners: (banners) => set({ banners }),
+      setPincodesFull: (pincodes) => set({ pincodes }),
+      setCoupons: (coupons) => set({ coupons }),
       addPincodes: (codes) =>
         set((s) => ({
           pincodes: Array.from(new Set([...s.pincodes, ...codes])),
@@ -268,7 +278,10 @@ interface ShopState {
   updateAddress: (a: Address) => void;
   deleteAddress: (id: string) => void;
   setDefaultAddress: (id: string) => void;
+  setAddresses: (addresses: Address[]) => void;
+  pushAddress: (a: Address) => void;
   addOrder: (o: Order) => void;
+  upsertOrder: (o: Order) => void;
   updateOrderStatus: (id: string, status: OrderStatus, note?: string) => void;
   cancelOrder: (id: string) => void;
 }
@@ -317,7 +330,23 @@ export const useShop = create<ShopState>()(
             isDefault: x.id === id,
           })),
         })),
+      setAddresses: (addresses) => set({ addresses }),
+      pushAddress: (addr) =>
+        set((s) => ({
+          addresses: addr.isDefault
+            ? [...s.addresses.map((x) => ({ ...x, isDefault: false })), addr]
+            : [...s.addresses, addr],
+        })),
       addOrder: (o) => set((s) => ({ orders: [o, ...s.orders] })),
+      upsertOrder: (o) =>
+        set((s) => {
+          const exists = s.orders.some((x) => x.id === o.id);
+          return {
+            orders: exists
+              ? s.orders.map((x) => (x.id === o.id ? o : x))
+              : [o, ...s.orders],
+          };
+        }),
       updateOrderStatus: (id, status, note) =>
         set((s) => ({
           orders: s.orders.map((o) =>

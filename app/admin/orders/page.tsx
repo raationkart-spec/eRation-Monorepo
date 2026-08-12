@@ -22,7 +22,7 @@ const STATUSES: (OrderStatus | "ALL")[] = [
 export default function AdminOrders() {
   const hydrated = useHydrated();
   const shopOrders = useShop((s) => s.orders);
-  const addOrder = useShop((s) => s.addOrder);
+  const upsertOrder = useShop((s) => s.upsertOrder);
 
   const [dbOrders, setDbOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export default function AdminOrders() {
         if (data.orders && Array.isArray(data.orders)) {
           setDbOrders(data.orders);
           // Sync with local shop store
-          data.orders.forEach((o: Order) => addOrder(o));
+          data.orders.forEach((o: Order) => upsertOrder(o));
         }
       }
     } catch (err) {

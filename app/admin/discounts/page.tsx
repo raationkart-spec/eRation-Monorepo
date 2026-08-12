@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Tag,
   Plus,
@@ -11,7 +11,6 @@ import {
   Sparkles,
   Search,
 } from "lucide-react";
-import { useCatalog } from "@/lib/store";
 import { formatMoney } from "@/lib/format";
 import { useToast } from "@/components/toast";
 import { useHydrated } from "@/lib/useHydrated";
@@ -20,9 +19,23 @@ import type { Coupon } from "@/lib/types";
 export default function AdminDiscountsPage() {
   const hydrated = useHydrated();
   const showToast = useToast((s) => s.show);
-  const coupons = useCatalog((s) => s.coupons || []);
-  const upsertCoupon = useCatalog((s) => s.upsertCoupon);
-  const deleteCoupon = useCatalog((s) => s.deleteCoupon);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadCoupons = () => {
+    fetch("/api/admin/coupons")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.coupons)) setCoupons(data.coupons);
+      })
+      .catch(() => showToast("Failed to load coupons"))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadCoupons();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [showModal, setShowModal] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
@@ -38,7 +51,7 @@ export default function AdminDiscountsPage() {
     usageLimit: "",
   });
 
-  if (!hydrated) return <div className="p-6">Loading discounts...</div>;
+  if (!hydrated || loading) return <div className="p-6">Loading discounts...</div>;
 
   const openNewModal = () => {
     setEditingCoupon(null);
@@ -54,7 +67,7 @@ export default function AdminDiscountsPage() {
     setShowModal(true);
   };
 
-  const handleSaveCoupon = () => {
+  const handleSaveCoupon = async () => {
     if (!form.code.trim()) {
       showToast("Coupon code is required");
       return;
@@ -65,8 +78,8 @@ export default function AdminDiscountsPage() {
       return;
     }
 
-    const newCoupon: Coupon = {
-      id: editingCoupon?.id || "c_" + Date.now(),
+    const payload = {
+      id: editingCoupon?.id,
       code: form.code.trim().toUpperCase(),
       description: form.description.trim() || undefined,
       discountType: form.discountType,
@@ -77,21 +90,51 @@ export default function AdminDiscountsPage() {
         : 0,
       maxDiscount: form.maxDiscount
         ? Math.round(parseFloat(form.maxDiscount) * 100)
-        : undefined,
-      usageLimit: form.usageLimit ? parseInt(form.usageLimit) : undefined,
-      usedCount: editingCoupon?.usedCount || 0,
-      isActive: editingCoupon ? editingCoupon.isActive : true,
-      createdAt: editingCoupon?.createdAt || new Date().toISOString(),
+        : null,
+      usageLimit: form.usageLimit ? parseInt(form.usageLimit) : null,
     };
 
-    upsertCoupon(newCoupon);
-    showToast(editingCoupon ? "Coupon updated" : "New coupon created!");
-    setShowModal(false);
+    try {
+      const res = await fetch("/api/admin/coupons", {
+        method: editingCoupon ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save coupon");
+
+      showToast(editingCoupon ? "Coupon updated" : "New coupon created!");
+      setShowModal(false);
+      loadCoupons();
+    } catch (err: any) {
+      showToast(err.message || "Failed to save coupon");
+    }
   };
 
-  const toggleCouponStatus = (coupon: Coupon) => {
-    upsertCoupon({ ...coupon, isActive: !coupon.isActive });
-    showToast(`Coupon ${coupon.code} ${coupon.isActive ? "deactivated" : "activated"}`);
+  const toggleCouponStatus = async (coupon: Coupon) => {
+    try {
+      const res = await fetch("/api/admin/coupons", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: coupon.id, isActive: !coupon.isActive }),
+      });
+      if (!res.ok) throw new Error();
+      showToast(`Coupon ${coupon.code} ${coupon.isActive ? "deactivated" : "activated"}`);
+      loadCoupons();
+    } catch {
+      showToast("Failed to update coupon status");
+    }
+  };
+
+  const removeCoupon = async (coupon: Coupon) => {
+    try {
+      const res = await fetch(`/api/admin/coupons?id=${coupon.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      showToast(`Deleted coupon ${coupon.code}`);
+      loadCoupons();
+    } catch {
+      showToast("Failed to delete coupon");
+    }
   };
 
   const filteredCoupons = coupons.filter(
@@ -226,10 +269,7 @@ export default function AdminDiscountsPage() {
 
             <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
               <button
-                onClick={() => {
-                  deleteCoupon(c.id);
-                  showToast(`Deleted coupon ${c.code}`);
-                }}
+                onClick={() => removeCoupon(c)}
                 className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
               >
                 <Trash2 size={13} /> Delete
