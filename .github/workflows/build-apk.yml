@@ -45,13 +45,13 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x mobile/android/gradlew
 
-      - name: Build debug APK
+      - name: Build release APK
         working-directory: mobile/android
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleRelease --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: quickcart-debug-apk
-          path: mobile/android/app/build/outputs/apk/debug/*.apk
+          name: quickcart-apk
+          path: mobile/android/app/build/outputs/apk/release/*.apk
           retention-days: 14
