@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Dimensions,
   Platform,
   StatusBar,
   KeyboardAvoidingView,
@@ -16,8 +17,10 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Mail, ArrowRight, Zap, ArrowLeft } from "lucide-react-native";
+import { Mail, ArrowRight, Zap } from "lucide-react-native";
 import { api } from "../lib/api";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,22 +30,6 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
-  useEffect(() => {
-    const showSub = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => setKeyboardVisible(true)
-    );
-    const hideSub = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setKeyboardVisible(false)
-    );
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   const isValidEmail = /^\S+@\S+\.\S+$/.test(email.trim());
 
@@ -64,23 +51,21 @@ export default function LoginScreen() {
   };
 
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
-  const isCompact = showEmailInput || isKeyboardVisible;
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           bounces={false}
-          keyboardShouldPersistTaps="always"
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Section */}
-          <View style={[styles.heroSection, isCompact && { height: topPadding + 64 }]}>
+          {/* Hero Section taking 70% of screen height */}
+          <View style={styles.heroSection}>
             <ImageBackground
               source={{
                 uri: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=80",
@@ -88,47 +73,32 @@ export default function LoginScreen() {
               style={styles.heroBg}
               resizeMode="cover"
             >
+              {/* Dark Gradient Overlay */}
               <View style={styles.heroOverlay} />
 
-              <View style={[styles.brandHeader, { paddingTop: topPadding + 4 }]}>
-                {isCompact ? (
-                  <View style={styles.compactNavRow}>
-                    <TouchableOpacity
-                      onPress={() => setShowEmailInput(false)}
-                      style={styles.backBtnPill}
-                    >
-                      <ArrowLeft size={16} color="#ffffff" />
-                    </TouchableOpacity>
-                    <Text style={styles.compactTitle}>QuickCart</Text>
-                    <View style={{ width: 32 }} />
-                  </View>
-                ) : (
-                  <>
-                    <View style={styles.badgePill}>
-                      <Zap size={12} color="#f97316" fill="#f97316" />
-                      <Text style={styles.badgeText}>DELIVERED ALL ACROSS SILIGURI</Text>
-                    </View>
-                    <Text style={styles.brandTitle}>QuickCart</Text>
-                  </>
-                )}
+              {/* Brand Header Badge */}
+              <View style={[styles.brandHeader, { paddingTop: topPadding + 16 }]}>
+                <View style={styles.badgePill}>
+                  <Zap size={11} color="#ffffff" fill="#ffffff" />
+                  <Text style={styles.badgeText}>DELIVERED ALL ACROSS SILIGURI</Text>
+                </View>
+                <Text style={styles.brandTitle}>QuickCart</Text>
               </View>
             </ImageBackground>
           </View>
 
           {/* Bottom Sheet Card */}
-          <View style={[styles.bottomCard, isCompact && styles.bottomCardCompact]}>
+          <View style={styles.bottomCard}>
             <View style={styles.contentBox}>
-              <View style={styles.headingBox}>
+              <View style={styles.textGroup}>
                 <Text style={styles.mainTitle}>
                   Groceries delivered{"\n"}
                   <Text style={styles.orangeTitle}>across Siliguri.</Text>
                 </Text>
 
-                {!isKeyboardVisible && (
-                  <Text style={styles.subText}>
-                    Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
-                  </Text>
-                )}
+                <Text style={styles.subText}>
+                  Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
+                </Text>
               </View>
 
               {/* CTA Buttons / Input */}
@@ -198,14 +168,14 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0f172a",
+    backgroundColor: "#090d16",
   },
   scrollContainer: {
     flexGrow: 1,
-    backgroundColor: "#0f172a",
+    backgroundColor: "#090d16",
   },
   heroSection: {
-    height: 280,
+    height: SCREEN_HEIGHT * 0.70,
     width: "100%",
     position: "relative",
   },
@@ -224,11 +194,11 @@ const styles = StyleSheet.create({
   badgePill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.25)",
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 20,
     gap: 6,
   },
@@ -239,61 +209,40 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   brandTitle: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: "900",
     color: "#ffffff",
-    marginTop: 6,
+    marginTop: 8,
     letterSpacing: -0.5,
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
-  compactNavRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  backBtnPill: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  compactTitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: "#ffffff",
-  },
   bottomCard: {
     flex: 1,
-    marginTop: -20,
+    marginTop: -32,
     backgroundColor: "#0f172a",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     borderTopWidth: 1,
     borderTopColor: "rgba(255, 255, 255, 0.15)",
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 28,
     paddingBottom: 24,
-  },
-  bottomCardCompact: {
-    paddingTop: 16,
+    justifyContent: "space-between",
   },
   contentBox: {
     flex: 1,
     justifyContent: "space-between",
   },
-  headingBox: {
+  textGroup: {
     alignItems: "center",
   },
   mainTitle: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: "900",
     color: "#ffffff",
-    lineHeight: 28,
+    lineHeight: 32,
     textAlign: "center",
   },
   orangeTitle: {
@@ -303,14 +252,14 @@ const styles = StyleSheet.create({
   subText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#94a3b8",
+    color: "#cbd5e1",
     textAlign: "center",
-    marginTop: 4,
+    marginTop: 6,
     paddingHorizontal: 10,
-    lineHeight: 17,
+    lineHeight: 18,
   },
   actionContainer: {
-    marginVertical: 14,
+    marginVertical: 18,
     width: "100%",
   },
   mainOrangeBtn: {
@@ -318,8 +267,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#f97316",
-    height: 50,
-    borderRadius: 25,
+    height: 52,
+    borderRadius: 26,
     gap: 8,
     shadowColor: "#f97316",
     shadowOffset: { width: 0, height: 4 },
@@ -336,7 +285,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   emailInputWrapper: {
-    gap: 10,
+    gap: 12,
   },
   inputPill: {
     flexDirection: "row",
@@ -344,9 +293,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e293b",
     borderWidth: 1.5,
     borderColor: "#f97316",
-    borderRadius: 25,
+    borderRadius: 26,
     paddingHorizontal: 16,
-    height: 50,
+    height: 52,
   },
   textInput: {
     flex: 1,
