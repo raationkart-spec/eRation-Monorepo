@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, MapPin, CreditCard, ShieldCheck, Check } from "lucide-react-native";
 
 import { useCartStore } from "../store/useCartStore";
@@ -24,7 +27,11 @@ import type { Product, PaymentMethod, Order } from "../lib/types";
 
 export default function CheckoutScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+
+  const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
+
 
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clear);
@@ -160,12 +167,13 @@ export default function CheckoutScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <ArrowLeft size={20} color="#0f172a" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Checkout</Text>
       </View>
+
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Address Selection Card */}

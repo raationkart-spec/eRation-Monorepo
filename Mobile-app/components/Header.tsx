@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Zap, ChevronDown, Search, User } from "lucide-react-native";
 import { useLocationStore } from "../store/useLocationStore";
 
@@ -11,11 +12,15 @@ interface HeaderProps {
 
 export function Header({ onOpenLocationModal, showSearch = true }: HeaderProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { pincode, city } = useLocationStore();
 
+  const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: topPadding + 6 }]}>
       <View style={styles.topRow}>
+
         <TouchableOpacity
           style={styles.locationButton}
           onPress={onOpenLocationModal}

@@ -198,4 +198,45 @@ export const api = {
     }
     return null;
   },
+
+  /**
+   * Send OTP via email using backend POST /api/auth/send-otp
+   */
+  async sendOtp(email: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/send-otp`, {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        return { success: true, message: data.message };
+      }
+      return { success: false, error: data.error || "Failed to send OTP email" };
+    } catch (e: any) {
+      console.log("sendOtp API error:", e);
+      return { success: false, error: "Network error. Please check internet connection." };
+    }
+  },
+
+  /**
+   * Verify OTP using backend POST /api/auth/verify-otp
+   */
+  async verifyOtp(email: string, otp: string): Promise<{ success: boolean; user?: any; error?: string }> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/verify-otp`, {
+        method: "POST",
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        return { success: true, user: data.user };
+      }
+      return { success: false, error: data.error || "Invalid or expired OTP" };
+    } catch (e: any) {
+      console.log("verifyOtp API error:", e);
+      return { success: false, error: "Network error. Please check internet connection." };
+    }
+  },
 };
+

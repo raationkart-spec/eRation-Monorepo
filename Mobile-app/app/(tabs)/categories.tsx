@@ -148,35 +148,38 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   sidebar: {
-    width: 100,
+    width: 84,
+    flexGrow: 0,
+    flexShrink: 0,
     backgroundColor: "#f8fafc",
     borderRightWidth: 1,
     borderRightColor: "#e2e8f0",
   },
   sidebarContent: {
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   sidebarItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     alignItems: "center",
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
   },
   sidebarItemActive: {
     backgroundColor: "#ffffff",
-    borderLeftWidth: 4,
+    borderLeftWidth: 3,
     borderLeftColor: "#ea580c",
   },
   sidebarEmoji: {
-    fontSize: 22,
-    marginBottom: 4,
+    fontSize: 20,
+    marginBottom: 3,
   },
   sidebarText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "700",
     color: "#64748b",
     textAlign: "center",
+    lineHeight: 12,
   },
   sidebarTextActive: {
     color: "#ea580c",
@@ -190,23 +193,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
   },
   categoryTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "900",
     color: "#0f172a",
   },
   itemCountText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
     color: "#94a3b8",
   },
   gridContent: {
-    padding: 8,
+    padding: 4,
     paddingBottom: 24,
   },
   productGrid: {
@@ -215,5 +218,7 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     width: "50%",
+    padding: 2,
   },
 });
+

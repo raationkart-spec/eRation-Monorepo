@@ -6,27 +6,58 @@ import {
   SafeAreaView,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, ShieldCheck } from "lucide-react-native";
+import { ArrowLeft, ShieldCheck, RefreshCw } from "lucide-react-native";
 import { useAuthStore } from "../store/useAuthStore";
+import { api } from "../lib/api";
 
 export default function VerifyScreen() {
   const router = useRouter();
-  const { phone } = useLocalSearchParams<{ phone: string }>();
-  const loginWithPhone = useAuthStore((s) => s.loginWithPhone);
+  const { email } = useLocalSearchParams<{ email: string }>();
+  const loginWithBackend = useAuthStore((s) => s.loginWithBackend);
 
-  const [otp, setOtp] = useState("123456");
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [infoMsg, setInfoMsg] = useState("");
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!/^\d{6}$/.test(otp.trim())) {
-      setErrorMsg("Please enter a 6-digit OTP code");
+      setErrorMsg("Please enter the 6-digit OTP code");
       return;
     }
 
-    loginWithPhone(phone || "+91 90000 00000", "QuickCart Shopper");
-    router.replace("/(tabs)");
+    setErrorMsg("");
+    setLoading(true);
+
+    const res = await api.verifyOtp(email || "", otp.trim());
+    setLoading(false);
+
+    if (res.success && res.user) {
+      loginWithBackend(res.user);
+      router.replace("/(tabs)");
+    } else {
+      setErrorMsg(res.error || "Invalid or expired OTP. Please try again.");
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email) return;
+    setResending(true);
+    setInfoMsg("");
+    setErrorMsg("");
+
+    const res = await api.sendOtp(email);
+    setResending(false);
+
+    if (res.success) {
+      setInfoMsg(`A new OTP has been sent to ${email}`);
+    } else {
+      setErrorMsg(res.error || "Failed to resend OTP.");
+    }
   };
 
   return (
@@ -46,10 +77,12 @@ export default function VerifyScreen() {
 
           <Text style={styles.cardTitle}>Enter Verification Code</Text>
           <Text style={styles.cardSub}>
-            We sent a 6-digit OTP to +91 {phone || "9000000000"}
+            We sent a 6-digit verification code to{"\n"}
+            <Text style={{ fontWeight: "800", color: "#0f172a" }}>{email || "your email"}</Text>
           </Text>
 
           {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+          {infoMsg ? <Text style={styles.infoText}>{infoMsg}</Text> : null}
 
           <TextInput
             style={styles.otpInput}
@@ -58,13 +91,39 @@ export default function VerifyScreen() {
             keyboardType="number-pad"
             maxLength={6}
             value={otp}
-            onChangeText={(text) => setOtp(text.replace(/\D/g, ""))}
+            onChangeText={(text) => {
+              setOtp(text.replace(/\D/g, ""));
+              if (errorMsg) setErrorMsg("");
+            }}
           />
 
-          <Text style={styles.hintText}>Demo OTP: Any 6 digits work (e.g. 123456)</Text>
+          <TouchableOpacity
+            style={[styles.verifyBtn, loading && styles.disabledBtn]}
+            onPress={handleVerify}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <Text style={styles.verifyBtnText}>VERIFY & CONTINUE</Text>
+            )}
+          </TouchableOpacity>
 
-          <TouchableOpacity style={styles.verifyBtn} onPress={handleVerify} activeOpacity={0.85}>
-            <Text style={styles.verifyBtnText}>VERIFY & CONTINUE</Text>
+          <TouchableOpacity
+            style={styles.resendBtn}
+            onPress={handleResend}
+            disabled={resending}
+            activeOpacity={0.7}
+          >
+            {resending ? (
+              <ActivityIndicator color="#ea580c" size="small" />
+            ) : (
+              <View style={styles.resendRow}>
+                <RefreshCw size={14} color="#ea580c" />
+                <Text style={styles.resendText}>Resend OTP Email</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -126,12 +185,29 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 16,
     textAlign: "center",
+    lineHeight: 18,
   },
   errorText: {
     color: "#dc2626",
     fontSize: 12,
     fontWeight: "700",
     marginBottom: 10,
+    backgroundColor: "#fef2f2",
+    padding: 8,
+    borderRadius: 8,
+    width: "100%",
+    textAlign: "center",
+  },
+  infoText: {
+    color: "#16a34a",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 10,
+    backgroundColor: "#f0fdf4",
+    padding: 8,
+    borderRadius: 8,
+    width: "100%",
+    textAlign: "center",
   },
   otpInput: {
     backgroundColor: "#f8fafc",
@@ -145,13 +221,7 @@ const styles = StyleSheet.create({
     color: "#0f172a",
     textAlign: "center",
     letterSpacing: 8,
-  },
-  hintText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#ea580c",
-    marginTop: 8,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   verifyBtn: {
     backgroundColor: "#ea580c",
@@ -161,10 +231,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  disabledBtn: {
+    opacity: 0.7,
+  },
   verifyBtnText: {
     color: "#ffffff",
     fontSize: 13,
     fontWeight: "900",
     letterSpacing: 0.5,
+  },
+  resendBtn: {
+    marginTop: 16,
+    paddingVertical: 6,
+  },
+  resendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  resendText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#ea580c",
   },
 });

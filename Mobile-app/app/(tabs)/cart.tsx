@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ShoppingBag, Tag, Trash2, ArrowRight } from "lucide-react-native";
 
 import { useCartStore } from "../../store/useCartStore";
@@ -23,7 +26,11 @@ import type { Product, Coupon } from "../../lib/types";
 
 export default function CartScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const items = useCartStore((s) => s.items);
+
+  const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
+
   const setQty = useCartStore((s) => s.setQty);
   const clear = useCartStore((s) => s.clear);
 
@@ -128,7 +135,7 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
         <View style={styles.headerTitleRow}>
           <ShoppingBag size={20} color="#ea580c" />
           <Text style={styles.headerTitle}>Shopping Cart ({items.length})</Text>
@@ -137,6 +144,7 @@ export default function CartScreen() {
           <Text style={styles.clearText}>Clear</Text>
         </TouchableOpacity>
       </View>
+
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Cart Item Cards */}

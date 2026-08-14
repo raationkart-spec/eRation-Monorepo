@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { User, MapPin, Package, PhoneCall, LogOut, Plus, Check, Trash2 } from "lucide-react-native";
 
 import { useAuthStore } from "../../store/useAuthStore";
@@ -19,7 +22,11 @@ import type { Address } from "../../lib/types";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+
+  const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
+
   const logout = useAuthStore((s) => s.logout);
 
   const addresses = useShopStore((s) => s.addresses);
@@ -64,10 +71,11 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
         <User size={20} color="#ea580c" />
         <Text style={styles.headerTitle}>Account & Profile</Text>
       </View>
+
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* User Info Card */}

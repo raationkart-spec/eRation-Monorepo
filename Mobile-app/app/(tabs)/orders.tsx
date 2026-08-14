@@ -6,8 +6,11 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Package, ChevronRight, Clock } from "lucide-react-native";
 
 import { useShopStore } from "../../store/useShopStore";
@@ -16,8 +19,11 @@ import type { OrderStatus } from "../../lib/types";
 
 export default function OrdersScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const orders = useShopStore((s) => s.orders);
   const [filter, setFilter] = useState<"ALL" | "ACTIVE" | "DELIVERED" | "CANCELLED">("ALL");
+
+  const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
 
   const filteredOrders = orders.filter((o) => {
     if (filter === "ACTIVE")
@@ -29,10 +35,11 @@ export default function OrdersScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
         <Package size={20} color="#ea580c" />
         <Text style={styles.headerTitle}>Your Orders ({orders.length})</Text>
       </View>
+
 
       {/* Filter Chips */}
       <View style={styles.filterRow}>

@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Search as SearchIcon, X } from "lucide-react-native";
 
 import { ProductCard } from "../components/ProductCard";
@@ -20,7 +23,11 @@ const RECENT_TAGS = ["Milk", "Bananas", "Apples", "Bread", "Eggs", "Chips", "Pan
 
 export default function SearchScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
+
+  const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
+
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -52,8 +59,9 @@ export default function SearchScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Top Search Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+
           <ArrowLeft size={20} color="#0f172a" />
         </TouchableOpacity>
 

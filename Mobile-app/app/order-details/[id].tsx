@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, MapPin, CreditCard, Ban } from "lucide-react-native";
 
 import { useShopStore } from "../../store/useShopStore";
@@ -21,7 +24,11 @@ import type { Order, OrderStatus } from "../../lib/types";
 
 export default function OrderDetailsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
+
+  const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
+
 
   const orders = useShopStore((s) => s.orders);
   const cancelOrderInStore = useShopStore((s) => s.cancelOrder);
@@ -84,7 +91,7 @@ export default function OrderDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
         <TouchableOpacity style={styles.backBtnPadding} onPress={() => router.push("/(tabs)/orders")}>
           <ArrowLeft size={20} color="#0f172a" />
         </TouchableOpacity>
@@ -93,6 +100,7 @@ export default function OrderDetailsScreen() {
           <Text style={styles.headerSub}>{formatDate(order.createdAt)}</Text>
         </View>
       </View>
+
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Status Header Badge */}

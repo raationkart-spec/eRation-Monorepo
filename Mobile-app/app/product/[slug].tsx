@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, ShieldCheck, Truck, RefreshCw } from "lucide-react-native";
 
 import { AddToCartButton } from "../../components/AddToCartButton";
@@ -20,7 +23,11 @@ import type { Product } from "../../lib/types";
 
 export default function ProductDetailScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { slug } = useLocalSearchParams<{ slug: string }>();
+
+  const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
+
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<Product | null>(null);
@@ -77,7 +84,7 @@ export default function ProductDetailScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Top Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
         <TouchableOpacity style={styles.headerBackBtn} onPress={() => router.back()}>
           <ArrowLeft size={20} color="#0f172a" />
         </TouchableOpacity>
@@ -85,6 +92,7 @@ export default function ProductDetailScreen() {
           {product.name}
         </Text>
       </View>
+
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Product Image Section */}

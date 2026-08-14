@@ -6,6 +6,7 @@ import type { User } from "../lib/types";
 interface AuthState {
   user: User | null;
   setUser: (user: User | null) => void;
+  loginWithBackend: (user: Partial<User>) => void;
   loginWithPhone: (phone: string, name?: string) => void;
   loginWithGoogle: () => void;
   logout: () => void;
@@ -15,14 +16,18 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      user: {
-        id: "u_demo",
-        name: "Demo Shopper",
-        email: "demo.shopper@gmail.com",
-        phone: "+91 90000 00000",
-        role: "CUSTOMER",
-      },
+      user: null,
       setUser: (user) => set({ user }),
+      loginWithBackend: (userData) =>
+        set({
+          user: {
+            id: userData.id || "u_" + Date.now(),
+            email: userData.email || "",
+            name: userData.name || userData.email?.split("@")[0] || "QuickCart Shopper",
+            phone: userData.phone || "",
+            role: userData.role || "CUSTOMER",
+          },
+        }),
       loginWithPhone: (phone, name) =>
         set({
           user: {
@@ -38,7 +43,7 @@ export const useAuthStore = create<AuthState>()(
             id: "u_google_demo",
             name: "Demo Shopper",
             email: "demo.shopper@gmail.com",
-            phone: "+91 90000 00000",
+            phone: "+91 98000 12345",
             role: "CUSTOMER",
           },
         }),
