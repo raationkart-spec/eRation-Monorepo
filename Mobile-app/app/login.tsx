@@ -10,6 +10,10 @@ import {
   Dimensions,
   Platform,
   StatusBar,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -49,99 +53,113 @@ export default function LoginScreen() {
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
 
   return (
-    <View style={styles.container}>
-      {/* Hero Section with Grocery Image */}
-      <View style={styles.heroSection}>
-        <ImageBackground
-          source={{
-            uri: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=80",
-          }}
-          style={styles.heroBg}
-          resizeMode="cover"
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          bounces={false}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {/* Dark Overlay */}
-          <View style={styles.heroOverlay} />
+          {/* Hero Section with Grocery Image */}
+          <View style={[styles.heroSection, showEmailInput && styles.heroSectionCompact]}>
+            <ImageBackground
+              source={{
+                uri: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=80",
+              }}
+              style={styles.heroBg}
+              resizeMode="cover"
+            >
+              {/* Dark Overlay */}
+              <View style={styles.heroOverlay} />
 
-          {/* Top Brand Header Badge */}
-          <View style={[styles.brandHeader, { paddingTop: topPadding + 10 }]}>
-            <View style={styles.badgePill}>
-              <Zap size={12} color="#f97316" fill="#f97316" />
-              <Text style={styles.badgeText}>DELIVERED ALL ACROSS SILIGURI</Text>
-            </View>
-            <Text style={styles.brandTitle}>QuickCart</Text>
-          </View>
-        </ImageBackground>
-      </View>
-
-      {/* Bottom Sheet Card */}
-      <View style={styles.bottomCard}>
-        <View style={styles.contentBox}>
-          <Text style={styles.mainTitle}>
-            Groceries delivered{"\n"}
-            <Text style={styles.orangeTitle}>across Siliguri.</Text>
-          </Text>
-
-          <Text style={styles.subText}>
-            Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
-          </Text>
-
-          {/* CTA Buttons / Input */}
-          <View style={styles.actionContainer}>
-            {!showEmailInput ? (
-              <TouchableOpacity
-                style={styles.mainOrangeBtn}
-                onPress={() => setShowEmailInput(true)}
-                activeOpacity={0.85}
-              >
-                <Mail size={18} color="#ffffff" />
-                <Text style={styles.mainBtnText}>Login using Email</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.emailInputWrapper}>
-                <View style={styles.inputPill}>
-                  <Mail size={18} color="#f97316" />
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Enter your email address"
-                    placeholderTextColor="#94a3b8"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoFocus
-                    value={email}
-                    onChangeText={(text) => {
-                      setEmail(text);
-                      if (errorMsg) setErrorMsg("");
-                    }}
-                  />
+              {/* Top Brand Header Badge */}
+              <View style={[styles.brandHeader, { paddingTop: topPadding + 6 }]}>
+                <View style={styles.badgePill}>
+                  <Zap size={12} color="#f97316" fill="#f97316" />
+                  <Text style={styles.badgeText}>DELIVERED ALL ACROSS SILIGURI</Text>
                 </View>
-
-                {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
-
-                <TouchableOpacity
-                  style={[styles.mainOrangeBtn, (!isValidEmail || loading) && styles.disabledBtn]}
-                  onPress={handleSendOtp}
-                  disabled={!isValidEmail || loading}
-                  activeOpacity={0.85}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#ffffff" size="small" />
-                  ) : (
-                    <>
-                      <Text style={styles.mainBtnText}>Get OTP Code</Text>
-                      <ArrowRight size={18} color="#ffffff" />
-                    </>
-                  )}
-                </TouchableOpacity>
+                <Text style={styles.brandTitle}>QuickCart</Text>
               </View>
-            )}
+            </ImageBackground>
           </View>
 
-          <Text style={styles.termsText}>
-            By continuing, you agree to our Terms of Service & Privacy Policy.
-          </Text>
-        </View>
-      </View>
-    </View>
+          {/* Bottom Sheet Card */}
+          <View style={styles.bottomCard}>
+            <View style={styles.contentBox}>
+              <Text style={styles.mainTitle}>
+                Groceries delivered{"\n"}
+                <Text style={styles.orangeTitle}>across Siliguri.</Text>
+              </Text>
+
+              <Text style={styles.subText}>
+                Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
+              </Text>
+
+              {/* CTA Buttons / Input */}
+              <View style={styles.actionContainer}>
+                {!showEmailInput ? (
+                  <TouchableOpacity
+                    style={styles.mainOrangeBtn}
+                    onPress={() => setShowEmailInput(true)}
+                    activeOpacity={0.85}
+                  >
+                    <Mail size={18} color="#ffffff" />
+                    <Text style={styles.mainBtnText}>Login using Email</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.emailInputWrapper}>
+                    <View style={styles.inputPill}>
+                      <Mail size={18} color="#f97316" />
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="Enter your email address"
+                        placeholderTextColor="#94a3b8"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoFocus
+                        value={email}
+                        onChangeText={(text) => {
+                          setEmail(text);
+                          if (errorMsg) setErrorMsg("");
+                        }}
+                        onSubmitEditing={handleSendOtp}
+                        returnKeyType="done"
+                      />
+                    </View>
+
+                    {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+
+                    <TouchableOpacity
+                      style={[styles.mainOrangeBtn, (!isValidEmail || loading) && styles.disabledBtn]}
+                      onPress={handleSendOtp}
+                      disabled={!isValidEmail || loading}
+                      activeOpacity={0.85}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="#ffffff" size="small" />
+                      ) : (
+                        <>
+                          <Text style={styles.mainBtnText}>Get OTP Code</Text>
+                          <ArrowRight size={18} color="#ffffff" />
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+
+              <Text style={styles.termsText}>
+                By continuing, you agree to our Terms of Service & Privacy Policy.
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -150,10 +168,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0f172a",
   },
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: "#0f172a",
+  },
   heroSection: {
-    height: SCREEN_HEIGHT * 0.52,
+    height: SCREEN_HEIGHT * 0.44,
     width: "100%",
     position: "relative",
+  },
+  heroSectionCompact: {
+    height: SCREEN_HEIGHT * 0.30,
   },
   heroBg: {
     width: "100%",
@@ -174,7 +199,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.25)",
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 4,
     borderRadius: 20,
     gap: 6,
   },
@@ -185,10 +210,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   brandTitle: {
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: "900",
     color: "#ffffff",
-    marginTop: 10,
+    marginTop: 6,
     letterSpacing: -0.5,
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 2 },
@@ -196,15 +221,15 @@ const styles = StyleSheet.create({
   },
   bottomCard: {
     flex: 1,
-    marginTop: -28,
+    marginTop: -24,
     backgroundColor: "#0f172a",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderTopWidth: 1,
     borderTopColor: "rgba(255, 255, 255, 0.15)",
     paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
     justifyContent: "space-between",
   },
   contentBox: {
@@ -212,10 +237,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   mainTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "900",
     color: "#ffffff",
-    lineHeight: 32,
+    lineHeight: 30,
     textAlign: "center",
   },
   orangeTitle: {
@@ -227,12 +252,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#94a3b8",
     textAlign: "center",
-    marginTop: 6,
+    marginTop: 4,
     paddingHorizontal: 10,
-    lineHeight: 18,
+    lineHeight: 17,
   },
   actionContainer: {
-    marginVertical: 16,
+    marginVertical: 14,
     width: "100%",
   },
   mainOrangeBtn: {
@@ -240,8 +265,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#f97316",
-    height: 52,
-    borderRadius: 26,
+    height: 50,
+    borderRadius: 25,
     gap: 8,
     shadowColor: "#f97316",
     shadowOffset: { width: 0, height: 4 },
@@ -266,9 +291,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e293b",
     borderWidth: 1.5,
     borderColor: "#f97316",
-    borderRadius: 26,
+    borderRadius: 25,
     paddingHorizontal: 16,
-    height: 52,
+    height: 50,
     gap: 10,
   },
   textInput: {
