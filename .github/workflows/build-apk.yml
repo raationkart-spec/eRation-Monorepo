@@ -38,6 +38,10 @@ jobs:
         working-directory: Mobile-app
         run: npm install --legacy-peer-deps
 
+      - name: Patch Reanimated C++ compiler flags
+        working-directory: Mobile-app
+        run: node -e "const fs=require('fs');const p='node_modules/react-native-reanimated/android/CMakeLists.txt';if(fs.existsSync(p)){let c=fs.readFileSync(p,'utf8');if(!c.includes('-Wno-error')){fs.appendFileSync(p,'\ntarget_compile_options(reanimated PRIVATE -Wno-error)\n');}}"
+
       - name: Prebuild native Android project
         working-directory: Mobile-app
         env:
