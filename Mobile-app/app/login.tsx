@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
   Platform,
   StatusBar,
   KeyboardAvoidingView,
@@ -17,10 +16,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Mail, ArrowRight, Zap } from "lucide-react-native";
+import { Mail, ArrowRight, Zap, ArrowLeft } from "lucide-react-native";
 import { api } from "../lib/api";
-
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -30,6 +27,22 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const isValidEmail = /^\S+@\S+\.\S+$/.test(email.trim());
 
@@ -51,21 +64,23 @@ export default function LoginScreen() {
   };
 
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
+  const isCompact = showEmailInput || isKeyboardVisible;
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           bounces={false}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Section with Grocery Image */}
-          <View style={[styles.heroSection, showEmailInput && styles.heroSectionCompact]}>
+          {/* Hero Section */}
+          <View style={[styles.heroSection, isCompact && { height: topPadding + 64 }]}>
             <ImageBackground
               source={{
                 uri: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=80",
@@ -73,31 +88,48 @@ export default function LoginScreen() {
               style={styles.heroBg}
               resizeMode="cover"
             >
-              {/* Dark Overlay */}
               <View style={styles.heroOverlay} />
 
-              {/* Top Brand Header Badge */}
-              <View style={[styles.brandHeader, { paddingTop: topPadding + 6 }]}>
-                <View style={styles.badgePill}>
-                  <Zap size={12} color="#f97316" fill="#f97316" />
-                  <Text style={styles.badgeText}>DELIVERED ALL ACROSS SILIGURI</Text>
-                </View>
-                <Text style={styles.brandTitle}>QuickCart</Text>
+              <View style={[styles.brandHeader, { paddingTop: topPadding + 4 }]}>
+                {isCompact ? (
+                  <View style={styles.compactNavRow}>
+                    <TouchableOpacity
+                      onPress={() => setShowEmailInput(false)}
+                      style={styles.backBtnPill}
+                    >
+                      <ArrowLeft size={16} color="#ffffff" />
+                    </TouchableOpacity>
+                    <Text style={styles.compactTitle}>QuickCart</Text>
+                    <View style={{ width: 32 }} />
+                  </View>
+                ) : (
+                  <>
+                    <View style={styles.badgePill}>
+                      <Zap size={12} color="#f97316" fill="#f97316" />
+                      <Text style={styles.badgeText}>DELIVERED ALL ACROSS SILIGURI</Text>
+                    </View>
+                    <Text style={styles.brandTitle}>QuickCart</Text>
+                  </>
+                )}
               </View>
             </ImageBackground>
           </View>
 
           {/* Bottom Sheet Card */}
-          <View style={styles.bottomCard}>
+          <View style={[styles.bottomCard, isCompact && styles.bottomCardCompact]}>
             <View style={styles.contentBox}>
-              <Text style={styles.mainTitle}>
-                Groceries delivered{"\n"}
-                <Text style={styles.orangeTitle}>across Siliguri.</Text>
-              </Text>
+              <View style={styles.headingBox}>
+                <Text style={styles.mainTitle}>
+                  Groceries delivered{"\n"}
+                  <Text style={styles.orangeTitle}>across Siliguri.</Text>
+                </Text>
 
-              <Text style={styles.subText}>
-                Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
-              </Text>
+                {!isKeyboardVisible && (
+                  <Text style={styles.subText}>
+                    Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
+                  </Text>
+                )}
+              </View>
 
               {/* CTA Buttons / Input */}
               <View style={styles.actionContainer}>
@@ -113,7 +145,7 @@ export default function LoginScreen() {
                 ) : (
                   <View style={styles.emailInputWrapper}>
                     <View style={styles.inputPill}>
-                      <Mail size={18} color="#f97316" />
+                      <Mail size={18} color="#f97316" style={{ marginRight: 8 }} />
                       <TextInput
                         style={styles.textInput}
                         placeholder="Enter your email address"
@@ -173,12 +205,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f172a",
   },
   heroSection: {
-    height: SCREEN_HEIGHT * 0.44,
+    height: 280,
     width: "100%",
     position: "relative",
-  },
-  heroSectionCompact: {
-    height: SCREEN_HEIGHT * 0.30,
   },
   heroBg: {
     width: "100%",
@@ -219,9 +248,28 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
+  compactNavRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  backBtnPill: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  compactTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#ffffff",
+  },
   bottomCard: {
     flex: 1,
-    marginTop: -24,
+    marginTop: -20,
     backgroundColor: "#0f172a",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
@@ -230,17 +278,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 24,
-    justifyContent: "space-between",
+  },
+  bottomCardCompact: {
+    paddingTop: 16,
   },
   contentBox: {
     flex: 1,
     justifyContent: "space-between",
   },
+  headingBox: {
+    alignItems: "center",
+  },
   mainTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "900",
     color: "#ffffff",
-    lineHeight: 30,
+    lineHeight: 28,
     textAlign: "center",
   },
   orangeTitle: {
@@ -294,7 +347,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingHorizontal: 16,
     height: 50,
-    gap: 10,
   },
   textInput: {
     flex: 1,
