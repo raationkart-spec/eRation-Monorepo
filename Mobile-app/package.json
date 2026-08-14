@@ -7,8 +7,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "tsc --noEmit",
-    "postinstall": "node -e \"const fs=require('fs');const p='node_modules/react-native-reanimated/android/CMakeLists.txt';if(fs.existsSync(p)){let c=fs.readFileSync(p,'utf8');if(!c.includes('-Wno-error')){fs.appendFileSync(p,'\\ntarget_compile_options(reanimated PRIVATE -Wno-error)\\n');}}\""
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -30,7 +29,7 @@
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-gesture-handler": "~2.28.0",
-    "react-native-reanimated": "~3.16.7",
+    "react-native-reanimated": "~3.19.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
