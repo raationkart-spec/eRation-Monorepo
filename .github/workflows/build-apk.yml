@@ -40,13 +40,23 @@ jobs:
 
       - name: Prebuild native Android project
         working-directory: Mobile-app
+        env:
+          EXPO_PUBLIC_API_URL: "https://quickcart-nu-nine.vercel.app"
+          NODE_ENV: "production"
         run: npx expo prebuild --platform android --no-install
+
+      - name: Install any missing prebuild dependencies
+        working-directory: Mobile-app
+        run: npm install
 
       - name: Make Gradle wrapper executable
         run: chmod +x Mobile-app/android/gradlew
 
       - name: Build release APK
         working-directory: Mobile-app/android
+        env:
+          EXPO_PUBLIC_API_URL: "https://quickcart-nu-nine.vercel.app"
+          NODE_ENV: "production"
         run: ./gradlew assembleRelease --stacktrace
 
       - name: Upload APK artifact
@@ -55,4 +65,3 @@ jobs:
           name: quickcart-apk
           path: Mobile-app/android/app/build/outputs/apk/release/*.apk
           retention-days: 14
-
