@@ -3,27 +3,36 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
+  ImageBackground,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Dimensions,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Zap, Mail, ArrowRight } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Mail, ArrowRight, Zap } from "lucide-react-native";
 import { api } from "../lib/api";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const [showEmailInput, setShowEmailInput] = useState(false);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleContinue = async () => {
+  const isValidEmail = /^\S+@\S+\.\S+$/.test(email.trim());
+
+  const handleSendOtp = async () => {
     const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !/^\S+@\S+\.\S+$/.test(cleanEmail)) {
-      setErrorMsg("Please enter a valid email address (e.g. user@example.com)");
-      return;
-    }
+    if (!isValidEmail || loading) return;
+
     setErrorMsg("");
     setLoading(true);
 
@@ -33,176 +42,251 @@ export default function LoginScreen() {
     if (res.success) {
       router.push({ pathname: "/verify", params: { email: cleanEmail } });
     } else {
-      setErrorMsg(res.error || "Failed to send OTP. Please try again.");
+      setErrorMsg(res.error || "Failed to send OTP email.");
     }
   };
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.brandBox}>
-          <View style={styles.logoCircle}>
-            <Zap size={32} color="#ffffff" fill="#ffffff" />
-          </View>
-          <Text style={styles.brandTitle}>QuickCart</Text>
-          <Text style={styles.brandTagline}>Groceries delivered in 10 minutes</Text>
-        </View>
+  const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Login or Sign Up</Text>
-          <Text style={styles.cardSubtitle}>
-            Enter your email to receive a 6-digit verification code
+  return (
+    <View style={styles.container}>
+      {/* Hero Section with Grocery Image */}
+      <View style={styles.heroSection}>
+        <ImageBackground
+          source={{
+            uri: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=80",
+          }}
+          style={styles.heroBg}
+          resizeMode="cover"
+        >
+          {/* Dark Overlay */}
+          <View style={styles.heroOverlay} />
+
+          {/* Top Brand Header Badge */}
+          <View style={[styles.brandHeader, { paddingTop: topPadding + 10 }]}>
+            <View style={styles.badgePill}>
+              <Zap size={12} color="#f97316" fill="#f97316" />
+              <Text style={styles.badgeText}>DELIVERED ALL ACROSS SILIGURI</Text>
+            </View>
+            <Text style={styles.brandTitle}>QuickCart</Text>
+          </View>
+        </ImageBackground>
+      </View>
+
+      {/* Bottom Sheet Card */}
+      <View style={styles.bottomCard}>
+        <View style={styles.contentBox}>
+          <Text style={styles.mainTitle}>
+            Groceries delivered{"\n"}
+            <Text style={styles.orangeTitle}>across Siliguri.</Text>
           </Text>
 
-          {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+          <Text style={styles.subText}>
+            Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
+          </Text>
 
-          <View style={styles.inputWrapper}>
-            <Mail size={18} color="#ea580c" style={{ marginRight: 8 }} />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email address"
-              placeholderTextColor="#94a3b8"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                if (errorMsg) setErrorMsg("");
-              }}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.continueBtn, loading && styles.disabledBtn]}
-            onPress={handleContinue}
-            disabled={loading}
-            activeOpacity={0.85}
-          >
-            {loading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
+          {/* CTA Buttons / Input */}
+          <View style={styles.actionContainer}>
+            {!showEmailInput ? (
+              <TouchableOpacity
+                style={styles.mainOrangeBtn}
+                onPress={() => setShowEmailInput(true)}
+                activeOpacity={0.85}
+              >
+                <Mail size={18} color="#ffffff" />
+                <Text style={styles.mainBtnText}>Login using Email</Text>
+              </TouchableOpacity>
             ) : (
-              <View style={styles.btnRow}>
-                <Text style={styles.continueBtnText}>SEND OTP</Text>
-                <ArrowRight size={16} color="#ffffff" />
+              <View style={styles.emailInputWrapper}>
+                <View style={styles.inputPill}>
+                  <Mail size={18} color="#f97316" />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your email address"
+                    placeholderTextColor="#94a3b8"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoFocus
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      if (errorMsg) setErrorMsg("");
+                    }}
+                  />
+                </View>
+
+                {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+
+                <TouchableOpacity
+                  style={[styles.mainOrangeBtn, (!isValidEmail || loading) && styles.disabledBtn]}
+                  onPress={handleSendOtp}
+                  disabled={!isValidEmail || loading}
+                  activeOpacity={0.85}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#ffffff" size="small" />
+                  ) : (
+                    <>
+                      <Text style={styles.mainBtnText}>Get OTP Code</Text>
+                      <ArrowRight size={18} color="#ffffff" />
+                    </>
+                  )}
+                </TouchableOpacity>
               </View>
             )}
-          </TouchableOpacity>
+          </View>
 
           <Text style={styles.termsText}>
-            By continuing, you agree to QuickCart's Terms of Service & Privacy Policy.
+            By continuing, you agree to our Terms of Service & Privacy Policy.
           </Text>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff7ed",
-  },
   container: {
     flex: 1,
-    padding: 20,
-    justifyContent: "center",
+    backgroundColor: "#0f172a",
   },
-  brandBox: {
+  heroSection: {
+    height: SCREEN_HEIGHT * 0.52,
+    width: "100%",
+    position: "relative",
+  },
+  heroBg: {
+    width: "100%",
+    height: "100%",
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(2, 6, 23, 0.45)",
+  },
+  brandHeader: {
     alignItems: "center",
-    marginBottom: 24,
+    paddingHorizontal: 20,
   },
-  logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#ea580c",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-    elevation: 4,
-  },
-  brandTitle: {
-    fontSize: 26,
-    fontWeight: "900",
-    color: "#0f172a",
-  },
-  brandTagline: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#ea580c",
-    marginTop: 2,
-  },
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#fed7aa",
-    elevation: 4,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#0f172a",
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#64748b",
-    marginBottom: 16,
-  },
-  errorText: {
-    color: "#dc2626",
-    fontSize: 12,
-    fontWeight: "700",
-    marginBottom: 10,
-    backgroundColor: "#fef2f2",
-    padding: 8,
-    borderRadius: 8,
-  },
-  inputWrapper: {
+  badgePill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
     borderWidth: 1,
-    borderColor: "#cbd5e1",
-    borderRadius: 14,
+    borderColor: "rgba(255, 255, 255, 0.25)",
     paddingHorizontal: 12,
-    height: 48,
-    marginBottom: 14,
-  },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#0f172a",
-  },
-  continueBtn: {
-    backgroundColor: "#ea580c",
-    borderRadius: 14,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  disabledBtn: {
-    opacity: 0.7,
-  },
-  btnRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    paddingVertical: 5,
+    borderRadius: 20,
     gap: 6,
   },
-  continueBtnText: {
+  badgeText: {
     color: "#ffffff",
-    fontSize: 13,
+    fontSize: 9,
     fontWeight: "900",
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+  },
+  brandTitle: {
+    fontSize: 34,
+    fontWeight: "900",
+    color: "#ffffff",
+    marginTop: 10,
+    letterSpacing: -0.5,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  bottomCard: {
+    flex: 1,
+    marginTop: -28,
+    backgroundColor: "#0f172a",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 20,
+    justifyContent: "space-between",
+  },
+  contentBox: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  mainTitle: {
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#ffffff",
+    lineHeight: 32,
+    textAlign: "center",
+  },
+  orangeTitle: {
+    color: "#f97316",
+    fontWeight: "900",
+  },
+  subText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#94a3b8",
+    textAlign: "center",
+    marginTop: 6,
+    paddingHorizontal: 10,
+    lineHeight: 18,
+  },
+  actionContainer: {
+    marginVertical: 16,
+    width: "100%",
+  },
+  mainOrangeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f97316",
+    height: 52,
+    borderRadius: 26,
+    gap: 8,
+    shadowColor: "#f97316",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  disabledBtn: {
+    opacity: 0.5,
+  },
+  mainBtnText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  emailInputWrapper: {
+    gap: 10,
+  },
+  inputPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1e293b",
+    borderWidth: 1.5,
+    borderColor: "#f97316",
+    borderRadius: 26,
+    paddingHorizontal: 16,
+    height: 52,
+    gap: 10,
+  },
+  textInput: {
+    flex: 1,
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  errorText: {
+    color: "#f87171",
+    fontSize: 11,
+    fontWeight: "700",
+    textAlign: "center",
   },
   termsText: {
     fontSize: 10,
-    color: "#94a3b8",
+    color: "#64748b",
     textAlign: "center",
-    marginTop: 16,
+    lineHeight: 14,
   },
 });
