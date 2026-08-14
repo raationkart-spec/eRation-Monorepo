@@ -9,17 +9,48 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import {
+  Apple,
+  Milk,
+  Coffee,
+  Sparkles,
+  Package,
+  Snowflake,
+  Wheat,
+  LayoutGrid,
+} from "lucide-react-native";
 
 import { Header } from "../../components/Header";
 import { ProductCard } from "../../components/ProductCard";
 import { PincodeModal } from "../../components/PincodeModal";
+import { UnserviceableLocationView } from "../../components/UnserviceableLocationView";
 import { Toast } from "../../components/Toast";
 
+import { useLocationStore } from "../../store/useLocationStore";
 import { api } from "../../lib/api";
 import type { Category, Product } from "../../lib/types";
 
+const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ size: number; color: string }>> = {
+  "fruits-vegetables": Apple,
+  "fruits-veg": Apple,
+  "dairy-eggs": Milk,
+  "dairy": Milk,
+  "bakery-breads": Coffee,
+  "bakery": Coffee,
+  "snacks-beverages": Sparkles,
+  "snacks": Sparkles,
+  "household-cleaning": Package,
+  "household": Package,
+  "personal-care": Sparkles,
+  "frozen-foods": Snowflake,
+  "staples-grains": Wheat,
+  "staples": Wheat,
+};
+
 export default function CategoriesScreen() {
   const router = useRouter();
+  const { isServiceable } = useLocationStore();
+
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -59,14 +90,18 @@ export default function CategoriesScreen() {
 
   const selectedCategory = activeCategories.find((c) => c.slug === selectedCategorySlug);
   const filteredProducts = products.filter(
-    (p) => p.categorySlug === selectedCategorySlug && p.isActive
+    (p) => (p.categorySlug === selectedCategorySlug || (selectedCategorySlug === "fruits-vegetables" && p.categorySlug === "fruits-veg")) && p.isActive
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <Header onOpenLocationModal={() => setLocationModalVisible(true)} />
 
-      {loading ? (
+      {!isServiceable ? (
+        <UnserviceableLocationView
+          onOpenPincodeModal={() => setLocationModalVisible(true)}
+        />
+      ) : loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#ea580c" />
         </View>
@@ -80,6 +115,9 @@ export default function CategoriesScreen() {
           >
             {activeCategories.map((cat) => {
               const isSelected = cat.slug === selectedCategorySlug;
+              const IconComp = CATEGORY_ICON_MAP[cat.slug] || Apple;
+              const iconColor = isSelected ? "#ea580c" : "#64748b";
+
               return (
                 <TouchableOpacity
                   key={cat.id}
@@ -87,7 +125,7 @@ export default function CategoriesScreen() {
                   onPress={() => setSelectedCategorySlug(cat.slug)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.sidebarEmoji}>{cat.emoji}</Text>
+                  <IconComp size={20} color={iconColor} />
                   <Text style={[styles.sidebarText, isSelected && styles.sidebarTextActive]}>
                     {cat.name}
                   </Text>
@@ -159,20 +197,17 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   sidebarItem: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 4,
     alignItems: "center",
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
+    gap: 4,
   },
   sidebarItemActive: {
     backgroundColor: "#ffffff",
     borderLeftWidth: 3,
     borderLeftColor: "#ea580c",
-  },
-  sidebarEmoji: {
-    fontSize: 20,
-    marginBottom: 3,
   },
   sidebarText: {
     fontSize: 9,
@@ -221,4 +256,3 @@ const styles = StyleSheet.create({
     padding: 2,
   },
 });
-

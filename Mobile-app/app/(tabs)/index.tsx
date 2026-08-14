@@ -10,7 +10,17 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import {
+  ChevronRight,
+  Apple,
+  Milk,
+  Coffee,
+  Sparkles,
+  Package,
+  Snowflake,
+  Wheat,
+  LayoutGrid,
+} from "lucide-react-native";
 
 import { Header } from "../../components/Header";
 import { PincodeModal } from "../../components/PincodeModal";
@@ -21,13 +31,34 @@ import { BuyItAgain } from "../../components/BuyItAgain";
 import { FlashDeals } from "../../components/FlashDeals";
 import { ChefsChoiceBundle } from "../../components/ChefsChoiceBundle";
 import { ProductCard } from "../../components/ProductCard";
+import { UnserviceableLocationView } from "../../components/UnserviceableLocationView";
 import { Toast } from "../../components/Toast";
 
+import { useLocationStore } from "../../store/useLocationStore";
 import { api } from "../../lib/api";
 import type { Banner, Category, FlashDeal, Product } from "../../lib/types";
 
+const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ size: number; color: string }>> = {
+  "fruits-vegetables": Apple,
+  "fruits-veg": Apple,
+  "dairy-eggs": Milk,
+  "dairy": Milk,
+  "bakery-breads": Coffee,
+  "bakery": Coffee,
+  "snacks-beverages": Sparkles,
+  "snacks": Sparkles,
+  "household-cleaning": Package,
+  "household": Package,
+  "personal-care": Sparkles,
+  "frozen-foods": Snowflake,
+  "staples-grains": Wheat,
+  "staples": Wheat,
+};
+
 export default function HomeScreen() {
   const router = useRouter();
+  const { isServiceable, initLocationOnAppLaunch } = useLocationStore();
+
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -60,11 +91,14 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
+    // Only detect location once when user initially opens the app
+    initLocationOnAppLaunch();
     loadData();
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
+    // Refresh products data without resetting location
     loadData();
   };
 
@@ -76,7 +110,7 @@ export default function HomeScreen() {
   const categorySections = activeCategories.map((cat) => ({
     category: cat,
     products: products.filter(
-      (p) => p.categorySlug === cat.slug && p.isActive
+      (p) => (p.categorySlug === cat.slug || (cat.slug === "fruits-vegetables" && p.categorySlug === "fruits-veg")) && p.isActive
     ),
   })).filter((s) => s.products.length > 0);
 
@@ -84,7 +118,11 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <Header onOpenLocationModal={() => setLocationModalVisible(true)} />
 
-      {loading ? (
+      {!isServiceable ? (
+        <UnserviceableLocationView
+          onOpenPincodeModal={() => setLocationModalVisible(true)}
+        />
+      ) : loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#ea580c" />
           <Text style={styles.loadingText}>Fetching fresh groceries...</Text>
@@ -116,33 +154,36 @@ export default function HomeScreen() {
           <ChefsChoiceBundle />
 
           {/* Category Sections */}
-          {categorySections.map((section) => (
-            <View key={section.category.id} style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleWrapper}>
-                  <Text style={styles.sectionEmoji}>{section.category.emoji}</Text>
-                  <Text style={styles.sectionTitle}>{section.category.name}</Text>
+          {categorySections.map((section) => {
+            const IconComp = CATEGORY_ICON_MAP[section.category.slug] || Apple;
+            return (
+              <View key={section.category.id} style={styles.sectionContainer}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionTitleWrapper}>
+                    <IconComp size={18} color="#ea580c" />
+                    <Text style={styles.sectionTitle}>{section.category.name}</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.seeAllBtn}
+                    onPress={() => router.push(`/category/${section.category.slug}`)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.seeAllText}>SEE ALL</Text>
+                    <ChevronRight size={14} color="#ea580c" />
+                  </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity
-                  style={styles.seeAllBtn}
-                  onPress={() => router.push(`/category/${section.category.slug}`)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.seeAllText}>SEE ALL</Text>
-                  <ChevronRight size={14} color="#ea580c" />
-                </TouchableOpacity>
+                <View style={styles.productGrid}>
+                  {section.products.slice(0, 6).map((product) => (
+                    <View key={product.id} style={styles.gridItem}>
+                      <ProductCard product={product} />
+                    </View>
+                  ))}
+                </View>
               </View>
-
-              <View style={styles.productGrid}>
-                {section.products.slice(0, 6).map((product) => (
-                  <View key={product.id} style={styles.gridItem}>
-                    <ProductCard product={product} />
-                  </View>
-                ))}
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
 
@@ -194,9 +235,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-  },
-  sectionEmoji: {
-    fontSize: 18,
   },
   sectionTitle: {
     fontSize: 16,

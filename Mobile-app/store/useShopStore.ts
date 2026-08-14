@@ -3,20 +3,6 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Address, Order, OrderStatus } from "../lib/types";
 
-export const seedAddress: Address = {
-  id: "addr_demo",
-  label: "Home",
-  name: "Demo Shopper",
-  phone: "9000000000",
-  line1: "142, Hill Cart Road",
-  line2: "Pradhan Nagar",
-  landmark: "Near Air View Complex",
-  city: "Siliguri",
-  state: "West Bengal",
-  pincode: "734001",
-  isDefault: true,
-};
-
 interface ShopState {
   addresses: Address[];
   orders: Order[];
@@ -34,7 +20,7 @@ interface ShopState {
 export const useShopStore = create<ShopState>()(
   persist(
     (set) => ({
-      addresses: [seedAddress],
+      addresses: [],
       orders: [],
       appliedCoupon: null,
       setAppliedCoupon: (appliedCoupon) => set({ appliedCoupon }),

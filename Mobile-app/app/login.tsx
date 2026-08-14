@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -25,11 +25,35 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      const h = e.endCoordinates.height;
+      setKeyboardHeight(h);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 50);
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const isValidEmail = /^\S+@\S+\.\S+$/.test(email.trim());
 
@@ -59,12 +83,16 @@ export default function LoginScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
-          contentContainerStyle={styles.scrollContainer}
+          ref={scrollViewRef}
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { paddingBottom: keyboardHeight > 0 ? keyboardHeight : 0 },
+          ]}
           bounces={false}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Section taking 70% of screen height */}
+          {/* Hero Section */}
           <View style={styles.heroSection}>
             <ImageBackground
               source={{
@@ -77,7 +105,7 @@ export default function LoginScreen() {
               <View style={styles.heroOverlay} />
 
               {/* Brand Header Badge */}
-              <View style={[styles.brandHeader, { paddingTop: topPadding + 16 }]}>
+              <View style={[styles.brandHeader, { paddingTop: topPadding + 12 }]}>
                 <View style={styles.badgePill}>
                   <Zap size={11} color="#ffffff" fill="#ffffff" />
                   <Text style={styles.badgeText}>DELIVERED ALL ACROSS SILIGURI</Text>
@@ -88,7 +116,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Bottom Sheet Card */}
-          <View style={styles.bottomCard}>
+          <View style={[styles.bottomCard, showEmailInput && styles.bottomCardTight]}>
             <View style={styles.contentBox}>
               <View style={styles.textGroup}>
                 <Text style={styles.mainTitle}>
@@ -96,17 +124,24 @@ export default function LoginScreen() {
                   <Text style={styles.orangeTitle}>across Siliguri.</Text>
                 </Text>
 
-                <Text style={styles.subText}>
-                  Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
-                </Text>
+                {!showEmailInput ? (
+                  <Text style={styles.subText}>
+                    Freshness delivered right to your doorstep in Siliguri. Sign in to start shopping.
+                  </Text>
+                ) : null}
               </View>
 
-              {/* CTA Buttons / Input */}
+              {/* CTA Section */}
               <View style={styles.actionContainer}>
                 {!showEmailInput ? (
                   <TouchableOpacity
                     style={styles.mainOrangeBtn}
-                    onPress={() => setShowEmailInput(true)}
+                    onPress={() => {
+                      setShowEmailInput(true);
+                      setTimeout(() => {
+                        scrollViewRef.current?.scrollToEnd({ animated: true });
+                      }, 100);
+                    }}
                     activeOpacity={0.85}
                   >
                     <Mail size={18} color="#ffffff" />
@@ -115,7 +150,7 @@ export default function LoginScreen() {
                 ) : (
                   <View style={styles.emailInputWrapper}>
                     <View style={styles.inputPill}>
-                      <Mail size={18} color="#f97316" style={{ marginRight: 8 }} />
+                      <Mail size={16} color="#f97316" style={{ marginRight: 8 }} />
                       <TextInput
                         style={styles.textInput}
                         placeholder="Enter your email address"
@@ -127,6 +162,11 @@ export default function LoginScreen() {
                         onChangeText={(text) => {
                           setEmail(text);
                           if (errorMsg) setErrorMsg("");
+                        }}
+                        onFocus={() => {
+                          setTimeout(() => {
+                            scrollViewRef.current?.scrollToEnd({ animated: true });
+                          }, 100);
                         }}
                         onSubmitEditing={handleSendOtp}
                         returnKeyType="done"
@@ -146,7 +186,7 @@ export default function LoginScreen() {
                       ) : (
                         <>
                           <Text style={styles.mainBtnText}>Get OTP Code</Text>
-                          <ArrowRight size={18} color="#ffffff" />
+                          <ArrowRight size={16} color="#ffffff" />
                         </>
                       )}
                     </TouchableOpacity>
@@ -227,9 +267,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "rgba(255, 255, 255, 0.15)",
     paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 24,
+    paddingTop: 24,
+    paddingBottom: 20,
     justifyContent: "space-between",
+  },
+  bottomCardTight: {
+    paddingTop: 16,
+    paddingBottom: 12,
   },
   contentBox: {
     flex: 1,
@@ -239,10 +283,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mainTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "900",
     color: "#ffffff",
-    lineHeight: 32,
+    lineHeight: 30,
     textAlign: "center",
   },
   orangeTitle: {
@@ -254,12 +298,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#cbd5e1",
     textAlign: "center",
-    marginTop: 6,
+    marginTop: 4,
     paddingHorizontal: 10,
-    lineHeight: 18,
+    lineHeight: 17,
   },
   actionContainer: {
-    marginVertical: 18,
+    marginVertical: 10,
     width: "100%",
   },
   mainOrangeBtn: {
@@ -267,8 +311,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#f97316",
-    height: 52,
-    borderRadius: 26,
+    height: 48,
+    borderRadius: 24,
     gap: 8,
     shadowColor: "#f97316",
     shadowOffset: { width: 0, height: 4 },
@@ -285,7 +329,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   emailInputWrapper: {
-    gap: 12,
+    gap: 8,
   },
   inputPill: {
     flexDirection: "row",
@@ -293,9 +337,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e293b",
     borderWidth: 1.5,
     borderColor: "#f97316",
-    borderRadius: 26,
+    borderRadius: 24,
     paddingHorizontal: 16,
-    height: 52,
+    height: 48,
   },
   textInput: {
     flex: 1,

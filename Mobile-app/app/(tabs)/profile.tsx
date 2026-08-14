@@ -18,7 +18,6 @@ import { User, MapPin, Package, PhoneCall, LogOut, Plus, Check, Trash2 } from "l
 import { useAuthStore } from "../../store/useAuthStore";
 import { useShopStore } from "../../store/useShopStore";
 import { Toast } from "../../components/Toast";
-import type { Address } from "../../lib/types";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -37,29 +36,41 @@ export default function ProfileScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Address Form State
+  // Address Form State (Empty by default)
   const [label, setLabel] = useState("Home");
-  const [name, setName] = useState(user?.name || "Demo Shopper");
-  const [phone, setPhone] = useState(user?.phone || "9000000000");
+  const [name, setName] = useState(user?.name || "");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [line1, setLine1] = useState("");
   const [landmark, setLandmark] = useState("");
   const [pincode, setPincode] = useState("734001");
 
   const handleSaveAddress = () => {
-    if (!line1 || !pincode) {
-      setToastMessage("Please enter street address and pincode");
+    if (!name.trim()) {
+      setToastMessage("Please enter full name");
+      return;
+    }
+    if (!phone.trim() || phone.trim().length < 10) {
+      setToastMessage("Phone number is compulsory (at least 10 digits)");
+      return;
+    }
+    if (!line1.trim()) {
+      setToastMessage("Please enter street address");
+      return;
+    }
+    if (!pincode.trim() || pincode.trim().length < 6) {
+      setToastMessage("Please enter a valid 6-digit pincode");
       return;
     }
 
     addAddress({
-      label,
-      name,
-      phone,
-      line1,
-      landmark,
+      label: label || "Home",
+      name: name.trim(),
+      phone: phone.trim(),
+      line1: line1.trim(),
+      landmark: landmark.trim(),
       city: "Siliguri",
       state: "West Bengal",
-      pincode,
+      pincode: pincode.trim(),
       isDefault: addresses.length === 0,
     });
 
@@ -76,19 +87,18 @@ export default function ProfileScreen() {
         <Text style={styles.headerTitle}>Account & Profile</Text>
       </View>
 
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : "Q"}
+              {user?.name ? user.name.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : "Q"}
             </Text>
           </View>
 
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.name || "Demo Shopper"}</Text>
-            <Text style={styles.userContact}>{user?.email || user?.phone || "+91 90000 00000"}</Text>
+            <Text style={styles.userName}>{user?.name || user?.email || "QuickCart User"}</Text>
+            <Text style={styles.userContact}>{user?.email || user?.phone || "Logged In"}</Text>
             <View style={styles.roleBadge}>
               <Text style={styles.roleText}>CUSTOMER</Text>
             </View>
@@ -108,42 +118,49 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          {addresses.map((addr) => (
-            <View key={addr.id} style={[styles.addrBox, addr.isDefault && styles.addrBoxDefault]}>
-              <View style={styles.addrHeader}>
-                <View style={styles.labelRow}>
-                  <Text style={styles.addrLabel}>{addr.label || "Address"}</Text>
-                  {addr.isDefault ? (
-                    <View style={styles.defaultBadge}>
-                      <Text style={styles.defaultBadgeText}>DEFAULT</Text>
-                    </View>
-                  ) : null}
+          {addresses.length > 0 ? (
+            addresses.map((addr) => (
+              <View key={addr.id} style={[styles.addrBox, addr.isDefault && styles.addrBoxDefault]}>
+                <View style={styles.addrHeader}>
+                  <View style={styles.labelRow}>
+                    <Text style={styles.addrLabel}>{addr.label || "Address"}</Text>
+                    {addr.isDefault ? (
+                      <View style={styles.defaultBadge}>
+                        <Text style={styles.defaultBadgeText}>DEFAULT</Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.addrActions}>
+                    {!addr.isDefault ? (
+                      <TouchableOpacity
+                        onPress={() => setDefaultAddress(addr.id)}
+                        style={styles.setDefBtn}
+                      >
+                        <Check size={14} color="#16a34a" />
+                      </TouchableOpacity>
+                    ) : null}
+
+                    {addresses.length > 1 ? (
+                      <TouchableOpacity onPress={() => deleteAddress(addr.id)}>
+                        <Trash2 size={14} color="#dc2626" />
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
                 </View>
 
-                <View style={styles.addrActions}>
-                  {!addr.isDefault ? (
-                    <TouchableOpacity
-                      onPress={() => setDefaultAddress(addr.id)}
-                      style={styles.setDefBtn}
-                    >
-                      <Check size={14} color="#16a34a" />
-                    </TouchableOpacity>
-                  ) : null}
-
-                  {addresses.length > 1 ? (
-                    <TouchableOpacity onPress={() => deleteAddress(addr.id)}>
-                      <Trash2 size={14} color="#dc2626" />
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
+                <Text style={styles.addrName}>{addr.name} ({addr.phone})</Text>
+                <Text style={styles.addrText}>
+                  {addr.line1}, {addr.landmark ? `${addr.landmark}, ` : ""}{addr.city} - {addr.pincode}
+                </Text>
               </View>
-
-              <Text style={styles.addrName}>{addr.name} ({addr.phone})</Text>
-              <Text style={styles.addrText}>
-                {addr.line1}, {addr.landmark ? `${addr.landmark}, ` : ""}{addr.city} - {addr.pincode}
-              </Text>
+            ))
+          ) : (
+            <View style={styles.emptyAddrBox}>
+              <Text style={styles.emptyAddrTitle}>No saved addresses</Text>
+              <Text style={styles.emptyAddrSub}>Tap 'Add New' above to enter your delivery address.</Text>
             </View>
-          ))}
+          )}
         </View>
 
         {/* Quick Links Section */}
@@ -160,7 +177,7 @@ export default function ProfileScreen() {
 
           <View style={styles.linkRow}>
             <PhoneCall size={18} color="#0f172a" />
-            <Text style={styles.linkText}>Support: +91 90000 00000</Text>
+            <Text style={styles.linkText}>Support: QuickCart Siliguri</Text>
           </View>
         </View>
 
@@ -183,6 +200,22 @@ export default function ProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Add Delivery Address</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Full Name *"
+              value={name}
+              onChangeText={setName}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Phone Number (Compulsory) *"
+              keyboardType="phone-pad"
+              maxLength={10}
+              value={phone}
+              onChangeText={setPhone}
+            />
 
             <TextInput
               style={styles.input}
@@ -344,6 +377,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "900",
     color: "#ea580c",
+  },
+  emptyAddrBox: {
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  emptyAddrTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#475569",
+  },
+  emptyAddrSub: {
+    fontSize: 11,
+    color: "#94a3b8",
+    marginTop: 2,
   },
   addrBox: {
     backgroundColor: "#f8fafc",

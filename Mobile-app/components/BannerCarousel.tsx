@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Dimensions, ScrollView, Image } from "react-native";
+import { Zap } from "lucide-react-native";
 import type { Banner } from "../lib/types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -20,25 +21,27 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        bounces={false}
       >
         {activeBanners.map((banner) => (
-          <View key={banner.id} style={styles.card}>
-            {banner.imageUrl ? (
-              <Image source={{ uri: banner.imageUrl }} style={styles.bgImage} />
-            ) : null}
-            <View style={styles.overlay} />
-            <View style={styles.textContent}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeEmoji}>{banner.emoji || "⚡"}</Text>
-                <Text style={styles.badgeText}>QUICKCART EXPRESS</Text>
+          <View key={banner.id} style={styles.slideWrapper}>
+            <View style={styles.card}>
+              {banner.imageUrl ? (
+                <Image source={{ uri: banner.imageUrl }} style={styles.bgImage} resizeMode="cover" />
+              ) : null}
+              <View style={styles.overlay} />
+              <View style={styles.textContent}>
+                <View style={styles.badge}>
+                  <Zap size={12} color="#ffffff" fill="#ffffff" />
+                  <Text style={styles.badgeText}>QUICKCART EXPRESS</Text>
+                </View>
+                <Text style={styles.title} numberOfLines={2}>
+                  {banner.title}
+                </Text>
+                <Text style={styles.subtitle} numberOfLines={2}>
+                  {banner.subtitle}
+                </Text>
               </View>
-              <Text style={styles.title} numberOfLines={2}>
-                {banner.title}
-              </Text>
-              <Text style={styles.subtitle} numberOfLines={2}>
-                {banner.subtitle}
-              </Text>
             </View>
           </View>
         ))}
@@ -50,10 +53,12 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 8,
+    width: "100%",
   },
-  scrollContent: {
-    paddingHorizontal: 16,
-    gap: 12,
+  slideWrapper: {
+    width: SCREEN_WIDTH,
+    alignItems: "center",
+    justifyContent: "center",
   },
   card: {
     width: CARD_WIDTH,
@@ -86,9 +91,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 4,
     marginBottom: 6,
-  },
-  badgeEmoji: {
-    fontSize: 11,
   },
   badgeText: {
     color: "#ffffff",

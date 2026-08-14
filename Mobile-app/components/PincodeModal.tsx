@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { X, Crosshair } from "lucide-react-native";
 import { useLocationStore } from "../store/useLocationStore";
+import { SERVICEABLE_PINCODES } from "../lib/data";
 
 const SILIGURI_PINCODES = [
   { pin: "734001", area: "Hill Cart Road, Siliguri" },
@@ -36,7 +37,11 @@ export function PincodeModal({ visible, onClose, onToast }: PincodeModalProps) {
     setErrorMsg("");
     const res = await detectLocation();
     if (res) {
-      onToast(`Location set to ${res.pincode} (${res.city}) 🎉`);
+      if (res.isServiceable) {
+        onToast(`Location set to ${res.pincode} (${res.city}) 🎉`);
+      } else {
+        onToast(`Pincode ${res.pincode} is currently unserviceable ⚠️`);
+      }
       onClose();
     } else {
       setErrorMsg("Unable to detect location automatically. Please select below.");
@@ -50,9 +55,15 @@ export function PincodeModal({ visible, onClose, onToast }: PincodeModalProps) {
       return;
     }
     const match = SILIGURI_PINCODES.find((s) => s.pin === pin);
-    const areaName = match ? match.area : "Siliguri Area";
+    const areaName = match ? match.area : "Custom Area";
     setPincode(pin, areaName);
-    onToast(`Pincode set to ${pin} 👍`);
+
+    if (SERVICEABLE_PINCODES.includes(pin)) {
+      onToast(`Pincode set to ${pin} 👍`);
+    } else {
+      onToast(`Pincode ${pin} is currently unserviceable ⚠️`);
+    }
+
     setInputPin("");
     setErrorMsg("");
     onClose();
@@ -60,7 +71,7 @@ export function PincodeModal({ visible, onClose, onToast }: PincodeModalProps) {
 
   const handleSelectArea = (pin: string, area: string) => {
     setPincode(pin, area);
-    onToast(`Pincode set to ${pin} (${area})`);
+    onToast(`Pincode set to ${pin} (${area}) 👍`);
     setErrorMsg("");
     onClose();
   };

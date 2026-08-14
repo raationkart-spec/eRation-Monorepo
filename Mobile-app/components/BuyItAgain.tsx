@@ -1,6 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
-import { RotateCcw } from "lucide-react-native";
+import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
+import { RotateCcw, ShoppingBag } from "lucide-react-native";
 import type { Product } from "../lib/types";
 import { formatMoney } from "../lib/format";
 import { AddToCartButton } from "./AddToCartButton";
@@ -29,7 +29,7 @@ export function BuyItAgain({ products }: BuyItAgainProps) {
               {product.imageUrl ? (
                 <Image source={{ uri: product.imageUrl }} style={styles.image} resizeMode="contain" />
               ) : (
-                <Text style={styles.emoji}>{product.emoji || "📦"}</Text>
+                <ShoppingBag size={24} color="#cbd5e1" />
               )}
             </View>
             <Text style={styles.name} numberOfLines={1}>
@@ -102,9 +102,6 @@ const styles = StyleSheet.create({
   image: {
     width: "80%",
     height: "80%",
-  },
-  emoji: {
-    fontSize: 32,
   },
   name: {
     fontSize: 11,

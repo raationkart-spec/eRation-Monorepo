@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft, ShieldCheck, Truck, RefreshCw } from "lucide-react-native";
+import { ArrowLeft, ShieldCheck, Truck, ShoppingBag } from "lucide-react-native";
 
 import { AddToCartButton } from "../../components/AddToCartButton";
 import { ProductCard } from "../../components/ProductCard";
@@ -27,7 +27,6 @@ export default function ProductDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
 
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
-
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<Product | null>(null);
@@ -93,7 +92,6 @@ export default function ProductDetailScreen() {
         </Text>
       </View>
 
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Product Image Section */}
         <View style={styles.imageContainer}>
@@ -106,7 +104,7 @@ export default function ProductDetailScreen() {
           {product.imageUrl ? (
             <Image source={{ uri: product.imageUrl }} style={styles.mainImage} resizeMode="contain" />
           ) : (
-            <Text style={styles.mainEmoji}>{product.emoji || "🛍️"}</Text>
+            <ShoppingBag size={80} color="#cbd5e1" />
           )}
         </View>
 
@@ -264,9 +262,6 @@ const styles = StyleSheet.create({
   mainImage: {
     width: "80%",
     height: "80%",
-  },
-  mainEmoji: {
-    fontSize: 80,
   },
   infoCard: {
     backgroundColor: "#ffffff",

@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft, MapPin, CreditCard, ShieldCheck, Check } from "lucide-react-native";
+import { ArrowLeft, MapPin, CreditCard, ShieldCheck, Check, Plus } from "lucide-react-native";
 
 import { useCartStore } from "../store/useCartStore";
 import { useShopStore } from "../store/useShopStore";
@@ -23,7 +23,7 @@ import { BillSummary } from "../components/BillSummary";
 import { Toast } from "../components/Toast";
 import { api } from "../lib/api";
 import { formatMoney } from "../lib/format";
-import type { Product, PaymentMethod, Order } from "../lib/types";
+import type { Product, PaymentMethod, Order, Address } from "../lib/types";
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -32,17 +32,27 @@ export default function CheckoutScreen() {
 
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
 
-
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clear);
 
   const addresses = useShopStore((s) => s.addresses);
+  const addAddress = useShopStore((s) => s.addAddress);
   const appliedCoupon = useShopStore((s) => s.appliedCoupon);
   const addOrder = useShopStore((s) => s.addOrder);
   const setAppliedCoupon = useShopStore((s) => s.setAppliedCoupon);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+
+  // New Address Form State (empty by default)
+  const [formName, setFormName] = useState(user?.name || "");
+  const [formPhone, setFormPhone] = useState(user?.phone || "");
+  const [formLine1, setFormLine1] = useState("");
+  const [formLandmark, setFormLandmark] = useState("");
+  const [formPincode, setFormPincode] = useState("734001");
+  const [formLabel, setFormLabel] = useState("Home");
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [notes, setNotes] = useState("");
   const [placing, setPlacing] = useState(false);
@@ -59,11 +69,16 @@ export default function CheckoutScreen() {
     }
     loadData();
 
-    const def = addresses.find((a) => a.isDefault) || addresses[0];
-    if (def) setSelectedAddressId(def.id);
+    if (addresses.length > 0) {
+      const def = addresses.find((a) => a.isDefault) || addresses[0];
+      setSelectedAddressId(def.id);
+      setShowNewAddressForm(false);
+    } else {
+      setShowNewAddressForm(true);
+    }
   }, [addresses]);
 
-  const selectedAddress = addresses.find((a) => a.id === selectedAddressId) || addresses[0];
+  const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
   const cartProductMap = items
     .map((item) => {
@@ -89,9 +104,48 @@ export default function CheckoutScreen() {
   );
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddress) {
-      setToastMessage("Please select a delivery address");
-      return;
+    let finalAddress: Omit<Address, "id"> | Address | undefined = selectedAddress;
+
+    // Validate phone number and address if submitting new address or if no selected address
+    if (showNewAddressForm || !finalAddress) {
+      if (!formName.trim()) {
+        setToastMessage("Please enter your full name");
+        return;
+      }
+      if (!formPhone.trim() || formPhone.trim().length < 10) {
+        setToastMessage("Phone number is compulsory (at least 10 digits)");
+        return;
+      }
+      if (!formLine1.trim()) {
+        setToastMessage("Please enter your delivery street address");
+        return;
+      }
+      if (!formPincode.trim() || formPincode.trim().length < 6) {
+        setToastMessage("Please enter a valid 6-digit pincode");
+        return;
+      }
+
+      // Save the new address
+      const newAddr = addAddress({
+        label: formLabel || "Home",
+        name: formName.trim(),
+        phone: formPhone.trim(),
+        line1: formLine1.trim(),
+        landmark: formLandmark.trim(),
+        city: "Siliguri",
+        state: "West Bengal",
+        pincode: formPincode.trim(),
+        isDefault: addresses.length === 0,
+      });
+
+      finalAddress = newAddr;
+      setSelectedAddressId(newAddr.id);
+    } else {
+      // Validating phone number on existing selected address
+      if (!finalAddress.phone || finalAddress.phone.trim().length < 10) {
+        setToastMessage("Phone number is compulsory (at least 10 digits)");
+        return;
+      }
     }
 
     setPlacing(true);
@@ -119,15 +173,15 @@ export default function CheckoutScreen() {
       orderNumber: newOrderNumber,
       items: orderItems,
       address: {
-        name: selectedAddress.name,
-        phone: selectedAddress.phone,
-        line1: selectedAddress.line1,
-        line2: selectedAddress.line2,
-        landmark: selectedAddress.landmark,
-        city: selectedAddress.city,
-        state: selectedAddress.state,
-        pincode: selectedAddress.pincode,
-        label: selectedAddress.label,
+        name: finalAddress.name,
+        phone: finalAddress.phone,
+        line1: finalAddress.line1,
+        line2: finalAddress.line2 || "",
+        landmark: finalAddress.landmark || "",
+        city: finalAddress.city,
+        state: finalAddress.state,
+        pincode: finalAddress.pincode,
+        label: finalAddress.label,
       },
       status: "PLACED",
       paymentMethod,
@@ -147,8 +201,8 @@ export default function CheckoutScreen() {
           at: nowIso,
         },
       ],
-      customerName: user?.name || selectedAddress.name || "Customer",
-      customerPhone: user?.phone || selectedAddress.phone || "9000000000",
+      customerName: user?.name || finalAddress.name || "Customer",
+      customerPhone: user?.phone || finalAddress.phone || "",
     };
 
     try {
@@ -174,38 +228,114 @@ export default function CheckoutScreen() {
         <Text style={styles.headerTitle}>Checkout</Text>
       </View>
 
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Address Selection Card */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <MapPin size={18} color="#ea580c" />
-            <Text style={styles.cardTitle}>Select Delivery Address</Text>
+            <Text style={styles.cardTitle}>Delivery Address</Text>
           </View>
 
-          {addresses.map((addr) => {
-            const isSelected = addr.id === selectedAddressId;
-            return (
+          {addresses.length > 0 && !showNewAddressForm ? (
+            <View>
+              {addresses.map((addr) => {
+                const isSelected = addr.id === selectedAddressId;
+                return (
+                  <TouchableOpacity
+                    key={addr.id}
+                    style={[styles.addrBox, isSelected && styles.addrBoxSelected]}
+                    onPress={() => setSelectedAddressId(addr.id)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.addrRow}>
+                      <View style={[styles.radio, isSelected && styles.radioSelected]}>
+                        {isSelected ? <Check size={12} color="#ffffff" /> : null}
+                      </View>
+                      <View style={styles.addrTextWrapper}>
+                        <Text style={styles.addrLabel}>{addr.label || "Home"} - {addr.name}</Text>
+                        <Text style={styles.addrDetail}>
+                          {addr.line1}, {addr.city} - {addr.pincode}
+                        </Text>
+                        <Text style={styles.addrPhone}>Phone: {addr.phone}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+
               <TouchableOpacity
-                key={addr.id}
-                style={[styles.addrBox, isSelected && styles.addrBoxSelected]}
-                onPress={() => setSelectedAddressId(addr.id)}
-                activeOpacity={0.8}
+                style={styles.addAddrBtn}
+                onPress={() => setShowNewAddressForm(true)}
               >
-                <View style={styles.addrRow}>
-                  <View style={[styles.radio, isSelected && styles.radioSelected]}>
-                    {isSelected ? <Check size={12} color="#ffffff" /> : null}
-                  </View>
-                  <View style={styles.addrTextWrapper}>
-                    <Text style={styles.addrLabel}>{addr.label || "Home"}</Text>
-                    <Text style={styles.addrDetail}>
-                      {addr.line1}, {addr.city} - {addr.pincode}
-                    </Text>
-                  </View>
-                </View>
+                <Plus size={14} color="#ea580c" />
+                <Text style={styles.addAddrText}>Add Another Delivery Address</Text>
               </TouchableOpacity>
-            );
-          })}
+            </View>
+          ) : (
+            <View style={styles.formContainer}>
+              <Text style={styles.formSectionSubtitle}>
+                Please enter your delivery details. All fields marked with * are compulsory.
+              </Text>
+
+              <Text style={styles.inputLabel}>Full Name *</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your full name"
+                placeholderTextColor="#94a3b8"
+                value={formName}
+                onChangeText={setFormName}
+              />
+
+              <Text style={styles.inputLabel}>Phone Number (Compulsory) *</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter 10-digit mobile number"
+                placeholderTextColor="#94a3b8"
+                keyboardType="phone-pad"
+                maxLength={10}
+                value={formPhone}
+                onChangeText={setFormPhone}
+              />
+
+              <Text style={styles.inputLabel}>House No. / Building / Street Address *</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g. 142 Hill Cart Road, Pradhan Nagar"
+                placeholderTextColor="#94a3b8"
+                value={formLine1}
+                onChangeText={setFormLine1}
+              />
+
+              <Text style={styles.inputLabel}>Landmark (Optional)</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g. Near Air View Complex"
+                placeholderTextColor="#94a3b8"
+                value={formLandmark}
+                onChangeText={setFormLandmark}
+              />
+
+              <Text style={styles.inputLabel}>Pincode *</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g. 734001"
+                placeholderTextColor="#94a3b8"
+                keyboardType="number-pad"
+                maxLength={6}
+                value={formPincode}
+                onChangeText={setFormPincode}
+              />
+
+              {addresses.length > 0 ? (
+                <TouchableOpacity
+                  style={styles.cancelAddrBtn}
+                  onPress={() => setShowNewAddressForm(false)}
+                >
+                  <Text style={styles.cancelAddrText}>Cancel & Use Saved Address</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          )}
         </View>
 
         {/* Payment Method Card */}
@@ -385,6 +515,65 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginTop: 2,
   },
+  addrPhone: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#ea580c",
+    marginTop: 2,
+  },
+  addAddrBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "#ea580c",
+    borderRadius: 12,
+    backgroundColor: "#fff7ed",
+    marginTop: 4,
+  },
+  addAddrText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#ea580c",
+  },
+  formContainer: {
+    gap: 6,
+  },
+  formSectionSubtitle: {
+    fontSize: 11,
+    color: "#64748b",
+    marginBottom: 8,
+  },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#334155",
+    marginTop: 4,
+  },
+  textInput: {
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#0f172a",
+  },
+  cancelAddrBtn: {
+    alignItems: "center",
+    paddingVertical: 10,
+    marginTop: 6,
+  },
+  cancelAddrText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#64748b",
+  },
   payOption: {
     flexDirection: "row",
     alignItems: "center",
@@ -409,12 +598,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#64748b",
     marginTop: 1,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#334155",
-    marginBottom: 6,
   },
   noteInput: {
     backgroundColor: "#f8fafc",

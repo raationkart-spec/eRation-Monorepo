@@ -1,7 +1,7 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
-import { Home, LayoutGrid, ShoppingBag, Package, User } from "lucide-react-native";
+import { Home, LayoutGrid, ShoppingBag, Package } from "lucide-react-native";
 import { useCartStore } from "../../store/useCartStore";
 
 export default function TabLayout() {
@@ -67,8 +67,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
-          tabBarIcon: ({ color, size }) => <User size={size || 20} color={color} />,
+          href: null,
         }}
       />
     </Tabs>

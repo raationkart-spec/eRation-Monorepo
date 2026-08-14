@@ -145,7 +145,6 @@ export default function CartScreen() {
         </TouchableOpacity>
       </View>
 
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Cart Item Cards */}
         <View style={styles.itemsCard}>
@@ -157,7 +156,7 @@ export default function CartScreen() {
                   {product.imageUrl ? (
                     <Image source={{ uri: product.imageUrl }} style={styles.itemImage} resizeMode="contain" />
                   ) : (
-                    <Text style={styles.itemEmoji}>{product.emoji || "🛍️"}</Text>
+                    <ShoppingBag size={24} color="#cbd5e1" />
                   )}
                 </View>
 
@@ -356,9 +355,6 @@ const styles = StyleSheet.create({
   itemImage: {
     width: "80%",
     height: "80%",
-  },
-  itemEmoji: {
-    fontSize: 24,
   },
   itemDetails: {
     flex: 1,

@@ -12,16 +12,45 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Apple,
+  Milk,
+  Coffee,
+  Sparkles,
+  Package,
+  Snowflake,
+  Wheat,
+  LayoutGrid,
+} from "lucide-react-native";
 
 import { ProductCard } from "../../components/ProductCard";
+import { UnserviceableLocationView } from "../../components/UnserviceableLocationView";
+import { PincodeModal } from "../../components/PincodeModal";
+import { Toast } from "../../components/Toast";
+import { useLocationStore } from "../../store/useLocationStore";
 import { api } from "../../lib/api";
 import type { Category, Product } from "../../lib/types";
+
+const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ size: number; color: string }>> = {
+  "fruits-vegetables": Apple,
+  "dairy-eggs": Milk,
+  "bakery-breads": Coffee,
+  "snacks-beverages": Sparkles,
+  "household-cleaning": Package,
+  "personal-care": Sparkles,
+  "frozen-foods": Snowflake,
+  "staples-grains": Wheat,
+};
 
 export default function SingleCategoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { isServiceable } = useLocationStore();
+
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
 
@@ -49,6 +78,8 @@ export default function SingleCategoryScreen() {
     loadData();
   }, [slug]);
 
+  const IconComp = (slug && CATEGORY_ICON_MAP[slug]) || LayoutGrid;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
@@ -56,13 +87,16 @@ export default function SingleCategoryScreen() {
           <ArrowLeft size={20} color="#0f172a" />
         </TouchableOpacity>
         <View style={styles.headerTitleWrapper}>
-          <Text style={styles.headerEmoji}>{category?.emoji || "🥦"}</Text>
+          <IconComp size={18} color="#ea580c" />
           <Text style={styles.headerTitle}>{category?.name || "Category"}</Text>
         </View>
       </View>
 
-
-      {loading ? (
+      {!isServiceable ? (
+        <UnserviceableLocationView
+          onOpenPincodeModal={() => setLocationModalVisible(true)}
+        />
+      ) : loading ? (
         <View style={styles.loadingBox}>
           <ActivityIndicator size="large" color="#ea580c" />
         </View>
@@ -83,6 +117,15 @@ export default function SingleCategoryScreen() {
           </View>
         </ScrollView>
       )}
+
+      {/* Pincode Modal */}
+      <PincodeModal
+        visible={locationModalVisible}
+        onClose={() => setLocationModalVisible(false)}
+        onToast={(msg) => setToastMessage(msg)}
+      />
+
+      <Toast message={toastMessage} onHide={() => setToastMessage(null)} />
     </SafeAreaView>
   );
 }
@@ -109,9 +152,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-  },
-  headerEmoji: {
-    fontSize: 18,
   },
   headerTitle: {
     fontSize: 16,

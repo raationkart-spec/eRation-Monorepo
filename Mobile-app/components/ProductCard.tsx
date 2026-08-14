@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { useRouter } from "expo-router";
+import { ShoppingBag } from "lucide-react-native";
 import type { Product } from "../lib/types";
 import { discountPercent, formatMoney } from "../lib/format";
 import { AddToCartButton } from "./AddToCartButton";
@@ -30,7 +31,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.imageUrl ? (
           <Image source={{ uri: product.imageUrl }} style={styles.productImage} resizeMode="contain" />
         ) : (
-          <Text style={styles.emojiPlaceholder}>{product.emoji || "🛍️"}</Text>
+          <ShoppingBag size={34} color="#cbd5e1" />
         )}
       </TouchableOpacity>
 
@@ -104,9 +105,6 @@ const styles = StyleSheet.create({
     width: "85%",
     height: "85%",
   },
-  emojiPlaceholder: {
-    fontSize: 38,
-  },
   productTitle: {
     fontSize: 12,
     fontWeight: "700",
@@ -151,4 +149,3 @@ const styles = StyleSheet.create({
     minWidth: 62,
   },
 });
-

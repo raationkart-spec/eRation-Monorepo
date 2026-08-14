@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Zap, ChevronDown, Search, User } from "lucide-react-native";
+import { MapPin, ChevronDown, Search, User } from "lucide-react-native";
 import { useLocationStore } from "../store/useLocationStore";
 
 interface HeaderProps {
@@ -20,22 +20,20 @@ export function Header({ onOpenLocationModal, showSearch = true }: HeaderProps) 
   return (
     <View style={[styles.container, { paddingTop: topPadding + 6 }]}>
       <View style={styles.topRow}>
-
         <TouchableOpacity
           style={styles.locationButton}
           onPress={onOpenLocationModal}
           activeOpacity={0.8}
         >
-          <View style={styles.zapIconWrapper}>
-            <Zap size={18} color="#ea580c" fill="#ffedd5" />
+          <View style={styles.pinIconWrapper}>
+            <MapPin size={18} color="#ea580c" />
           </View>
           <View style={styles.locationTextWrapper}>
-            <Text style={styles.deliveryTimeText}>10 mins</Text>
             <View style={styles.pincodeRow}>
               <Text style={styles.pincodeText} numberOfLines={1}>
                 {pincode} · {city}
               </Text>
-              <ChevronDown size={13} color="#64748b" />
+              <ChevronDown size={14} color="#ea580c" />
             </View>
           </View>
         </TouchableOpacity>
@@ -83,7 +81,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  zapIconWrapper: {
+  pinIconWrapper: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -94,24 +92,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   locationTextWrapper: {
-    alignItems: "flex-start",
-  },
-  deliveryTimeText: {
-    fontSize: 14,
-    fontWeight: "900",
-    color: "#0f172a",
-    lineHeight: 18,
+    justifyContent: "center",
   },
   pincodeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 2,
+    gap: 4,
   },
   pincodeText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#64748b",
-    maxWidth: 160,
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#0f172a",
+    maxWidth: 200,
   },
   actionsRow: {
     flexDirection: "row",

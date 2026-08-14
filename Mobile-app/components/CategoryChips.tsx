@@ -1,7 +1,34 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
+import {
+  Apple,
+  Milk,
+  Coffee,
+  Sparkles,
+  Package,
+  Snowflake,
+  Wheat,
+  LayoutGrid,
+} from "lucide-react-native";
 import type { Category } from "../lib/types";
+
+const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ size: number; color: string }>> = {
+  "fruits-vegetables": Apple,
+  "fruits-veg": Apple,
+  "dairy-eggs": Milk,
+  "dairy": Milk,
+  "bakery-breads": Coffee,
+  "bakery": Coffee,
+  "snacks-beverages": Sparkles,
+  "snacks": Sparkles,
+  "household-cleaning": Package,
+  "household": Package,
+  "personal-care": Sparkles,
+  "frozen-foods": Snowflake,
+  "staples-grains": Wheat,
+  "staples": Wheat,
+};
 
 interface CategoryChipsProps {
   categories: Category[];
@@ -24,6 +51,9 @@ export function CategoryChips({ categories, selectedSlug, onSelect }: CategoryCh
       >
         {activeCats.map((cat) => {
           const isSelected = selectedSlug === cat.slug;
+          const IconComp = CATEGORY_ICON_MAP[cat.slug] || Apple;
+          const iconColor = isSelected ? "#c2410c" : "#ea580c";
+
           return (
             <TouchableOpacity
               key={cat.id}
@@ -37,7 +67,7 @@ export function CategoryChips({ categories, selectedSlug, onSelect }: CategoryCh
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.emoji}>{cat.emoji}</Text>
+              <IconComp size={15} color={iconColor} />
               <Text style={[styles.name, isSelected && styles.nameSelected]}>
                 {cat.name}
               </Text>
@@ -71,9 +101,6 @@ const styles = StyleSheet.create({
   chipSelected: {
     backgroundColor: "#fff7ed",
     borderColor: "#ea580c",
-  },
-  emoji: {
-    fontSize: 14,
   },
   name: {
     fontSize: 12,
