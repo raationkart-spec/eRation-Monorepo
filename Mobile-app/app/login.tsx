@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Zap, Phone, Chrome } from "lucide-react-native";
+import { Zap, Phone, Globe } from "lucide-react-native";
 import { useAuthStore } from "../store/useAuthStore";
 
 export default function LoginScreen() {
@@ -72,7 +72,7 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity style={styles.googleBtn} onPress={handleGoogleLogin} activeOpacity={0.85}>
-            <Chrome size={18} color="#ea580c" />
+            <Globe size={18} color="#ea580c" />
             <Text style={styles.googleBtnText}>One-Tap Google Demo Login</Text>
           </TouchableOpacity>
 

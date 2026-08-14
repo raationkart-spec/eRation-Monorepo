@@ -36,7 +36,7 @@ jobs:
 
       - name: Install mobile dependencies
         working-directory: Mobile-app
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Prebuild native Android project
         working-directory: Mobile-app
@@ -44,10 +44,6 @@ jobs:
           EXPO_PUBLIC_API_URL: "https://quickcart-nu-nine.vercel.app"
           NODE_ENV: "production"
         run: npx expo prebuild --platform android --no-install
-
-      - name: Install any missing prebuild dependencies
-        working-directory: Mobile-app
-        run: npm install
 
       - name: Make Gradle wrapper executable
         run: chmod +x Mobile-app/android/gradlew
