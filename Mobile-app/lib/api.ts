@@ -1,23 +1,34 @@
 import { BANNERS, CATEGORIES, DEFAULT_CONFIG, INITIAL_COUPONS, PRODUCTS, SERVICEABLE_PINCODES } from "./data";
 import type { Banner, Category, Coupon, FlashDeal, Order, Product, StoreConfig } from "./types";
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "https://quickcart-nu-nine.vercel.app";
+const getApiBaseUrl = (): string => {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (envUrl && typeof envUrl === "string" && envUrl !== "undefined" && envUrl !== "null" && envUrl.startsWith("http")) {
+    return envUrl.replace(/\/$/, "");
+  }
+  return "https://quickcart-nu-nine.vercel.app";
+};
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 6000): Promise<Response> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
+const API_BASE_URL = getApiBaseUrl();
+
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> {
+  let timeoutId: any;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
   try {
-    const response = await fetch(url, {
+    const fetchPromise = fetch(url, {
       ...options,
-      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
       },
     });
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
     return response;
   } finally {
-    clearTimeout(id);
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 
@@ -168,7 +179,7 @@ export const api = {
    */
   async sendOtp(email: string): Promise<{ success: boolean; message?: string; devOtp?: string; error?: string }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/otp`, {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/send-otp`, {
         method: "POST",
         body: JSON.stringify({ email }),
       });
@@ -188,9 +199,9 @@ export const api = {
    */
   async verifyOtp(email: string, code: string): Promise<{ success: boolean; token?: string; user?: any; error?: string }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/verify`, {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/verify-otp`, {
         method: "POST",
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email, otp: code }),
       });
       if (res.ok) {
         const data = await res.json();

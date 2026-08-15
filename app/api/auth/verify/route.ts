@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rateLimit } from "@/lib/rateLimit";
 
+/**
+ * Alias route: POST /api/auth/verify
+ * Delegated from legacy mobile APK builds that call /api/auth/verify.
+ * Forwards to the canonical /api/auth/verify-otp logic.
+ * Accepts both `otp` and `code` keys for maximum compatibility.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -25,7 +31,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check valid OTP in DB (or accept demo OTP 123456 if testing)
     const validRecord = await db.emailOtp.findFirst({
       where: {
         email: cleanEmail,
@@ -47,10 +52,7 @@ export async function POST(request: NextRequest) {
       await db.emailOtp.delete({ where: { id: validRecord.id } });
     }
 
-    // Upsert user in database
-    let user = await db.user.findUnique({
-      where: { email: cleanEmail },
-    });
+    let user = await db.user.findUnique({ where: { email: cleanEmail } });
 
     if (!user) {
       user = await db.user.create({
@@ -62,12 +64,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      user,
-    });
+    return NextResponse.json({ success: true, user });
   } catch (error) {
-    console.error("POST /api/auth/verify-otp error:", error);
+    console.error("POST /api/auth/verify (alias) error:", error);
     return NextResponse.json(
       { error: "Failed to verify OTP" },
       { status: 500 }
