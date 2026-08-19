@@ -170,3 +170,15 @@ export interface User {
   role: Role;
   image?: string;
 }
+
+// ─── Bulk Import Types ───
+export type ImportRowStatus = "valid" | "incomplete" | "error";
+
+export interface ImportRow {
+  raw: Record<string, string>;
+  product: Partial<Product> & { name: string };
+  status: ImportRowStatus;
+  issues: string[];
+  activeOverride?: boolean;
+}
+

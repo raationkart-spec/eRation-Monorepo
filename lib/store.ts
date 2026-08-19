@@ -92,6 +92,7 @@ interface CatalogState {
   flashDeals: FlashDeal[];
   setFlashDeals: (d: FlashDeal[]) => void;
   upsertProduct: (p: Product) => void;
+  bulkUpsertProducts: (products: Product[]) => void;
   deleteProduct: (id: string) => void;
   adjustStock: (id: string, changeQty: number) => void;
   upsertCategory: (c: Category) => void;
@@ -155,6 +156,20 @@ export const useCatalog = create<CatalogState>()(
               ? s.products.map((x) => (x.id === p.id ? p : x))
               : [...s.products, p],
           };
+        }),
+      bulkUpsertProducts: (incoming) =>
+        set((s) => {
+          const byId = new Map(s.products.map((p) => [p.id, p]));
+          const bySlug = new Map(s.products.map((p) => [p.slug, p]));
+          incoming.forEach((p) => {
+            const existingId = p.id ? byId.get(p.id)?.id : bySlug.get(p.slug)?.id;
+            const finalId =
+              existingId ||
+              p.id ||
+              "imp_" + Date.now() + Math.random().toString(36).substring(2, 7);
+            byId.set(finalId, { ...p, id: finalId } as Product);
+          });
+          return { products: Array.from(byId.values()) };
         }),
       deleteProduct: (id) =>
         set((s) => ({

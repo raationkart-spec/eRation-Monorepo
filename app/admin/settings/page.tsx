@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Trash2, RotateCcw } from "lucide-react";
+import { Trash2, RotateCcw, Loader2 } from "lucide-react";
 import { useCatalog } from "@/lib/store";
 import { useToast } from "@/components/toast";
 import { AdminTableSkeleton } from "@/components/skeletons";
@@ -11,6 +11,7 @@ export default function AdminSettings() {
   const config = useCatalog((s) => s.config);
   const setConfig = useCatalog((s) => s.setConfig);
   const pincodes = useCatalog((s) => s.pincodes);
+  const setPincodesFull = useCatalog((s) => s.setPincodesFull);
   const addPincodes = useCatalog((s) => s.addPincodes);
   const removePincode = useCatalog((s) => s.removePincode);
   const resetCatalog = useCatalog((s) => s.resetCatalog);
@@ -24,31 +25,88 @@ export default function AdminSettings() {
     free_delivery_above: String(config.free_delivery_above / 100),
   });
   const [newPins, setNewPins] = useState("");
+  const [saving, setSaving] = useState(false);
 
   if (!hydrated) return <AdminTableSkeleton />;
 
-  const saveConfig = () => {
+  const saveConfig = async () => {
+    setSaving(true);
+    const deliveryFeePaise = Math.round(parseFloat(form.delivery_fee || "0") * 100);
+    const freeAbovePaise = Math.round(
+      parseFloat(form.free_delivery_above || "0") * 100
+    );
+
+    // 1. Local Zustand update
     setConfig({
       store_name: form.store_name,
       store_phone: form.store_phone,
       store_address: form.store_address,
-      delivery_fee: Math.round(parseFloat(form.delivery_fee || "0") * 100),
-      free_delivery_above: Math.round(
-        parseFloat(form.free_delivery_above || "0") * 100
-      ),
+      delivery_fee: deliveryFeePaise,
+      free_delivery_above: freeAbovePaise,
     });
-    show("Settings saved");
+
+    // 2. Persist to DB
+    try {
+      const res = await fetch("/api/admin/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storeName: form.store_name,
+          deliveryFee: deliveryFeePaise,
+          freeDeliveryThreshold: freeAbovePaise,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to persist to database");
+      show("Settings saved to database ✅");
+    } catch (err: any) {
+      show("Saved locally (DB notice: " + err.message + ")");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const addPins = () => {
+  const addPins = async () => {
     const codes = newPins
       .split(/[\s,]+/)
       .map((c) => c.trim())
       .filter((c) => /^\d{6}$/.test(c));
-    if (codes.length) {
-      addPincodes(codes);
-      setNewPins("");
-      show(`${codes.length} pincode(s) added`);
+
+    if (!codes.length) return;
+
+    addPincodes(codes);
+    setNewPins("");
+
+    try {
+      const res = await fetch("/api/admin/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pincodesToAdd: codes }),
+      });
+      const data = await res.json();
+      if (res.ok && data.pincodes) {
+        setPincodesFull(data.pincodes);
+      }
+      show(`${codes.length} pincode(s) added & saved ✅`);
+    } catch (err) {
+      show(`${codes.length} pincode(s) added locally`);
+    }
+  };
+
+  const handleRemovePin = async (pin: string) => {
+    removePincode(pin);
+    try {
+      const res = await fetch("/api/admin/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pincodeToRemove: pin }),
+      });
+      const data = await res.json();
+      if (res.ok && data.pincodes) {
+        setPincodesFull(data.pincodes);
+      }
+      show(`Pincode ${pin} removed`);
+    } catch (err) {
+      show(`Pincode ${pin} removed locally`);
     }
   };
 
@@ -57,7 +115,7 @@ export default function AdminSettings() {
       <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
 
       {/* App config */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
         <h2 className="mb-3 font-semibold text-slate-900">Store Settings</h2>
         <div className="space-y-3">
           <SField label="Store Name">
@@ -106,14 +164,24 @@ export default function AdminSettings() {
               />
             </SField>
           </div>
-          <button onClick={saveConfig} className="btn-primary">
-            Save Settings
+          <button
+            onClick={saveConfig}
+            disabled={saving}
+            className="btn-primary disabled:opacity-50"
+          >
+            {saving ? (
+              <span className="flex items-center gap-1.5">
+                <Loader2 size={15} className="animate-spin" /> Saving...
+              </span>
+            ) : (
+              "Save Settings"
+            )}
           </button>
         </div>
       </div>
 
       {/* Pincodes */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
         <h2 className="mb-1 font-semibold text-slate-900">
           Serviceable Pincodes
         </h2>
@@ -124,11 +192,15 @@ export default function AdminSettings() {
           {pincodes.map((p) => (
             <span
               key={p}
-              className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 border border-slate-200"
             >
               {p}
-              <button onClick={() => removePincode(p)}>
-                <Trash2 size={12} className="text-slate-400" />
+              <button
+                type="button"
+                onClick={() => handleRemovePin(p)}
+                className="text-slate-400 hover:text-red-600 ml-0.5"
+              >
+                <Trash2 size={12} />
               </button>
             </span>
           ))}
@@ -137,7 +209,7 @@ export default function AdminSettings() {
           <input
             value={newPins}
             onChange={(e) => setNewPins(e.target.value)}
-            placeholder="Add pincodes (comma or space separated)"
+            placeholder="Add 6-digit pincodes (e.g. 734001, 734002)"
             className="sinput flex-1"
           />
           <button onClick={addPins} className="btn-primary">
@@ -147,7 +219,7 @@ export default function AdminSettings() {
       </div>
 
       {/* Demo reset */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
         <h2 className="mb-1 font-semibold text-slate-900">Demo Controls</h2>
         <p className="mb-3 text-sm text-slate-500">
           Reset catalog, categories, banners &amp; settings back to the seeded
@@ -158,7 +230,7 @@ export default function AdminSettings() {
             resetCatalog();
             show("Catalog reset to demo defaults");
           }}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
         >
           <RotateCcw size={15} /> Reset demo data
         </button>

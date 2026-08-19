@@ -38,7 +38,7 @@ export default function CategoriesPage() {
   );
 
   return (
-    <div className="fixed inset-x-0 top-14 bottom-16 z-10 flex overflow-hidden bg-slate-50">
+    <div className="fixed inset-x-0 top-16 bottom-16 z-10 flex overflow-hidden bg-slate-50">
       {/* Fixed Independent Sidebar Scroll Container matching Stitch browse_categories.html */}
       <aside className="h-full w-24 shrink-0 overflow-y-auto no-scrollbar border-r border-slate-200/80 bg-white p-2 space-y-2 shadow-xs">
         {activeCats.map((c) => {

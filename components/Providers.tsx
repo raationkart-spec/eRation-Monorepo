@@ -35,14 +35,16 @@ function CatalogSync() {
             delivery_fee: configRes.config.deliveryFee,
             free_delivery_above: configRes.config.freeDeliveryThreshold,
             platform_fee: configRes.config.platformFee,
-          });
+            isStoreOpen: configRes.config.isStoreOpen,
+          } as any);
         }
         if (Array.isArray(configRes.pincodes) && configRes.pincodes.length > 0) {
           setPincodesFull(configRes.pincodes);
         }
       })
       .catch((err) => console.warn("Catalog sync failed, using local seed data:", err));
-  }, [isAdmin, setProducts, setCategories, setBanners, setConfig, setPincodesFull, setFlashDeals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   return null;
 }

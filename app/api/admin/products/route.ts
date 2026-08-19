@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       stockQty,
       lowStockThreshold = 5,
       emoji = "📦",
+      imageUrl,
       tags = [],
       isActive = true,
       isFeatured = false,
@@ -69,14 +70,15 @@ export async function POST(request: NextRequest) {
         slug: generatedSlug,
         description,
         categorySlug,
-        brand,
+        brand: brand || null,
         unit,
         mrp: Number(mrp),
         price: Number(price),
         stockQty: Number(stockQty || 0),
         lowStockThreshold: Number(lowStockThreshold),
         emoji,
-        tags,
+        imageUrl: imageUrl || null,
+        tags: Array.isArray(tags) ? tags : [],
         isActive: Boolean(isActive),
         isFeatured: Boolean(isFeatured),
         sortOrder: Number(sortOrder),
@@ -84,10 +86,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ product }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("POST /api/admin/products error:", error);
     return NextResponse.json(
-      { error: "Failed to create product" },
+      { error: error.message || "Failed to create product" },
       { status: 500 }
     );
   }
@@ -96,7 +98,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await auth();
-    if (session?.user?.role !== "ADMIN") {
+    if ((session?.user as any)?.role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -117,14 +119,15 @@ export async function PUT(request: NextRequest) {
         ...(data.mrp !== undefined && { mrp: Number(data.mrp) }),
         ...(data.price !== undefined && { price: Number(data.price) }),
         ...(data.stockQty !== undefined && { stockQty: Number(data.stockQty) }),
+        ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl || null }),
       },
     });
 
     return NextResponse.json({ product });
-  } catch (error) {
+  } catch (error: any) {
     console.error("PUT /api/admin/products error:", error);
     return NextResponse.json(
-      { error: "Failed to update product" },
+      { error: error.message || "Failed to update product" },
       { status: 500 }
     );
   }
@@ -133,7 +136,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await auth();
-    if (session?.user?.role !== "ADMIN") {
+    if ((session?.user as any)?.role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -154,10 +157,10 @@ export async function DELETE(request: NextRequest) {
     });
 
     return NextResponse.json({ product });
-  } catch (error) {
+  } catch (error: any) {
     console.error("DELETE /api/admin/products error:", error);
     return NextResponse.json(
-      { error: "Failed to delete product" },
+      { error: error.message || "Failed to delete product" },
       { status: 500 }
     );
   }

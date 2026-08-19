@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { ToastHost } from "@/components/toast";
-import { useAuth } from "@/lib/store";
+import { useAuth, useCatalog } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { AdminDashboardSkeleton } from "@/components/skeletons";
 
@@ -46,6 +46,8 @@ export default function AdminLayout({
   const hydrated = useHydrated();
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
+  const config = useCatalog((s) => s.config);
+  const isStoreOpen = (config as any).isStoreOpen !== false;
 
   const isLoginPage = pathname === "/admin/login";
   const isAdmin = user?.role === "ADMIN";
@@ -163,8 +165,21 @@ export default function AdminLayout({
             <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-500">
               <span>Siliguri Operations</span>
               <span className="text-slate-300">•</span>
-              <span className="text-emerald-600 font-bold flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" /> Store Live &amp; Accepting Orders
+              <span
+                className={`font-bold flex items-center gap-1.5 ${
+                  isStoreOpen ? "text-emerald-600" : "text-red-500"
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    isStoreOpen
+                      ? "bg-emerald-500 animate-ping"
+                      : "bg-red-500"
+                  }`}
+                />{" "}
+                {isStoreOpen
+                  ? "Store Live & Accepting Orders"
+                  : "⚠️ Store Closed — Not Accepting Orders"}
               </span>
             </div>
           </div>

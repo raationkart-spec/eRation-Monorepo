@@ -4,20 +4,21 @@ import { useState, useMemo } from "react";
 import {
   Plus,
   Search,
-  SlidersHorizontal,
   Package,
   AlertTriangle,
   CheckCircle,
+  Eye,
   EyeOff,
   Download,
+  Upload,
   Percent,
-  Trash2,
 } from "lucide-react";
 import { useCatalog } from "@/lib/store";
 import { formatMoney } from "@/lib/format";
 import { AdminTableSkeleton } from "@/components/skeletons";
 import { useHydrated } from "@/lib/useHydrated";
 import { useToast } from "@/components/toast";
+import { ImportProductsModal } from "@/components/admin/ImportProductsModal";
 
 export default function AdminProducts() {
   const hydrated = useHydrated();
@@ -25,15 +26,16 @@ export default function AdminProducts() {
   const products = useCatalog((s) => s.products);
   const categories = useCatalog((s) => s.categories);
   const upsertProduct = useCatalog((s) => s.upsertProduct);
-  const deleteProduct = useCatalog((s) => s.deleteProduct);
 
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const [stockFilter, setStockFilter] = useState("all"); // all, low, out, instock
   const [discountFilter, setDiscountFilter] = useState("all"); // all, discounted, fullmrp
+  const [visibilityFilter, setVisibilityFilter] = useState("all"); // all, active, hidden, noimage
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pageSize, setPageSize] = useState(25);
   const [page, setPage] = useState(1);
+  const [showImport, setShowImport] = useState(false);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -61,9 +63,18 @@ export default function AdminProducts() {
         matchDiscount = p.mrp <= p.price;
       }
 
-      return matchQ && matchCat && matchStock && matchDiscount;
+      let matchVis = true;
+      if (visibilityFilter === "active") {
+        matchVis = p.isActive;
+      } else if (visibilityFilter === "hidden") {
+        matchVis = !p.isActive;
+      } else if (visibilityFilter === "noimage") {
+        matchVis = !p.imageUrl;
+      }
+
+      return matchQ && matchCat && matchStock && matchDiscount && matchVis;
     });
-  }, [products, q, cat, stockFilter, discountFilter]);
+  }, [products, q, cat, stockFilter, discountFilter, visibilityFilter]);
 
   if (!hydrated) return <AdminTableSkeleton />;
 
@@ -91,14 +102,23 @@ export default function AdminProducts() {
   };
 
   const updateProductRemote = async (id: string, data: Record<string, unknown>) => {
-    const res = await fetch("/api/admin/products", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, ...data }),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Update failed");
-    upsertProduct(json.product);
+    const prod = products.find((p) => p.id === id);
+    if (prod) {
+      upsertProduct({ ...prod, ...data } as any);
+    }
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...data }),
+      });
+      const json = await res.json();
+      if (res.ok && json.product) {
+        upsertProduct(json.product);
+      }
+    } catch (err) {
+      console.warn("Product remote update error:", err);
+    }
   };
 
   const handleBulkToggleActive = async (activeState: boolean) => {
@@ -132,6 +152,7 @@ export default function AdminProducts() {
       "MRP (₹)",
       "Selling Price (₹)",
       "Stock Qty",
+      "Image URL",
       "Is Active",
     ];
     const rows = filtered.map((p) => [
@@ -143,6 +164,7 @@ export default function AdminProducts() {
       (p.mrp / 100).toFixed(2),
       (p.price / 100).toFixed(2),
       p.stockQty,
+      p.imageUrl || "",
       p.isActive ? "Yes" : "No",
     ]);
 
@@ -160,6 +182,9 @@ export default function AdminProducts() {
 
   // Stats calculation
   const totalCount = products.length;
+  const activeCount = products.filter((p) => p.isActive).length;
+  const hiddenCount = products.filter((p) => !p.isActive).length;
+  const noImageCount = products.filter((p) => !p.imageUrl).length;
   const lowStockCount = products.filter(
     (p) => p.stockQty > 0 && p.stockQty <= p.lowStockThreshold
   ).length;
@@ -180,6 +205,12 @@ export default function AdminProducts() {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-brand bg-brand-50/70 px-3.5 py-2 text-xs font-bold text-brand-dark shadow-2xs hover:bg-brand-100 transition"
+          >
+            <Upload size={15} /> Import Sheet (.xlsx)
+          </button>
+          <button
             onClick={handleExportCSV}
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50"
           >
@@ -195,7 +226,7 @@ export default function AdminProducts() {
       </div>
 
       {/* Metrics Summary Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-2xs">
           <p className="text-2xs font-bold uppercase tracking-wider text-slate-400">
             Total Catalog SKUs
@@ -204,10 +235,18 @@ export default function AdminProducts() {
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-2xs">
           <p className="text-2xs font-bold uppercase tracking-wider text-slate-400">
-            Active Products
+            Active / Live
           </p>
           <p className="text-xl font-black text-emerald-600 mt-0.5">
-            {products.filter((p) => p.isActive).length}
+            {activeCount}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-2xs">
+          <p className="text-2xs font-bold uppercase tracking-wider text-slate-400">
+            Hidden / Drafts
+          </p>
+          <p className="text-xl font-black text-amber-600 mt-0.5">
+            {hiddenCount}
           </p>
         </div>
         <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 shadow-2xs">
@@ -232,7 +271,7 @@ export default function AdminProducts() {
       <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-2xs space-y-3">
         <div className="flex flex-wrap gap-2 items-center">
           {/* Main Search Bar */}
-          <div className="flex flex-1 min-w-[240px] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-brand focus-within:bg-white">
+          <div className="flex flex-1 min-w-[220px] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-brand focus-within:bg-white">
             <Search size={16} className="text-slate-400" />
             <input
               value={q}
@@ -244,6 +283,21 @@ export default function AdminProducts() {
               className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
             />
           </div>
+
+          {/* Visibility Filter */}
+          <select
+            value={visibilityFilter}
+            onChange={(e) => {
+              setVisibilityFilter(e.target.value);
+              setPage(1);
+            }}
+            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-brand"
+          >
+            <option value="all">Visibility: All ({products.length})</option>
+            <option value="active">✅ Live Only ({activeCount})</option>
+            <option value="hidden">🙈 Hidden / Drafts ({hiddenCount})</option>
+            <option value="noimage">🖼️ Missing Image ({noImageCount})</option>
+          </select>
 
           {/* Category Selector */}
           <select
@@ -287,7 +341,7 @@ export default function AdminProducts() {
             className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-brand"
           >
             <option value="all">Pricing: All</option>
-            <option value="discounted">🔥 Discounted Items Only</option>
+            <option value="discounted">🔥 Discounted Items</option>
             <option value="fullmrp">Full MRP Items</option>
           </select>
         </div>
@@ -452,13 +506,25 @@ export default function AdminProducts() {
                           Active
                         </span>
                       ) : (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-2xs font-bold text-slate-400">
+                        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-2xs font-bold text-amber-800">
                           Hidden
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => updateProductRemote(p.id, { isActive: !p.isActive })}
+                          title={p.isActive ? "Hide from storefront" : "Show on storefront"}
+                          className={`rounded-md p-1.5 transition ${
+                            p.isActive
+                              ? "text-emerald-700 hover:bg-red-50 hover:text-red-600"
+                              : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-700"
+                          }`}
+                        >
+                          {p.isActive ? <Eye size={15} /> : <EyeOff size={15} />}
+                        </button>
                         <Link
                           href={`/admin/products/${p.id}`}
                           className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 hover:bg-brand hover:text-white transition"
@@ -543,6 +609,11 @@ export default function AdminProducts() {
           </div>
         )}
       </div>
+
+      {/* Bulk Import Modal */}
+      {showImport && (
+        <ImportProductsModal onClose={() => setShowImport(false)} />
+      )}
     </div>
   );
 }

@@ -39,6 +39,10 @@ jobs:
         run: npm install --legacy-peer-deps
 
 
+      - name: Create .env file for mobile build
+        working-directory: Mobile-app
+        run: echo "EXPO_PUBLIC_API_URL=https://quickcart-nu-nine.vercel.app" > .env
+
       - name: Prebuild native Android project
         working-directory: Mobile-app
         env:

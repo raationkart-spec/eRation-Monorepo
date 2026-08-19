@@ -6,12 +6,14 @@ interface ImageUploaderProps {
   imageUrl?: string | null;
   onChange: (url: string) => void;
   label?: string;
+  folder?: string;
 }
 
 export function ImageUploader({
   imageUrl,
   onChange,
   label = "Product Image",
+  folder = "products",
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -37,6 +39,7 @@ export function ImageUploader({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("folder", folder || "products");
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",
