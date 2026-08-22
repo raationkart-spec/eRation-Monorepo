@@ -70,21 +70,26 @@ export default function LoginScreen() {
         const res = await WebBrowser.openAuthSessionAsync(data.url, localRedirectUri);
 
         if (res.type === "success" && res.url) {
-          // Parse hash or search params from callback URL
           const urlString = res.url;
           const hashIndex = urlString.indexOf("#");
           const queryIndex = urlString.indexOf("?");
-          const paramString =
-            hashIndex !== -1
-              ? urlString.substring(hashIndex + 1)
-              : queryIndex !== -1
-              ? urlString.substring(queryIndex + 1)
+
+          const hashString = hashIndex !== -1 ? urlString.substring(hashIndex + 1) : "";
+          const queryString =
+            queryIndex !== -1
+              ? hashIndex !== -1 && hashIndex > queryIndex
+                ? urlString.substring(queryIndex + 1, hashIndex)
+                : urlString.substring(queryIndex + 1)
               : "";
 
-          const params = new URLSearchParams(paramString);
-          const access_token = params.get("access_token");
-          const refresh_token = params.get("refresh_token");
-          const code = params.get("code");
+          const hashParams = new URLSearchParams(hashString);
+          const queryParams = new URLSearchParams(queryString);
+
+          const access_token =
+            hashParams.get("access_token") || queryParams.get("access_token");
+          const refresh_token =
+            hashParams.get("refresh_token") || queryParams.get("refresh_token");
+          const code = hashParams.get("code") || queryParams.get("code");
 
           let authUser: any = null;
 
