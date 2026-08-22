@@ -128,7 +128,7 @@ export default function CartScreen() {
   const freeThreshold = 39900;
   const platformFee = 500;
   const isFreeDelivery = itemTotal >= freeThreshold;
-  const potentialCoins = Math.floor(itemTotal / 10000) * 100;
+  const potentialCoins = Math.floor(itemTotal / 1000);
   const grandTotal = Math.max(
     0,
     itemTotal + (isFreeDelivery ? 0 : deliveryFee) + platformFee - (appliedCoupon?.discount || 0)
