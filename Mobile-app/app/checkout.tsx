@@ -29,6 +29,8 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+  const tokenBalance = useAuthStore((s) => s.tokenBalance);
+  const setTokenBalance = useAuthStore((s) => s.setTokenBalance);
 
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
 
@@ -44,6 +46,10 @@ export default function CheckoutScreen() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+
+  // QuickCoins state
+  const [tokenInput, setTokenInput] = useState<string>("");
+  const [tokensApplied, setTokensApplied] = useState<number>(0);
 
   // New Address Form State (empty by default)
   const [formName, setFormName] = useState(user?.name || "");
@@ -61,8 +67,14 @@ export default function CheckoutScreen() {
   useEffect(() => {
     async function loadData() {
       try {
-        const prodsRes = await api.getProducts();
+        const [prodsRes, serverTokens] = await Promise.all([
+          api.getProducts(),
+          api.getTokenBalance(),
+        ]);
         setProducts(prodsRes);
+        if (typeof serverTokens === "number" && serverTokens > 0) {
+          setTokenBalance(serverTokens);
+        }
       } catch (e) {
         console.log("Checkout products load error:", e);
       }
@@ -76,7 +88,7 @@ export default function CheckoutScreen() {
     } else {
       setShowNewAddressForm(true);
     }
-  }, [addresses]);
+  }, [addresses, setTokenBalance]);
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
@@ -93,15 +105,39 @@ export default function CheckoutScreen() {
     return acc + price * item.quantity;
   }, 0);
 
-  const deliveryFee = 2900;
-  const freeThreshold = 49900;
+  const deliveryFee = 3900;
+  const freeThreshold = 39900;
   const platformFee = 500;
   const isFreeDelivery = itemTotal >= freeThreshold;
   const actualDeliveryFee = isFreeDelivery ? 0 : deliveryFee;
+
+  const tokenDiscount = Math.floor(tokensApplied / 100) * 2500;
   const grandTotal = Math.max(
     0,
-    itemTotal + actualDeliveryFee + platformFee - (appliedCoupon?.discount || 0)
+    itemTotal + actualDeliveryFee + platformFee - (appliedCoupon?.discount || 0) - tokenDiscount
   );
+
+  const applyTokens = () => {
+    const num = parseInt(tokenInput, 10);
+    if (isNaN(num) || num < 100) {
+      setToastMessage("Enter at least 100 QuickCoins (in multiples of 100)");
+      return;
+    }
+    const blocks = Math.floor(Math.min(num, tokenBalance) / 100);
+    if (blocks <= 0) {
+      setToastMessage("Not enough QuickCoins to redeem");
+      return;
+    }
+    const applied = blocks * 100;
+    setTokensApplied(applied);
+    setToastMessage(`Applied ${applied} QuickCoins (-${formatMoney(blocks * 2500)}) 🎉`);
+  };
+
+  const removeTokens = () => {
+    setTokensApplied(0);
+    setTokenInput("");
+    setToastMessage("QuickCoins removed");
+  };
 
   const handlePlaceOrder = async () => {
     let finalAddress: Omit<Address, "id"> | Address | undefined = selectedAddress;
@@ -191,6 +227,9 @@ export default function CheckoutScreen() {
       platformFee,
       discount: appliedCoupon?.discount || 0,
       couponCode: appliedCoupon?.code,
+      tokenDiscount,
+      tokensEarned: Math.floor(itemTotal / 10000) * 100,
+      tokensRedeemed: tokensApplied,
       total: grandTotal,
       notes,
       createdAt: nowIso,
@@ -205,11 +244,21 @@ export default function CheckoutScreen() {
       customerPhone: user?.phone || finalAddress.phone || "",
     };
 
+    let earnedCoins = Math.floor(itemTotal / 10000) * 100;
     try {
-      await api.createOrder(orderPayload);
+      const res = await api.createOrder({
+        ...orderPayload,
+        tokensToRedeem: tokensApplied,
+      });
+      if (typeof res.tokensEarned === "number") {
+        earnedCoins = res.tokensEarned;
+      }
     } catch (e) {
       console.log("Create order API error, using local state:", e);
     }
+
+    // Update local token balance
+    setTokenBalance(Math.max(0, tokenBalance - tokensApplied + earnedCoins));
 
     addOrder(orderPayload);
     clearCart();
@@ -374,6 +423,63 @@ export default function CheckoutScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* QuickCoins Redemption Card */}
+        <View style={styles.card}>
+          <View style={styles.coinCardHeader}>
+            <Text style={styles.cardTitle}>🪙 QuickCoins</Text>
+            <View style={styles.coinBadge}>
+              <Text style={styles.coinBadgeText}>{tokenBalance} coins available</Text>
+            </View>
+          </View>
+
+          {tokenBalance >= 100 ? (
+            <View style={styles.coinContent}>
+              <Text style={styles.coinHelperText}>
+                100 coins = ₹25 off · Redeem in multiples of 100
+              </Text>
+
+              {tokensApplied > 0 ? (
+                <View style={styles.appliedCoinBox}>
+                  <View>
+                    <Text style={styles.appliedCoinTitle}>{tokensApplied} coins applied</Text>
+                    <Text style={styles.appliedCoinSub}>
+                      Saving {formatMoney(tokenDiscount)}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={removeTokens}>
+                    <Text style={styles.removeCoinText}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.coinInputRow}>
+                  <TextInput
+                    style={styles.coinInput}
+                    placeholder="e.g. 100, 200"
+                    placeholderTextColor="#94a3b8"
+                    keyboardType="number-pad"
+                    value={tokenInput}
+                    onChangeText={setTokenInput}
+                  />
+                  <TouchableOpacity
+                    style={[
+                      styles.applyCoinBtn,
+                      (!tokenInput || parseInt(tokenInput, 10) < 100) && styles.applyCoinBtnDisabled,
+                    ]}
+                    onPress={applyTokens}
+                    disabled={!tokenInput || parseInt(tokenInput, 10) < 100}
+                  >
+                    <Text style={styles.applyCoinBtnText}>Apply</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          ) : (
+            <Text style={styles.coinEmptyText}>
+              You need at least 100 QuickCoins to redeem. Earn 10 coins per ₹100 spent!
+            </Text>
+          )}
+        </View>
+
         {/* Delivery Note */}
         <View style={styles.card}>
           <Text style={styles.inputLabel}>Delivery Instructions (Optional)</Text>
@@ -391,6 +497,8 @@ export default function CheckoutScreen() {
           items={items}
           products={products}
           appliedDiscount={appliedCoupon?.discount || 0}
+          appliedTokenDiscount={tokenDiscount}
+          appliedTokens={tokensApplied}
           deliveryFee={deliveryFee}
           freeDeliveryThreshold={freeThreshold}
           platformFee={platformFee}
@@ -608,6 +716,95 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 12,
     color: "#0f172a",
+  },
+  coinCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  coinBadge: {
+    backgroundColor: "#fffbeb",
+    borderWidth: 1,
+    borderColor: "#fde68a",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  coinBadgeText: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#b45309",
+  },
+  coinContent: {
+    gap: 8,
+  },
+  coinHelperText: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: "600",
+  },
+  appliedCoinBox: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#fffbeb",
+    borderWidth: 1,
+    borderColor: "#fde68a",
+    borderRadius: 10,
+    padding: 10,
+  },
+  appliedCoinTitle: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#92400e",
+  },
+  appliedCoinSub: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#b45309",
+    marginTop: 1,
+  },
+  removeCoinText: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#dc2626",
+  },
+  coinInputRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  coinInput: {
+    flex: 1,
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+  applyCoinBtn: {
+    backgroundColor: "#d97706",
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  applyCoinBtnDisabled: {
+    opacity: 0.5,
+  },
+  applyCoinBtnText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  coinEmptyText: {
+    fontSize: 11,
+    color: "#94a3b8",
+    fontWeight: "600",
   },
   bottomBar: {
     position: "absolute",

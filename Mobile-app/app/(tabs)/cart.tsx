@@ -124,10 +124,11 @@ export default function CartScreen() {
     );
   }
 
-  const deliveryFee = 2900;
-  const freeThreshold = 49900;
+  const deliveryFee = 3900;
+  const freeThreshold = 39900;
   const platformFee = 500;
   const isFreeDelivery = itemTotal >= freeThreshold;
+  const potentialCoins = Math.floor(itemTotal / 10000) * 100;
   const grandTotal = Math.max(
     0,
     itemTotal + (isFreeDelivery ? 0 : deliveryFee) + platformFee - (appliedCoupon?.discount || 0)
@@ -187,6 +188,15 @@ export default function CartScreen() {
             );
           })}
         </View>
+
+        {/* QuickCoins Earn Banner */}
+        {itemTotal > 0 && potentialCoins > 0 ? (
+          <View style={styles.coinBanner}>
+            <Text style={styles.coinBannerText}>
+              🪙 Earn {potentialCoins} QuickCoins on this order!
+            </Text>
+          </View>
+        ) : null}
 
         {/* Coupons Box */}
         <View style={styles.couponCard}>
@@ -404,6 +414,22 @@ const styles = StyleSheet.create({
     borderColor: "#e2e8f0",
     padding: 14,
     marginVertical: 8,
+  },
+  coinBanner: {
+    backgroundColor: "#fffbeb",
+    borderWidth: 1,
+    borderColor: "#fde68a",
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  coinBannerText: {
+    color: "#92400e",
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 0.2,
   },
   couponHeader: {
     flexDirection: "row",

@@ -31,8 +31,8 @@ export async function PUT(request: NextRequest) {
       },
       create: {
         id: "default",
-        deliveryFee: Number(deliveryFee || 2900),
-        freeDeliveryThreshold: Number(freeDeliveryThreshold || 29900),
+        deliveryFee: Number(deliveryFee || 3900),
+        freeDeliveryThreshold: Number(freeDeliveryThreshold || 39900),
         minOrderValue: Number(minOrderValue || 9900),
         storeName: storeName || "QuickCart",
         isStoreOpen: isStoreOpen !== undefined ? Boolean(isStoreOpen) : true,

@@ -8,6 +8,8 @@ interface BillSummaryProps {
   items: CartItem[];
   products: Product[];
   appliedDiscount?: number;
+  appliedTokenDiscount?: number;
+  appliedTokens?: number;
   deliveryFee?: number;
   freeDeliveryThreshold?: number;
   platformFee?: number;
@@ -17,8 +19,10 @@ export function BillSummary({
   items,
   products,
   appliedDiscount = 0,
-  deliveryFee = 2900, // ₹29
-  freeDeliveryThreshold = 49900, // ₹499
+  appliedTokenDiscount = 0,
+  appliedTokens = 0,
+  deliveryFee = 3900, // ₹39
+  freeDeliveryThreshold = 39900, // ₹399
   platformFee = 500, // ₹5
 }: BillSummaryProps) {
   const itemTotal = items.reduce((acc, item) => {
@@ -32,7 +36,10 @@ export function BillSummary({
   const progressPercent = Math.min(100, Math.round((itemTotal / freeDeliveryThreshold) * 100));
   const remainingForFree = Math.max(0, freeDeliveryThreshold - itemTotal);
 
-  const grandTotal = Math.max(0, itemTotal + actualDeliveryFee + platformFee - appliedDiscount);
+  const grandTotal = Math.max(
+    0,
+    itemTotal + actualDeliveryFee + platformFee - appliedDiscount - appliedTokenDiscount
+  );
 
   return (
     <View style={styles.card}>
@@ -74,6 +81,13 @@ export function BillSummary({
         <View style={styles.row}>
           <Text style={styles.discountLabel}>Coupon Savings</Text>
           <Text style={styles.discountValue}>-{formatMoney(appliedDiscount)}</Text>
+        </View>
+      ) : null}
+
+      {appliedTokenDiscount > 0 ? (
+        <View style={styles.row}>
+          <Text style={styles.tokenDiscountLabel}>QuickCoins ({appliedTokens} coins)</Text>
+          <Text style={styles.tokenDiscountValue}>-{formatMoney(appliedTokenDiscount)}</Text>
         </View>
       ) : null}
 
@@ -160,6 +174,16 @@ const styles = StyleSheet.create({
   discountValue: {
     fontSize: 12,
     color: "#16a34a",
+    fontWeight: "900",
+  },
+  tokenDiscountLabel: {
+    fontSize: 12,
+    color: "#d97706",
+    fontWeight: "700",
+  },
+  tokenDiscountValue: {
+    fontSize: 12,
+    color: "#d97706",
     fontWeight: "900",
   },
   divider: {

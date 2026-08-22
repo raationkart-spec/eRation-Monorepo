@@ -40,6 +40,12 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
 
+  // QuickCoins token state
+  const tokenBalance = useAuth((s) => s.tokenBalance);
+  const setTokenBalance = useAuth((s) => s.setTokenBalance);
+  const [tokenInput, setTokenInput] = useState<number>(0);
+  const [tokensApplied, setTokensApplied] = useState<number>(0);
+
   const storeAddresses = (Array.isArray(addresses) ? addresses : [])
     .filter((a): a is Address => Boolean(a && typeof a === "object" && a.id && a.pincode));
   const validAddresses = storeAddresses.length > 0 ? storeAddresses : [seedAddress];
@@ -107,7 +113,19 @@ export default function CheckoutPage() {
     ? pincodes.length === 0 || pincodes.includes(selected.pincode) || selected.pincode.startsWith("734")
     : false;
   const discount = appliedCoupon?.discount ?? 0;
-  const grandTotal = Math.max(0, total - discount);
+  const tokenDiscount = Math.floor(tokensApplied / 100) * 2500;
+  const grandTotal = Math.max(0, total - discount - tokenDiscount);
+
+  const applyTokens = () => {
+    if (tokenInput < 100) return;
+    const blocks = Math.floor(Math.min(tokenInput, tokenBalance) / 100);
+    setTokensApplied(blocks * 100);
+  };
+
+  const removeTokens = () => {
+    setTokensApplied(0);
+    setTokenInput(0);
+  };
 
   const applyCoupon = () => {
     if (!couponInput.trim()) return;
@@ -172,6 +190,8 @@ export default function CheckoutPage() {
       platformFee,
       discount,
       couponCode: appliedCoupon?.code,
+      tokenDiscount,
+      tokensRedeemed: tokensApplied,
       total: grandTotal,
       createdAt: new Date().toISOString(),
       statusHistory: [{ status: "PLACED", at: new Date().toISOString() }],
@@ -210,6 +230,7 @@ export default function CheckoutPage() {
         customerName: user.name,
         customerPhone: user.phone ?? targetAddress.phone,
         couponCode: appliedCoupon?.code,
+        tokensToRedeem: tokensApplied,
       }),
     })
       .then(async (res) => {
@@ -239,6 +260,9 @@ export default function CheckoutPage() {
             platformFee: dbOrder.platformFee,
             discount: dbOrder.discount,
             couponCode: dbOrder.couponCode ?? undefined,
+            tokenDiscount: dbOrder.tokenDiscount ?? 0,
+            tokensEarned: dbOrder.tokensEarned ?? 0,
+            tokensRedeemed: dbOrder.tokensRedeemed ?? 0,
             total: dbOrder.total,
             createdAt: dbOrder.createdAt,
             statusHistory: dbOrder.statusHistory?.map((h: any) => ({
@@ -251,8 +275,11 @@ export default function CheckoutPage() {
           };
           addOrder(formatted);
           setAppliedCoupon(null);
+          // Update local token balance from server
+          const earned = data.tokensEarned ?? 0;
+          setTokenBalance(Math.max(0, tokenBalance - tokensApplied + earned));
           clearCart();
-          router.replace(`/orders/${formatted.id}?placed=true`);
+          router.replace(`/orders/${formatted.id}?placed=true&earned=${earned}`);
         } else {
           addOrder(order);
           setAppliedCoupon(null);
@@ -436,6 +463,60 @@ export default function CheckoutPage() {
           )}
         </section>
 
+        {/* QuickCoins Token Redemption Section */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm space-y-2.5">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+            🪙 QuickCoins
+            <span className="ml-auto text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+              {tokenBalance} coins available
+            </span>
+          </h2>
+          {tokenBalance >= 100 ? (
+            <div className="space-y-2">
+              <p className="text-2xs text-slate-500 font-medium">
+                100 coins = ₹25 off · Redeem in multiples of 100
+              </p>
+              {tokensApplied > 0 ? (
+                <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-3">
+                  <div>
+                    <p className="text-xs font-extrabold text-amber-800">{tokensApplied} coins applied</p>
+                    <p className="text-2xs text-amber-600 font-semibold">
+                      Saving {formatMoney(tokenDiscount)}
+                    </p>
+                  </div>
+                  <button onClick={removeTokens} className="text-2xs font-bold text-red-600 hover:underline">
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    step={100}
+                    min={100}
+                    max={Math.floor(tokenBalance / 100) * 100}
+                    value={tokenInput || ""}
+                    onChange={(e) => setTokenInput(Number(e.target.value))}
+                    placeholder="e.g. 100, 200, 300"
+                    className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold outline-none focus:border-amber-500"
+                  />
+                  <button
+                    onClick={applyTokens}
+                    disabled={!tokenInput || tokenInput < 100}
+                    className="rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50"
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-2xs text-slate-400 font-semibold">
+              You need at least 100 QuickCoins to redeem. Earn 10 coins per ₹100 spent!
+            </p>
+          )}
+        </section>
+
         {/* Order Items & Bill Details */}
         <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm space-y-3">
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
@@ -460,6 +541,12 @@ export default function CheckoutPage() {
               <div className="flex justify-between">
                 <span>Coupon Discount ({appliedCoupon?.code})</span>
                 <span className="text-emerald-600 font-bold">-{formatMoney(discount)}</span>
+              </div>
+            )}
+            {tokenDiscount > 0 && (
+              <div className="flex justify-between">
+                <span>QuickCoins ({tokensApplied} coins)</span>
+                <span className="text-amber-600 font-bold">-{formatMoney(tokenDiscount)}</span>
               </div>
             )}
             <div className="border-t border-dashed border-slate-200 pt-2.5 flex justify-between text-sm font-black text-slate-900">

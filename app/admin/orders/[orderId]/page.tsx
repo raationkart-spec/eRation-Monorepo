@@ -238,6 +238,18 @@ export default function AdminOrderDetail({
               <span>Delivery Fee:</span>
               <span>{order.deliveryFee === 0 ? "FREE" : formatMoney(order.deliveryFee)}</span>
             </div>
+            {(order.tokenDiscount ?? 0) > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>QuickCoins discount ({order.tokensRedeemed} coins):</span>
+                <span className="text-amber-600">-{formatMoney(order.tokenDiscount ?? 0)}</span>
+              </div>
+            )}
+            {(order.tokensEarned ?? 0) > 0 && (
+              <div className="flex justify-between text-slate-500 italic">
+                <span>QuickCoins awarded:</span>
+                <span className="text-amber-500">+{order.tokensEarned} coins</span>
+              </div>
+            )}
             <div className="flex justify-between font-black text-sm text-slate-900 pt-1 border-t border-slate-100">
               <span>Total Amount:</span>
               <span>{formatMoney(order.total)}</span>

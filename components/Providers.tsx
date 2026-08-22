@@ -69,6 +69,7 @@ function AddressSync() {
 function AuthSync() {
   const { data: session, status } = useSession();
   const setUser = useAuth((s) => s.setUser);
+  const setTokenBalance = useAuth((s) => s.setTokenBalance);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
@@ -79,8 +80,16 @@ function AuthSync() {
         image: session.user.image || undefined,
         role: (session.user as any).role || "CUSTOMER",
       });
+      // Fetch and cache token balance
+      fetch("/api/user/tokens")
+        .then((r) => r.json())
+        .then((d) => setTokenBalance(d.tokenBalance ?? 0))
+        .catch(() => {});
     }
-  }, [session, status, setUser]);
+    if (status === "unauthenticated") {
+      setTokenBalance(0);
+    }
+  }, [session, status, setUser, setTokenBalance]);
 
   return null;
 }
