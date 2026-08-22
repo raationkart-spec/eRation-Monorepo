@@ -21,8 +21,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.quickcart.app",
-      "usesCleartextTraffic": true
+      "package": "com.quickcart.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,7 +29,8 @@
     "plugins": [
       "expo-router",
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "scheme": "quickcart"
   }

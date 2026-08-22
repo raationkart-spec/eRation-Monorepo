@@ -1,3 +1,4 @@
+import "react-native-url-polyfill/auto";
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -10,27 +11,34 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
   const user = useAuthStore((s) => s.user);
-  const [mounted, setMounted] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    // Check if store is already hydrated
+    if (useAuthStore.persist.hasHydrated()) {
+      setIsHydrated(true);
+    }
+    const unsub = useAuthStore.persist.onFinishHydration(() => {
+      setIsHydrated(true);
+    });
+    return () => unsub();
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!isHydrated) return;
 
     const inAuthGroup = segments[0] === "login" || segments[0] === "verify";
 
     if (!user && !inAuthGroup) {
-      // User is not logged in -> Redirect mandatory to /login onboarding screen
+      // User is not logged in -> Redirect to /login
       router.replace("/login");
     } else if (user && inAuthGroup) {
-      // User is logged in -> Redirect to main app storefront
+      // User is logged in -> Redirect to storefront
       router.replace("/(tabs)");
     }
-  }, [user, segments, mounted]);
+  }, [user, segments, isHydrated]);
 
-  if (!mounted) {
+  if (!isHydrated) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#f97316" />
