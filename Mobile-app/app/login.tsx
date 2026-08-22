@@ -47,15 +47,17 @@ export default function LoginScreen() {
       setGoogleLoading(true);
       setErrorMsg("");
 
-      const redirectUrl = makeRedirectUri({
+      const localRedirectUri = makeRedirectUri({
         scheme: "quickcart",
         path: "auth/callback",
       });
 
+      const redirectTo = `https://quickcart-nu-nine.vercel.app/auth/callback?returnTo=${encodeURIComponent(localRedirectUri)}`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
+          redirectTo,
           skipBrowserRedirect: true,
         },
       });
@@ -65,7 +67,7 @@ export default function LoginScreen() {
       }
 
       if (data?.url) {
-        const res = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+        const res = await WebBrowser.openAuthSessionAsync(data.url, localRedirectUri);
 
         if (res.type === "success" && res.url) {
           // Parse hash or search params from callback URL

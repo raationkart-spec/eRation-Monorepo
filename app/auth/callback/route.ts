@@ -36,6 +36,23 @@ export async function GET(request: Request) {
         console.error("Supabase OAuth DB sync error:", dbErr);
       }
 
+      // Check if returnTo is a mobile deep-link scheme
+      if (returnTo.startsWith("quickcart://") || returnTo.startsWith("exp://")) {
+        const hashParams = new URLSearchParams();
+        if (data.session?.access_token) {
+          hashParams.set("access_token", data.session.access_token);
+        }
+        if (data.session?.refresh_token) {
+          hashParams.set("refresh_token", data.session.refresh_token);
+        }
+        if (code) {
+          hashParams.set("code", code);
+        }
+        const separator = returnTo.includes("#") ? "&" : "#";
+        const mobileTarget = `${returnTo}${separator}${hashParams.toString()}`;
+        return NextResponse.redirect(mobileTarget);
+      }
+
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
 
@@ -49,6 +66,9 @@ export async function GET(request: Request) {
     }
   }
 
-  // If error or no code, redirect to login with error
+  // If error or no code, redirect to mobile or web login with error
+  if (returnTo.startsWith("quickcart://") || returnTo.startsWith("exp://")) {
+    return NextResponse.redirect(`${returnTo}#error=OAuthFailed`);
+  }
   return NextResponse.redirect(`${origin}/login?error=OAuthFailed`);
 }
