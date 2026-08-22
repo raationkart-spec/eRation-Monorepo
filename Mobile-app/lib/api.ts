@@ -215,6 +215,31 @@ export const api = {
   },
 
   /**
+   * Sync Supabase authenticated user with backend database
+   */
+  async syncSupabaseUser(user: {
+    id?: string;
+    email: string;
+    name?: string;
+    image?: string;
+  }): Promise<{ success: boolean; user?: any; error?: string }> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/supabase-sync`, {
+        method: "POST",
+        body: JSON.stringify(user),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { success: true, user: data.user };
+      }
+      const errData = await res.json().catch(() => ({}));
+      return { success: false, error: errData.error || "Failed to sync user" };
+    } catch (e: any) {
+      return { success: false, error: e.message || "Network error syncing user" };
+    }
+  },
+
+  /**
    * Create an order
    */
   async createOrder(

@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, ArrowRight } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { createClient } from "@/utils/supabase/client";
 
 function LoginInner() {
   const router = useRouter();
@@ -20,6 +20,21 @@ function LoginInner() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const supabase = createClient();
+      const redirectTo = `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`;
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+        },
+      });
+    } catch (e: any) {
+      setError(e.message || "Failed to initiate Google sign-in");
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -105,7 +120,7 @@ function LoginInner() {
               confusing dead end there) */}
           {!isApp && (
             <button
-              onClick={() => signIn("google", { callbackUrl: returnTo })}
+              onClick={handleGoogleSignIn}
               className="group flex w-full items-center justify-center gap-3 rounded-full border border-slate-700 bg-white py-3.5 text-sm font-bold text-slate-900 shadow-md transition-all duration-200 hover:bg-slate-100 active:scale-95"
             >
               <svg className="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
