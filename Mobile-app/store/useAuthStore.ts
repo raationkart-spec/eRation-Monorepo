@@ -5,6 +5,8 @@ import type { User } from "../lib/types";
 
 interface AuthState {
   user: User | null;
+  tokenBalance: number;
+  setTokenBalance: (tokenBalance: number) => void;
   setUser: (user: User | null) => void;
   loginWithBackend: (user: Partial<User>) => void;
   loginWithPhone: (phone: string, name?: string) => void;
@@ -17,6 +19,8 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      tokenBalance: 0,
+      setTokenBalance: (tokenBalance) => set({ tokenBalance }),
       setUser: (user) => set({ user }),
       loginWithBackend: (userData) =>
         set({
@@ -27,6 +31,7 @@ export const useAuthStore = create<AuthState>()(
             phone: userData.phone || "",
             role: userData.role || "CUSTOMER",
           },
+          ...(typeof userData.tokenBalance === "number" ? { tokenBalance: userData.tokenBalance } : {}),
         }),
       loginWithPhone: (phone, name) =>
         set({
@@ -47,7 +52,7 @@ export const useAuthStore = create<AuthState>()(
             role: "CUSTOMER",
           },
         }),
-      logout: () => set({ user: null }),
+      logout: () => set({ user: null, tokenBalance: 0 }),
       updateName: (name) =>
         set((s) => (s.user ? { user: { ...s.user, name } } : s)),
     }),

@@ -26,6 +26,8 @@ import type {
 // ─────────────────────────────────────────────────────────────
 interface AuthState {
   user: User | null;
+  tokenBalance: number;
+  setTokenBalance: (n: number) => void;
   setUser: (user: User | null) => void;
   loginWithEmail: (email: string) => void;
   loginWithGoogle: () => void;
@@ -39,6 +41,8 @@ export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      tokenBalance: 0,
+      setTokenBalance: (tokenBalance) => set({ tokenBalance }),
       setUser: (user) => set({ user }),
       loginWithEmail: (email) =>
         set({

@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       notes,
       couponCode,
     } = body;
+    const tokensToRedeem: number = Math.max(0, Number(body.tokensToRedeem) || 0);
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -210,7 +211,26 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      const total = subtotal + deliveryFee + platformFee - discount;
+
+      // ── Token redemption ──────────────────────────────────────────────────
+      let tokenDiscount = 0;
+      let actualTokensRedeemed = 0;
+      if (tokensToRedeem >= 100 && session?.user?.id) {
+        const dbUser = await tx.user.findUnique({
+          where: { id: session.user.id },
+          select: { tokenBalance: true },
+        });
+        const userTokens = dbUser?.tokenBalance ?? 0;
+        // Redeem only whole 100-token blocks, capped to what user actually has
+        const redeemableBlocks = Math.floor(Math.min(tokensToRedeem, userTokens) / 100);
+        actualTokensRedeemed = redeemableBlocks * 100;
+        tokenDiscount = redeemableBlocks * 2500; // 100 tokens = ₹25 = 2500 paise
+      }
+
+      const total = subtotal + deliveryFee + platformFee - discount - tokenDiscount;
+
+      // ── Tokens earned on this order (10 coins per ₹100 = floor(subtotal/10000)*100) ──
+      const tokensEarned = Math.floor(subtotal / 10000) * 100;
 
       const orderCount = await tx.order.count();
       const orderNumber = makeOrderNumber(orderCount + 1);
@@ -234,6 +254,9 @@ export async function POST(request: NextRequest) {
           platformFee,
           discount,
           couponCode: appliedCouponCode,
+          tokenDiscount,
+          tokensEarned,
+          tokensRedeemed: actualTokensRedeemed,
           total,
           notes,
           items: {
@@ -254,10 +277,26 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // ── Deduct redeemed tokens atomically ───────────────────────────────
+      if (actualTokensRedeemed > 0 && session?.user?.id) {
+        await tx.user.update({
+          where: { id: session.user.id },
+          data: { tokenBalance: { decrement: actualTokensRedeemed } },
+        });
+      }
+
+      // ── Award earned tokens atomically ───────────────────────────────────
+      if (tokensEarned > 0 && session?.user?.id) {
+        await tx.user.update({
+          where: { id: session.user.id },
+          data: { tokenBalance: { increment: tokensEarned } },
+        });
+      }
+
       return newOrder;
     }, { timeout: 20000, maxWait: 10000 });
 
-    return NextResponse.json({ order }, { status: 201 });
+    return NextResponse.json({ order, tokensEarned: order.tokensEarned }, { status: 201 });
   } catch (error: any) {
     console.error("POST /api/orders error:", error);
     return NextResponse.json(

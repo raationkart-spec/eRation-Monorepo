@@ -153,6 +153,9 @@ export interface Order {
   platformFee: number;
   discount: number;
   couponCode?: string;
+  tokenDiscount?: number;
+  tokensEarned?: number;
+  tokensRedeemed?: number;
   total: number;
   notes?: string;
   createdAt: string;

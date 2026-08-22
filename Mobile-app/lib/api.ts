@@ -217,7 +217,9 @@ export const api = {
   /**
    * Create an order
    */
-  async createOrder(orderPayload: Partial<Order>): Promise<{ success: boolean; orderId?: string; error?: string }> {
+  async createOrder(
+    orderPayload: Partial<Order> & { tokensToRedeem?: number }
+  ): Promise<{ success: boolean; orderId?: string; tokensEarned?: number; error?: string }> {
     try {
       const res = await fetchWithTimeout(`${API_BASE_URL}/api/orders`, {
         method: "POST",
@@ -226,13 +228,33 @@ export const api = {
 
       if (res.ok) {
         const data = await res.json();
-        return { success: true, orderId: data.orderId || data.id };
+        return {
+          success: true,
+          orderId: data.order?.id || data.orderId || data.id,
+          tokensEarned: data.tokensEarned ?? data.order?.tokensEarned,
+        };
       }
       const errData = await res.json().catch(() => ({}));
       return { success: false, error: errData.message || errData.error || "Failed to place order" };
     } catch (e: any) {
       return { success: false, error: e.message || "Network error. Please try again." };
     }
+  },
+
+  /**
+   * Fetch user's token balance
+   */
+  async getTokenBalance(): Promise<number> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/user/tokens`);
+      if (res.ok) {
+        const data = await res.json();
+        return data.tokenBalance ?? 0;
+      }
+    } catch (e) {
+      console.log("API getTokenBalance fallback:", e);
+    }
+    return 0;
   },
 
   /**

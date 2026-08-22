@@ -150,8 +150,8 @@ export const DEFAULT_CONFIG = {
   store_email: "support@quickcart.in",
   store_address: "Hill Cart Road, Siliguri, West Bengal 734001",
   support_whatsapp: "+91 98000 12345",
-  delivery_fee: 4900,
-  free_delivery_above: 49900,
+  delivery_fee: 3900,           // ₹39
+  free_delivery_above: 39900,   // ₹399
   platform_fee: 200,
   tax_rate: 0,
 };

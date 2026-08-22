@@ -198,6 +198,11 @@ export default function CartPage() {
               <span>You are saving {formatMoney(savings)} on this order!</span>
             </div>
           )}
+          {subtotal > 0 && (
+            <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-2.5 text-xs font-extrabold text-amber-800 flex items-center gap-2">
+              🪙 <span>Earn {Math.floor(subtotal / 10000) * 100} QuickCoins on this order!</span>
+            </div>
+          )}
         </section>
       </div>
 

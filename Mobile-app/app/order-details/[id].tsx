@@ -194,6 +194,20 @@ export default function OrderDetailsScreen() {
             </View>
           ) : null}
 
+          {(order.tokenDiscount ?? 0) > 0 ? (
+            <View style={styles.billRow}>
+              <Text style={styles.tokenDiscountLabel}>QuickCoins ({order.tokensRedeemed} coins)</Text>
+              <Text style={styles.tokenDiscountValue}>-{formatMoney(order.tokenDiscount!)}</Text>
+            </View>
+          ) : null}
+
+          {(order.tokensEarned ?? 0) > 0 ? (
+            <View style={styles.billRow}>
+              <Text style={styles.tokenEarnedLabel}>QuickCoins awarded</Text>
+              <Text style={styles.tokenEarnedValue}>+{order.tokensEarned} coins</Text>
+            </View>
+          ) : null}
+
           <View style={styles.divider} />
 
           <View style={styles.billRow}>
@@ -395,6 +409,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#16a34a",
     fontWeight: "900",
+  },
+  tokenDiscountLabel: {
+    fontSize: 12,
+    color: "#d97706",
+    fontWeight: "700",
+  },
+  tokenDiscountValue: {
+    fontSize: 12,
+    color: "#d97706",
+    fontWeight: "900",
+  },
+  tokenEarnedLabel: {
+    fontSize: 12,
+    color: "#d97706",
+    fontWeight: "600",
+    fontStyle: "italic",
+  },
+  tokenEarnedValue: {
+    fontSize: 12,
+    color: "#d97706",
+    fontWeight: "800",
   },
   divider: {
     height: 1,

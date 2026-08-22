@@ -47,6 +47,7 @@ model User {
   image         String?
   phone         String?   @unique
   role          Role      @default(CUSTOMER)
+  tokenBalance  Int       @default(0)
   accounts      Account[]
   sessions      Session[]
   addresses     Address[]
@@ -214,6 +215,9 @@ model Order {
   platformFee   Int                @default(0)
   discount      Int                @default(0)
   couponCode    String?
+  tokenDiscount Int                @default(0)
+  tokensEarned  Int                @default(0)
+  tokensRedeemed Int               @default(0)
   total         Int
   notes         String?
   items         OrderItem[]
@@ -249,8 +253,8 @@ model OrderStatusHistory {
 
 model StoreConfig {
   id                   String   @id @default("default")
-  deliveryFee          Int      @default(2900)
-  freeDeliveryThreshold Int     @default(29900)
+  deliveryFee          Int      @default(3900)
+  freeDeliveryThreshold Int     @default(39900)
   minOrderValue        Int      @default(9900)
   platformFee          Int      @default(200)
   storeName            String   @default("QuickCart")

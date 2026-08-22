@@ -23,6 +23,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+  const tokenBalance = useAuthStore((s) => s.tokenBalance);
 
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
 
@@ -103,6 +104,25 @@ export default function ProfileScreen() {
               <Text style={styles.roleText}>CUSTOMER</Text>
             </View>
           </View>
+        </View>
+
+        {/* QuickCoins Rewards Card */}
+        <View style={styles.coinCard}>
+          <View style={styles.coinCardHeader}>
+            <View style={styles.coinTitleRow}>
+              <Text style={styles.coinEmoji}>🪙</Text>
+              <View>
+                <Text style={styles.coinCardTitle}>QuickCoins Balance</Text>
+                <Text style={styles.coinCardSub}>100 coins = ₹25 off at checkout</Text>
+              </View>
+            </View>
+            <View style={styles.coinBalanceBadge}>
+              <Text style={styles.coinBalanceText}>{tokenBalance} Coins</Text>
+            </View>
+          </View>
+          <Text style={styles.coinRuleText}>
+            Earn 10 QuickCoins for every ₹100 spent on QuickCart orders!
+          </Text>
         </View>
 
         {/* Saved Addresses Section */}
@@ -343,6 +363,57 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "900",
     color: "#ea580c",
+  },
+  coinCard: {
+    backgroundColor: "#fffbeb",
+    borderWidth: 1,
+    borderColor: "#fde68a",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+  },
+  coinCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  coinTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  coinEmoji: {
+    fontSize: 22,
+  },
+  coinCardTitle: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#92400e",
+  },
+  coinCardSub: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#b45309",
+    marginTop: 1,
+  },
+  coinBalanceBadge: {
+    backgroundColor: "#fef3c7",
+    borderWidth: 1,
+    borderColor: "#fcd34d",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  coinBalanceText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#b45309",
+  },
+  coinRuleText: {
+    fontSize: 11,
+    color: "#78350f",
+    fontWeight: "600",
   },
   sectionCard: {
     backgroundColor: "#ffffff",

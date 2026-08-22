@@ -4,8 +4,8 @@ export const DEFAULT_CONFIG: StoreConfig = {
   storeName: "QuickCart",
   supportPhone: "+91 90000 00000",
   supportEmail: "support@quickcart.com",
-  deliveryFee: 2900, // ₹29
-  freeDeliveryThreshold: 49900, // ₹499
+  deliveryFee: 3900, // ₹39
+  freeDeliveryThreshold: 39900, // ₹399
   platformFee: 500, // ₹5
   minOrderValue: 9900, // ₹99
 };

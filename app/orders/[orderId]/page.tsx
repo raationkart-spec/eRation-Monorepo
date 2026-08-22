@@ -71,6 +71,9 @@ function OrderDetail({ orderId }: { orderId: string }) {
           platformFee: o.platformFee ?? 0,
           discount: o.discount ?? 0,
           couponCode: o.couponCode ?? undefined,
+          tokenDiscount: o.tokenDiscount ?? 0,
+          tokensEarned: o.tokensEarned ?? 0,
+          tokensRedeemed: o.tokensRedeemed ?? 0,
           total: o.total,
           createdAt: o.createdAt,
           deliveredAt: o.deliveredAt ?? undefined,
@@ -89,7 +92,8 @@ function OrderDetail({ orderId }: { orderId: string }) {
   useEffect(() => {
     if (placed) {
       clearCart();
-      show("Order placed! 🎉");
+      const earnedCoins = Number(new URLSearchParams(window.location.search).get("earned") ?? 0);
+      show(earnedCoins > 0 ? `Order placed! 🎉 You earned ${earnedCoins} QuickCoins!` : "Order placed! 🎉");
       const handlePopState = (e: PopStateEvent) => {
         e.preventDefault();
         router.replace("/");
@@ -309,6 +313,12 @@ function OrderDetail({ orderId }: { orderId: string }) {
               <div className="flex justify-between">
                 <span>Coupon discount{order.couponCode ? ` (${order.couponCode})` : ""}</span>
                 <span className="text-emerald-600 font-bold">-{formatMoney(order.discount)}</span>
+              </div>
+            )}
+            {(order.tokenDiscount ?? 0) > 0 && (
+              <div className="flex justify-between">
+                <span>QuickCoins ({order.tokensRedeemed} coins)</span>
+                <span className="text-amber-600 font-bold">-{formatMoney(order.tokenDiscount!)}</span>
               </div>
             )}
             <div className="border-t border-dashed border-slate-200 pt-2 flex justify-between text-sm font-black text-slate-900">
