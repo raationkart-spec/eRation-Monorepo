@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useAuth, useCatalog, useShop } from "@/lib/store";
+import { createClient } from "@/utils/supabase/client";
 
 function CatalogSync() {
   const { data: session } = useSession();
@@ -70,8 +71,10 @@ function AuthSync() {
   const { data: session, status } = useSession();
   const setUser = useAuth((s) => s.setUser);
   const setTokenBalance = useAuth((s) => s.setTokenBalance);
+  const logout = useAuth((s) => s.logout);
 
   useEffect(() => {
+    // 1. NextAuth session check
     if (status === "authenticated" && session?.user) {
       setUser({
         id: session.user.id || "u_session",
@@ -80,16 +83,81 @@ function AuthSync() {
         image: session.user.image || undefined,
         role: (session.user as any).role || "CUSTOMER",
       });
-      // Fetch and cache token balance
       fetch("/api/user/tokens")
         .then((r) => r.json())
         .then((d) => setTokenBalance(d.tokenBalance ?? 0))
         .catch(() => {});
+      return;
     }
-    if (status === "unauthenticated") {
-      setTokenBalance(0);
-    }
-  }, [session, status, setUser, setTokenBalance]);
+
+    // 2. Supabase auth check & subscription
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user && user.email) {
+        const userEmail: string = user.email;
+        const meta = user.user_metadata || {};
+        fetch("/api/auth/supabase-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: user.id,
+            email: userEmail,
+            name: meta.full_name || meta.name || userEmail.split("@")[0],
+            image: meta.avatar_url || meta.picture,
+          }),
+        })
+          .then((r) => r.json())
+          .then((res) => {
+            if (res.user) {
+              setUser(res.user);
+              if (typeof res.user.tokenBalance === "number") {
+                setTokenBalance(res.user.tokenBalance);
+              }
+            }
+          })
+          .catch(() => {});
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && session.user.email) {
+        const u = session.user;
+        const uEmail = u.email!;
+        const meta = u.user_metadata || {};
+        fetch("/api/auth/supabase-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: u.id,
+            email: uEmail,
+            name: meta.full_name || meta.name || uEmail.split("@")[0],
+            image: meta.avatar_url || meta.picture,
+          }),
+        })
+          .then((r) => r.json())
+          .then((res) => {
+            if (res.user) {
+              setUser(res.user);
+              if (typeof res.user.tokenBalance === "number") {
+                setTokenBalance(res.user.tokenBalance);
+              }
+            }
+          })
+          .catch(() => {});
+      } else if (event === "SIGNED_OUT") {
+        if (status !== "authenticated") {
+          logout();
+          setTokenBalance(0);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [session, status, setUser, setTokenBalance, logout]);
 
   return null;
 }

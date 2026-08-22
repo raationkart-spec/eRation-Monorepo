@@ -82,6 +82,9 @@ export default function LoginScreen() {
           const params = new URLSearchParams(paramString);
           const access_token = params.get("access_token");
           const refresh_token = params.get("refresh_token");
+          const code = params.get("code");
+
+          let authUser: any = null;
 
           if (access_token && refresh_token) {
             const { data: sessionData, error: sessionErr } =
@@ -89,35 +92,43 @@ export default function LoginScreen() {
                 access_token,
                 refresh_token,
               });
-
             if (!sessionErr && sessionData.user) {
-              const u = sessionData.user;
-              const cleanEmail = u.email || "";
-              const meta = u.user_metadata || {};
-              const name = meta.full_name || meta.name || cleanEmail.split("@")[0];
-              const image = meta.avatar_url || meta.picture;
+              authUser = sessionData.user;
+            }
+          } else if (code) {
+            const { data: sessionData, error: sessionErr } =
+              await supabase.auth.exchangeCodeForSession(code);
+            if (!sessionErr && sessionData.user) {
+              authUser = sessionData.user;
+            }
+          }
 
-              const syncRes = await api.syncSupabaseUser({
-                id: u.id,
+          if (authUser) {
+            const cleanEmail = authUser.email || "";
+            const meta = authUser.user_metadata || {};
+            const name = meta.full_name || meta.name || cleanEmail.split("@")[0];
+            const image = meta.avatar_url || meta.picture;
+
+            const syncRes = await api.syncSupabaseUser({
+              id: authUser.id,
+              email: cleanEmail,
+              name,
+              image,
+            });
+
+            if (syncRes.success && syncRes.user) {
+              loginWithBackend(syncRes.user);
+            } else {
+              loginWithBackend({
+                id: authUser.id,
                 email: cleanEmail,
                 name,
                 image,
+                role: "CUSTOMER",
               });
-
-              if (syncRes.success && syncRes.user) {
-                loginWithBackend(syncRes.user);
-              } else {
-                loginWithBackend({
-                  id: u.id,
-                  email: cleanEmail,
-                  name,
-                  image,
-                  role: "CUSTOMER",
-                });
-              }
-              router.replace("/(tabs)");
-              return;
             }
+            router.replace("/(tabs)");
+            return;
           }
         }
       }
