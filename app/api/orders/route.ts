@@ -229,8 +229,8 @@ export async function POST(request: NextRequest) {
 
       const total = subtotal + deliveryFee + platformFee - discount - tokenDiscount;
 
-      // ── Tokens earned on this order (10 coins per ₹100 = floor(subtotal/10000)*100) ──
-      const tokensEarned = Math.floor(subtotal / 10000) * 100;
+      // ── Tokens earned on this order (10% of subtotal: 1 coin per ₹10 = floor(subtotal / 1000)) ──
+      const tokensEarned = Math.floor(subtotal / 1000);
 
       const orderCount = await tx.order.count();
       const orderNumber = makeOrderNumber(orderCount + 1);

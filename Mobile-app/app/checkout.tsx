@@ -228,7 +228,7 @@ export default function CheckoutScreen() {
       discount: appliedCoupon?.discount || 0,
       couponCode: appliedCoupon?.code,
       tokenDiscount,
-      tokensEarned: Math.floor(itemTotal / 10000) * 100,
+      tokensEarned: Math.floor(itemTotal / 1000),
       tokensRedeemed: tokensApplied,
       total: grandTotal,
       notes,
@@ -244,7 +244,7 @@ export default function CheckoutScreen() {
       customerPhone: user?.phone || finalAddress.phone || "",
     };
 
-    let earnedCoins = Math.floor(itemTotal / 10000) * 100;
+    let earnedCoins = Math.floor(itemTotal / 1000);
     try {
       const res = await api.createOrder({
         ...orderPayload,
