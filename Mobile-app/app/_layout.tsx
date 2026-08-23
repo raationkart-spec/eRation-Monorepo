@@ -27,12 +27,15 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isHydrated) return;
 
-    const inAuthGroup = segments[0] === "login" || segments[0] === "verify";
+    const inAuthGroup =
+      segments[0] === "login" ||
+      segments[0] === "verify" ||
+      segments[0] === "auth";
 
     if (!user && !inAuthGroup) {
       // User is not logged in -> Redirect to /login
       router.replace("/login");
-    } else if (user && inAuthGroup) {
+    } else if (user && (segments[0] === "login" || segments[0] === "verify")) {
       // User is logged in -> Redirect to storefront
       router.replace("/(tabs)");
     }
@@ -64,6 +67,7 @@ export default function RootLayout() {
           >
             <Stack.Screen name="login" options={{ headerShown: false }} />
             <Stack.Screen name="verify" options={{ headerShown: false }} />
+            <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="product/[slug]" options={{ headerShown: false, presentation: "modal" }} />
             <Stack.Screen name="category/[slug]" options={{ headerShown: false }} />
