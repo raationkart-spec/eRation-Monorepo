@@ -50,6 +50,25 @@ jobs:
           NODE_ENV: "production"
         run: npx expo prebuild --platform android --no-install
 
+      - name: Configure Production Keystore and Signing
+        working-directory: Mobile-app
+        run: |
+          cat release-keystore.b64 | base64 -d > android/app/release.keystore
+          node -e "
+            const fs = require('fs');
+            const gradlePath = 'android/app/build.gradle';
+            let content = fs.readFileSync(gradlePath, 'utf8');
+            content = content.replace(
+              'signingConfig signingConfigs.debug',
+              'signingConfig signingConfigs.release'
+            );
+            content = content.replace(
+              'signingConfigs {',
+              'signingConfigs {\n        release {\n            storeFile file(\'release.keystore\')\n            storePassword \'quickcart123\'\n            keyAlias \'quickcart\'\n            keyPassword \'quickcart123\'\n        }'
+            );
+            fs.writeFileSync(gradlePath, content, 'utf8');
+          "
+
       - name: Make Gradle wrapper executable
         run: chmod +x Mobile-app/android/gradlew
 
