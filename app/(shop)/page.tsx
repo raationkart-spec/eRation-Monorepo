@@ -63,6 +63,22 @@ export default function HomePage() {
           </div>
         </section>
       ))}
+
+      {/* Storefront Footer */}
+      <footer className="mt-8 border-t border-slate-100 pt-6 pb-4 text-center text-xs text-slate-400">
+        <p className="font-bold text-slate-600">QuickCart • Siliguri</p>
+        <p className="mt-1 text-2xs">Daily groceries & essentials delivered fast across Siliguri.</p>
+        <div className="mt-3 flex items-center justify-center gap-4 text-2xs font-semibold">
+          <a href="/terms" className="text-slate-500 underline hover:text-orange-500">
+            Terms of Service
+          </a>
+          <span>•</span>
+          <a href="/privacy" className="text-slate-500 underline hover:text-orange-500">
+            Privacy Policy
+          </a>
+        </div>
+        <p className="mt-3 text-[10px] text-slate-300">© 2026 QuickCart. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

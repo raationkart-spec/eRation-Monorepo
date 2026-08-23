@@ -15,15 +15,16 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const isAuthed = Boolean(user || session?.user);
+  const isPublicPage = pathname === "/terms" || pathname === "/privacy";
 
   useEffect(() => {
-    if (hydrated && status !== "loading" && !isAuthed) {
+    if (hydrated && status !== "loading" && !isAuthed && !isPublicPage) {
       router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`);
     }
-  }, [hydrated, status, isAuthed, pathname, router]);
+  }, [hydrated, status, isAuthed, pathname, router, isPublicPage]);
 
   if (!hydrated || status === "loading") return <HomeSkeleton />;
-  if (!isAuthed) return null;
+  if (!isAuthed && !isPublicPage) return null;
 
   return <>{children}</>;
 }

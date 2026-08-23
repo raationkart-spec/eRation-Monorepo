@@ -344,7 +344,25 @@ export default function LoginScreen() {
               </View>
 
               <Text style={styles.termsText}>
-                By continuing, you agree to our Terms of Service & Privacy Policy.
+                By continuing, you agree to our{" "}
+                <Text
+                  style={[styles.termsText, { color: "#f97316", textDecorationLine: "underline" }]}
+                  onPress={() =>
+                    WebBrowser.openBrowserAsync("https://quickcart-nu-nine.vercel.app/terms")
+                  }
+                >
+                  Terms of Service
+                </Text>{" "}
+                &{" "}
+                <Text
+                  style={[styles.termsText, { color: "#f97316", textDecorationLine: "underline" }]}
+                  onPress={() =>
+                    WebBrowser.openBrowserAsync("https://quickcart-nu-nine.vercel.app/privacy")
+                  }
+                >
+                  Privacy Policy
+                </Text>
+                .
               </Text>
             </View>
           </View>

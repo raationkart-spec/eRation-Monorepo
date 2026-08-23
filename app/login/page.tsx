@@ -209,7 +209,21 @@ function LoginInner() {
 
         <div className="w-full text-center pt-2">
           <p className="text-2xs font-medium text-slate-400">
-            By continuing, you agree to our Terms of Service & Privacy Policy.
+            By continuing, you agree to our{" "}
+            <Link
+              href="/terms"
+              className="text-orange-400 font-semibold underline underline-offset-2 hover:text-orange-300 transition-colors"
+            >
+              Terms of Service
+            </Link>{" "}
+            &amp;{" "}
+            <Link
+              href="/privacy"
+              className="text-orange-400 font-semibold underline underline-offset-2 hover:text-orange-300 transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            .
           </p>
         </div>
       </div>
