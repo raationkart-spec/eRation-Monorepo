@@ -2,61 +2,19 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { db } from "@/lib/db";
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  const returnTo = searchParams.get("returnTo") || "/";
-
-  if (code) {
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (!error && data.user && data.user.email) {
-      const cleanEmail = data.user.email.toLowerCase().trim();
-      const meta = data.user.user_metadata || {};
-      const name = meta.full_name || meta.name || cleanEmail.split("@")[0];
-      const image = meta.avatar_url || meta.picture || undefined;
-
-      try {
-        await db.user.upsert({
-          where: { email: cleanEmail },
-          update: {
-            name,
-            ...(image ? { image } : {}),
-          },
-          create: {
-            email: cleanEmail,
-            name,
-            image,
-            role: "CUSTOMER",
-            tokenBalance: 0,
-          },
-        });
-      } catch (dbErr) {
-        console.error("Supabase OAuth DB sync error:", dbErr);
-      }
-
-      // Check if returnTo is a mobile deep-link scheme
-      if (returnTo.startsWith("quickcart://") || returnTo.startsWith("exp://")) {
-        const hashParams = new URLSearchParams();
-        if (data.session?.access_token) {
-          hashParams.set("access_token", data.session.access_token);
-        }
-        if (data.session?.refresh_token) {
-          hashParams.set("refresh_token", data.session.refresh_token);
-        }
-        if (code) {
-          hashParams.set("code", code);
-        }
-        const separator = returnTo.includes("#") ? "&" : "#";
-        const mobileTarget = `${returnTo}${separator}${hashParams.toString()}`;
-
-        const html = `<!DOCTYPE html>
+function renderMobileBounceHtml(
+  mobileTarget: string,
+  badgeText = "⚡ QuickCart",
+  title = "Login Successful! 🎉",
+  message = "Returning to QuickCart App...",
+  buttonText = "Open QuickCart App"
+) {
+  const html = `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Redirecting to QuickCart...</title>
+    <title>${title}</title>
     <meta http-equiv="refresh" content="0;url=${mobileTarget}">
     <script>
       window.location.replace("${mobileTarget}");
@@ -123,38 +81,134 @@ export async function GET(request: Request) {
   </head>
   <body>
     <div class="card">
-      <div class="badge">⚡ QuickCart</div>
-      <h2>Login Successful! 🎉</h2>
-      <p>Returning to QuickCart App...</p>
-      <a class="btn" href="${mobileTarget}">Open QuickCart App</a>
+      <div class="badge">${badgeText}</div>
+      <h2>${title}</h2>
+      <p>${message}</p>
+      <a class="btn" href="${mobileTarget}">${buttonText}</a>
     </div>
   </body>
 </html>`;
 
-        return new NextResponse(html, {
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "no-store, max-age=0",
-          },
-        });
-      }
+  return new NextResponse(html, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store, max-age=0",
+    },
+  });
+}
 
-      const forwardedHost = request.headers.get("x-forwarded-host");
-      const isLocalEnv = process.env.NODE_ENV === "development";
+function resolveWebRedirect(
+  returnTo: string,
+  origin: string,
+  forwardedHost: string | null,
+  isLocalEnv: boolean
+): string {
+  // If returnTo is already an absolute HTTP/HTTPS URL, don't concatenate host prefix!
+  if (/^https?:\/\//i.test(returnTo)) {
+    return returnTo;
+  }
+  const safePath = returnTo.startsWith("/") ? returnTo : `/${returnTo}`;
+  if (isLocalEnv) {
+    return `${origin}${safePath}`;
+  }
+  if (forwardedHost) {
+    return `https://${forwardedHost}${safePath}`;
+  }
+  return `${origin}${safePath}`;
+}
 
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${returnTo}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${returnTo}`);
-      } else {
-        return NextResponse.redirect(`${origin}${returnTo}`);
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const returnTo = searchParams.get("returnTo") || "/";
+  const isMobileTarget =
+    returnTo.startsWith("quickcart://") || returnTo.startsWith("exp://");
+
+  if (code) {
+    let sessionUser: any = null;
+    let sessionTokens: { access_token?: string; refresh_token?: string } = {};
+
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      if (!error && data?.user) {
+        sessionUser = data.user;
+        sessionTokens = {
+          access_token: data.session?.access_token,
+          refresh_token: data.session?.refresh_token,
+        };
+
+        if (sessionUser.email) {
+          const cleanEmail = sessionUser.email.toLowerCase().trim();
+          const meta = sessionUser.user_metadata || {};
+          const name = meta.full_name || meta.name || cleanEmail.split("@")[0];
+          const image = meta.avatar_url || meta.picture || undefined;
+
+          try {
+            await db.user.upsert({
+              where: { email: cleanEmail },
+              update: {
+                name,
+                ...(image ? { image } : {}),
+              },
+              create: {
+                email: cleanEmail,
+                name,
+                image,
+                role: "CUSTOMER",
+                tokenBalance: 0,
+              },
+            });
+          } catch (dbErr) {
+            console.error("Supabase OAuth DB sync error:", dbErr);
+          }
+        }
       }
+    } catch (exchangeErr) {
+      console.warn("Server-side code exchange skipped or failed:", exchangeErr);
     }
+
+    // Handle Mobile Deep-Link Target
+    if (isMobileTarget) {
+      const hashParams = new URLSearchParams();
+      if (sessionTokens.access_token) {
+        hashParams.set("access_token", sessionTokens.access_token);
+      }
+      if (sessionTokens.refresh_token) {
+        hashParams.set("refresh_token", sessionTokens.refresh_token);
+      }
+      // Pass the code through so the mobile client can exchange it locally if needed (PKCE)
+      if (code) {
+        hashParams.set("code", code);
+      }
+
+      const separator = returnTo.includes("#") ? "&" : "#";
+      const mobileTarget = `${returnTo}${separator}${hashParams.toString()}`;
+      return renderMobileBounceHtml(mobileTarget);
+    }
+
+    // Handle Web Target
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const isLocalEnv = process.env.NODE_ENV === "development";
+    const redirectUrl = resolveWebRedirect(returnTo, origin, forwardedHost, isLocalEnv);
+    return NextResponse.redirect(redirectUrl);
   }
 
-  // If error or no code, redirect to mobile or web login with error
-  if (returnTo.startsWith("quickcart://") || returnTo.startsWith("exp://")) {
-    return NextResponse.redirect(`${returnTo}#error=OAuthFailed`);
+  // If no code was provided or OAuth failed:
+  if (isMobileTarget) {
+    const separator = returnTo.includes("#") ? "&" : "#";
+    const mobileTarget = `${returnTo}${separator}error=OAuthFailed`;
+    return renderMobileBounceHtml(
+      mobileTarget,
+      "⚡ QuickCart",
+      "Authentication Notice",
+      "Redirecting back to QuickCart App...",
+      "Return to App"
+    );
   }
-  return NextResponse.redirect(`${origin}/login?error=OAuthFailed`);
+
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const isLocalEnv = process.env.NODE_ENV === "development";
+  const loginRedirect = resolveWebRedirect("/login?error=OAuthFailed", origin, forwardedHost, isLocalEnv);
+  return NextResponse.redirect(loginRedirect);
 }
