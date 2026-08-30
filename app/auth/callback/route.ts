@@ -2,101 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { db } from "@/lib/db";
 
-function renderMobileBounceHtml(
-  mobileTarget: string,
-  badgeText = "⚡ QuickCart",
-  title = "Login Successful! 🎉",
-  message = "Returning to QuickCart App...",
-  buttonText = "Open QuickCart App"
-) {
-  const html = `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${title}</title>
-    <meta http-equiv="refresh" content="0;url=${mobileTarget}">
-    <script>
-      window.location.replace("${mobileTarget}");
-    </script>
-    <style>
-      body {
-        margin: 0;
-        padding: 24px;
-        background-color: #020617;
-        color: #ffffff;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        box-sizing: border-box;
-        text-align: center;
-      }
-      .card {
-        background-color: #0f172a;
-        border: 1px solid #1e293b;
-        border-radius: 20px;
-        padding: 32px 24px;
-        max-width: 360px;
-        width: 100%;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-      }
-      .badge {
-        display: inline-block;
-        background-color: rgba(249, 115, 22, 0.15);
-        color: #f97316;
-        font-weight: 800;
-        font-size: 11px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        padding: 4px 12px;
-        border-radius: 9999px;
-        margin-bottom: 16px;
-      }
-      h2 {
-        margin: 0 0 8px;
-        font-size: 22px;
-        font-weight: 800;
-      }
-      p {
-        margin: 0 0 24px;
-        font-size: 14px;
-        color: #94a3b8;
-        line-height: 1.5;
-      }
-      .btn {
-        display: inline-block;
-        background: linear-gradient(to right, #f97316, #ea580c);
-        color: #ffffff;
-        text-decoration: none;
-        padding: 14px 28px;
-        border-radius: 9999px;
-        font-weight: 800;
-        font-size: 14px;
-        box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.3);
-      }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <div class="badge">${badgeText}</div>
-      <h2>${title}</h2>
-      <p>${message}</p>
-      <a class="btn" href="${mobileTarget}">${buttonText}</a>
-    </div>
-  </body>
-</html>`;
-
-  return new NextResponse(html, {
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store, max-age=0",
-    },
-  });
-}
-
 function resolveWebRedirect(
   returnTo: string,
   origin: string,
@@ -168,7 +73,7 @@ export async function GET(request: Request) {
       console.warn("Server-side code exchange skipped or failed:", exchangeErr);
     }
 
-    // Handle Mobile Deep-Link Target
+    // ── Mobile Deep-Link Target ──────────────────────────────────────────────
     if (isMobileTarget) {
       const hashParams = new URLSearchParams();
       if (sessionTokens.access_token) {
@@ -177,34 +82,44 @@ export async function GET(request: Request) {
       if (sessionTokens.refresh_token) {
         hashParams.set("refresh_token", sessionTokens.refresh_token);
       }
-      // Pass the code through so the mobile client can exchange it locally if needed (PKCE)
-      if (code) {
-        hashParams.set("code", code);
-      }
+      // Always pass code through — mobile app uses PKCE and can exchange it locally
+      hashParams.set("code", code);
 
       const separator = returnTo.includes("#") ? "&" : "#";
       const mobileTarget = `${returnTo}${separator}${hashParams.toString()}`;
-      return renderMobileBounceHtml(mobileTarget);
+
+      // CRITICAL: Use a raw Response with HTTP 302 + Location header.
+      // NextResponse.redirect() throws TypeError for non-HTTP schemes.
+      // HTML meta-refresh / JS window.location are NOT intercepted by Android
+      // Chrome Custom Tabs — only a top-level HTTP 302 redirect is intercepted
+      // by WebBrowser.openAuthSessionAsync() to close the tab and return to app.
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: mobileTarget,
+          "Cache-Control": "no-store, max-age=0",
+        },
+      });
     }
 
-    // Handle Web Target
+    // ── Web Target ───────────────────────────────────────────────────────────
     const forwardedHost = request.headers.get("x-forwarded-host");
     const isLocalEnv = process.env.NODE_ENV === "development";
     const redirectUrl = resolveWebRedirect(returnTo, origin, forwardedHost, isLocalEnv);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If no code was provided or OAuth failed:
+  // ── No code / OAuth failed ───────────────────────────────────────────────
   if (isMobileTarget) {
     const separator = returnTo.includes("#") ? "&" : "#";
     const mobileTarget = `${returnTo}${separator}error=OAuthFailed`;
-    return renderMobileBounceHtml(
-      mobileTarget,
-      "⚡ QuickCart",
-      "Authentication Notice",
-      "Redirecting back to QuickCart App...",
-      "Return to App"
-    );
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: mobileTarget,
+        "Cache-Control": "no-store, max-age=0",
+      },
+    });
   }
 
   const forwardedHost = request.headers.get("x-forwarded-host");

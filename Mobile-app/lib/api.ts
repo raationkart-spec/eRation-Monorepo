@@ -267,11 +267,14 @@ export const api = {
   },
 
   /**
-   * Fetch user's token balance
+   * Fetch user's token balance — optionally pass email for mobile (no web session cookie)
    */
-  async getTokenBalance(): Promise<number> {
+  async getTokenBalance(email?: string): Promise<number> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE_URL}/api/user/tokens`);
+      const url = email
+        ? `${API_BASE_URL}/api/user/tokens?email=${encodeURIComponent(email)}`
+        : `${API_BASE_URL}/api/user/tokens`;
+      const res = await fetchWithTimeout(url);
       if (res.ok) {
         const data = await res.json();
         return data.tokenBalance ?? 0;

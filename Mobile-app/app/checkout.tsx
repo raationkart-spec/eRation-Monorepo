@@ -69,7 +69,7 @@ export default function CheckoutScreen() {
       try {
         const [prodsRes, serverTokens] = await Promise.all([
           api.getProducts(),
-          api.getTokenBalance(),
+          api.getTokenBalance(user?.email || undefined),
         ]);
         setProducts(prodsRes);
         if (typeof serverTokens === "number" && serverTokens > 0) {
@@ -242,6 +242,7 @@ export default function CheckoutScreen() {
       ],
       customerName: user?.name || finalAddress.name || "Customer",
       customerPhone: user?.phone || finalAddress.phone || "",
+      customerEmail: user?.email || "",
     };
 
     let earnedCoins = Math.floor(itemTotal / 1000);

@@ -1,13 +1,22 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const emailParam = searchParams.get("email")?.toLowerCase().trim();
+
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ tokenBalance: 0 });
 
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
+  // Resolve user by session ID first, then by session email, then by query param email
+  const user = await db.user.findFirst({
+    where: {
+      OR: [
+        ...(session?.user?.id ? [{ id: session.user.id }] : []),
+        ...(session?.user?.email ? [{ email: session.user.email.toLowerCase().trim() }] : []),
+        ...(emailParam ? [{ email: emailParam }] : []),
+      ],
+    },
     select: { tokenBalance: true },
   });
 

@@ -39,10 +39,22 @@ export async function POST(request: NextRequest) {
       paymentMethod = "COD",
       customerName,
       customerPhone,
+      customerEmail,
       notes,
       couponCode,
     } = body;
     const tokensToRedeem: number = Math.max(0, Number(body.tokensToRedeem) || 0);
+
+    // ── Resolve unified userId from session or email ─────────────────────────
+    let resolvedUserId: string | null = session?.user?.id ?? null;
+    if (!resolvedUserId && customerEmail) {
+      const cleanCustEmail = String(customerEmail).toLowerCase().trim();
+      const dbUser = await db.user.findUnique({
+        where: { email: cleanCustEmail },
+        select: { id: true },
+      });
+      resolvedUserId = dbUser?.id ?? null;
+    }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -215,9 +227,9 @@ export async function POST(request: NextRequest) {
       // ── Token redemption ──────────────────────────────────────────────────
       let tokenDiscount = 0;
       let actualTokensRedeemed = 0;
-      if (tokensToRedeem >= 100 && session?.user?.id) {
+      if (tokensToRedeem >= 100 && resolvedUserId) {
         const dbUser = await tx.user.findUnique({
-          where: { id: session.user.id },
+          where: { id: resolvedUserId },
           select: { tokenBalance: true },
         });
         const userTokens = dbUser?.tokenBalance ?? 0;
@@ -242,7 +254,7 @@ export async function POST(request: NextRequest) {
       const newOrder = await tx.order.create({
         data: {
           orderNumber,
-          userId: session?.user?.id ?? null,
+          userId: resolvedUserId,
           customerName,
           customerPhone,
           addressLine,
@@ -278,17 +290,17 @@ export async function POST(request: NextRequest) {
       });
 
       // ── Deduct redeemed tokens atomically ───────────────────────────────
-      if (actualTokensRedeemed > 0 && session?.user?.id) {
+      if (actualTokensRedeemed > 0 && resolvedUserId) {
         await tx.user.update({
-          where: { id: session.user.id },
+          where: { id: resolvedUserId },
           data: { tokenBalance: { decrement: actualTokensRedeemed } },
         });
       }
 
       // ── Award earned tokens atomically ───────────────────────────────────
-      if (tokensEarned > 0 && session?.user?.id) {
+      if (tokensEarned > 0 && resolvedUserId) {
         await tx.user.update({
-          where: { id: session.user.id },
+          where: { id: resolvedUserId },
           data: { tokenBalance: { increment: tokensEarned } },
         });
       }

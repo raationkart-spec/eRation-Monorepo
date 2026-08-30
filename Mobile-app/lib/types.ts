@@ -163,6 +163,7 @@ export interface Order {
   statusHistory: OrderStatusEvent[];
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
 }
 
 export interface User {
