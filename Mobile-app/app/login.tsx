@@ -20,9 +20,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Mail, ArrowRight, Zap } from "lucide-react-native";
 import Svg, { Path } from "react-native-svg";
 import * as WebBrowser from "expo-web-browser";
-import { makeRedirectUri } from "expo-auth-session";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import { api } from "../lib/api";
-import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/useAuthStore";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -42,106 +41,51 @@ export default function LoginScreen() {
   const [errorMsg, setErrorMsg] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
+  useEffect(() => {
+    try {
+      GoogleSignin.configure({
+        webClientId:
+          "391965258299-cp842fdrb9nfa5l9e4p3e7c0fdbrcs1g.apps.googleusercontent.com",
+        offlineAccess: false,
+      });
+    } catch (e) {
+      console.log("GoogleSignin.configure error:", e);
+    }
+  }, []);
+
   const handleGoogleSignIn = async () => {
     try {
       setGoogleLoading(true);
       setErrorMsg("");
 
-      const localRedirectUri = makeRedirectUri({
-        scheme: "quickcart",
-        path: "auth/callback",
-      });
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const signInResult = await GoogleSignin.signIn();
+      const idToken =
+        signInResult.data?.idToken || (signInResult as any).idToken;
 
-      const redirectTo = `https://quickcart-nu-nine.vercel.app/auth/callback?returnTo=${encodeURIComponent(localRedirectUri)}`;
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-          skipBrowserRedirect: true,
-        },
-      });
-
-      if (error) {
-        throw error;
+      if (!idToken) {
+        throw new Error("Could not retrieve Google ID token.");
       }
 
-      if (data?.url) {
-        const res = await WebBrowser.openAuthSessionAsync(data.url, localRedirectUri);
+      const res = await api.googleNativeLogin(idToken);
 
-        if (res.type === "success" && res.url) {
-          const urlString = res.url;
-          const hashIndex = urlString.indexOf("#");
-          const queryIndex = urlString.indexOf("?");
-
-          const hashString = hashIndex !== -1 ? urlString.substring(hashIndex + 1) : "";
-          const queryString =
-            queryIndex !== -1
-              ? hashIndex !== -1 && hashIndex > queryIndex
-                ? urlString.substring(queryIndex + 1, hashIndex)
-                : urlString.substring(queryIndex + 1)
-              : "";
-
-          const hashParams = new URLSearchParams(hashString);
-          const queryParams = new URLSearchParams(queryString);
-
-          const access_token =
-            hashParams.get("access_token") || queryParams.get("access_token");
-          const refresh_token =
-            hashParams.get("refresh_token") || queryParams.get("refresh_token");
-          const code = hashParams.get("code") || queryParams.get("code");
-
-          let authUser: any = null;
-
-          if (access_token && refresh_token) {
-            const { data: sessionData, error: sessionErr } =
-              await supabase.auth.setSession({
-                access_token,
-                refresh_token,
-              });
-            if (!sessionErr && sessionData.user) {
-              authUser = sessionData.user;
-            }
-          } else if (code) {
-            const { data: sessionData, error: sessionErr } =
-              await supabase.auth.exchangeCodeForSession(code);
-            if (!sessionErr && sessionData.user) {
-              authUser = sessionData.user;
-            }
-          }
-
-          if (authUser) {
-            const cleanEmail = authUser.email || "";
-            const meta = authUser.user_metadata || {};
-            const name = meta.full_name || meta.name || cleanEmail.split("@")[0];
-            const image = meta.avatar_url || meta.picture;
-
-            const syncRes = await api.syncSupabaseUser({
-              id: authUser.id,
-              email: cleanEmail,
-              name,
-              image,
-            });
-
-            if (syncRes.success && syncRes.user) {
-              loginWithBackend(syncRes.user);
-            } else {
-              loginWithBackend({
-                id: authUser.id,
-                email: cleanEmail,
-                name,
-                image,
-                role: "CUSTOMER",
-              });
-            }
-            router.replace("/(tabs)");
-            return;
-          }
-        }
+      if (res.success && res.user) {
+        loginWithBackend(res.user);
+        router.replace("/(tabs)");
+      } else {
+        setErrorMsg(res.error || "Failed to sign in with Google.");
       }
     } catch (e: any) {
-      console.error("Google sign-in error:", e);
-      setErrorMsg(e.message || "Failed to sign in with Google.");
+      if (e.code === statusCodes.SIGN_IN_CANCELLED) {
+        // User cancelled account picker
+      } else if (e.code === statusCodes.IN_PROGRESS) {
+        // Operation already in progress
+      } else if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        setErrorMsg("Google Play Services is not available or outdated.");
+      } else {
+        console.error("Google sign-in error:", e);
+        setErrorMsg(e.message || "Failed to sign in with Google.");
+      }
     } finally {
       setGoogleLoading(false);
     }

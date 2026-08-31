@@ -18,12 +18,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const isPublicPage = pathname === "/terms" || pathname === "/privacy";
 
   useEffect(() => {
-    if (hydrated && status !== "loading" && !isAuthed && !isPublicPage) {
+    if (hydrated && status === "unauthenticated" && !user && !isPublicPage) {
       router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`);
     }
-  }, [hydrated, status, isAuthed, pathname, router, isPublicPage]);
+  }, [hydrated, status, user, isAuthed, pathname, router, isPublicPage]);
 
-  if (!hydrated || status === "loading") return <HomeSkeleton />;
+  if (!hydrated || (status === "loading" && !user)) return <HomeSkeleton />;
   if (!isAuthed && !isPublicPage) return null;
 
   return <>{children}</>;

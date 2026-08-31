@@ -30,7 +30,8 @@
       "expo-router",
       "expo-asset",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin"
     ],
     "scheme": "quickcart"
   }

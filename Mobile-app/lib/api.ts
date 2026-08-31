@@ -215,7 +215,27 @@ export const api = {
   },
 
   /**
-   * Sync Supabase authenticated user with backend database
+   * Native Google Sign-In verification with Next.js backend
+   */
+  async googleNativeLogin(idToken: string): Promise<{ success: boolean; user?: any; error?: string }> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/google-native`, {
+        method: "POST",
+        body: JSON.stringify({ idToken }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { success: true, user: data.user };
+      }
+      const errData = await res.json().catch(() => ({}));
+      return { success: false, error: errData.error || "Failed to authenticate with Google" };
+    } catch (e: any) {
+      return { success: false, error: e.message || "Network error during Google sign in" };
+    }
+  },
+
+  /**
+   * Sync authenticated user with backend database
    */
   async syncSupabaseUser(user: {
     id?: string;

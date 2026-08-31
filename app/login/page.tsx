@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, ArrowRight } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
+import { signIn } from "next-auth/react";
 
 function LoginInner() {
   const router = useRouter();
@@ -30,15 +30,7 @@ function LoginInner() {
     try {
       setGoogleLoading(true);
       setError("");
-      const supabase = createClient();
-      const redirectTo = `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`;
-      const { error: signInError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-        },
-      });
-      if (signInError) throw signInError;
+      await signIn("google", { callbackUrl: returnTo });
     } catch (e: any) {
       setError(e.message || "Failed to initiate Google sign-in");
       setGoogleLoading(false);
