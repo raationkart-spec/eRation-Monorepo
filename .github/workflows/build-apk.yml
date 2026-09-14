@@ -66,10 +66,10 @@ jobs:
               );
             }
 
-            // Explicitly target release block inside buildTypes so debug block is not mistakenly modified
+            // Explicitly target release block inside buildTypes (accounting for any intermediate comments)
             content = content.replace(
-              /release\s*\{\s*signingConfig\s+signingConfigs\.\w+/,
-              'release {\n            signingConfig signingConfigs.release'
+              /(buildTypes\s*\{[\s\S]*?release\s*\{[\s\S]*?signingConfig\s+)signingConfigs\.\w+/,
+              '$1signingConfigs.release'
             );
 
             fs.writeFileSync(gradlePath, content, 'utf8');
