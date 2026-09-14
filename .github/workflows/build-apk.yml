@@ -54,41 +54,7 @@ jobs:
         working-directory: Mobile-app
         run: |
           cat release-keystore.b64 | base64 -d > android/app/release.keystore
-          node -e "
-            const fs = require('fs');
-            const gradlePath = 'android/app/build.gradle';
-            let content = fs.readFileSync(gradlePath, 'utf8');
-
-            if (!content.includes('keyAlias \'quickcart\'')) {
-              content = content.replace(
-                'signingConfigs {',
-                'signingConfigs {\n        release {\n            storeFile file(\'release.keystore\')\n            storePassword \'quickcart123\'\n            keyAlias \'quickcart\'\n            keyPassword \'quickcart123\'\n        }'
-              );
-            }
-
-            // Explicitly target release block inside buildTypes (accounting for any intermediate comments)
-            content = content.replace(
-              /(buildTypes\s*\{[\s\S]*?release\s*\{[\s\S]*?signingConfig\s+)signingConfigs\.\w+/,
-              '$1signingConfigs.release'
-            );
-
-            fs.writeFileSync(gradlePath, content, 'utf8');
-            console.log('Successfully updated android/app/build.gradle signingConfig.');
-          "
-
-      - name: Verify Gradle Release Signing Config
-        working-directory: Mobile-app
-        run: |
-          node -e "
-            const fs = require('fs');
-            const content = fs.readFileSync('android/app/build.gradle', 'utf8');
-            const releaseMatch = content.match(/release\s*\{[\s\S]*?signingConfig\s+signingConfigs\.release/);
-            if (!releaseMatch) {
-              console.error('FATAL: buildTypes.release is NOT using signingConfigs.release!');
-              process.exit(1);
-            }
-            console.log('VERIFIED: buildTypes.release is correctly pointing to signingConfigs.release');
-          "
+          node scripts/configure-release-signing.js
 
       - name: Make Gradle wrapper executable
         run: chmod +x Mobile-app/android/gradlew
