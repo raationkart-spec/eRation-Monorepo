@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.semart.app"
+      "package": "com.semart.app",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"

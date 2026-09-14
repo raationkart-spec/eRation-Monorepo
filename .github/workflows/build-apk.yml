@@ -58,15 +58,36 @@ jobs:
             const fs = require('fs');
             const gradlePath = 'android/app/build.gradle';
             let content = fs.readFileSync(gradlePath, 'utf8');
+
+            if (!content.includes('keyAlias \'quickcart\'')) {
+              content = content.replace(
+                'signingConfigs {',
+                'signingConfigs {\n        release {\n            storeFile file(\'release.keystore\')\n            storePassword \'quickcart123\'\n            keyAlias \'quickcart\'\n            keyPassword \'quickcart123\'\n        }'
+              );
+            }
+
+            // Explicitly target release block inside buildTypes so debug block is not mistakenly modified
             content = content.replace(
-              'signingConfig signingConfigs.debug',
-              'signingConfig signingConfigs.release'
+              /release\s*\{\s*signingConfig\s+signingConfigs\.\w+/,
+              'release {\n            signingConfig signingConfigs.release'
             );
-            content = content.replace(
-              'signingConfigs {',
-              'signingConfigs {\n        release {\n            storeFile file(\'release.keystore\')\n            storePassword \'quickcart123\'\n            keyAlias \'quickcart\'\n            keyPassword \'quickcart123\'\n        }'
-            );
+
             fs.writeFileSync(gradlePath, content, 'utf8');
+            console.log('Successfully updated android/app/build.gradle signingConfig.');
+          "
+
+      - name: Verify Gradle Release Signing Config
+        working-directory: Mobile-app
+        run: |
+          node -e "
+            const fs = require('fs');
+            const content = fs.readFileSync('android/app/build.gradle', 'utf8');
+            const releaseMatch = content.match(/release\s*\{[\s\S]*?signingConfig\s+signingConfigs\.release/);
+            if (!releaseMatch) {
+              console.error('FATAL: buildTypes.release is NOT using signingConfigs.release!');
+              process.exit(1);
+            }
+            console.log('VERIFIED: buildTypes.release is correctly pointing to signingConfigs.release');
           "
 
       - name: Make Gradle wrapper executable
@@ -80,6 +101,22 @@ jobs:
         run: |
           ./gradlew assembleRelease --stacktrace
           ./gradlew bundleRelease --stacktrace
+
+      - name: Verify AAB Release Certificate
+        working-directory: Mobile-app/android
+        run: |
+          AAB_FILE=$(ls app/build/outputs/bundle/release/*.aab | head -n 1)
+          echo "Inspecting certificate in $AAB_FILE..."
+          CERT_INFO=$(unzip -p "$AAB_FILE" META-INF/*.RSA | openssl pkcs7 -inform DER -print_certs -text)
+          if echo "$CERT_INFO" | grep -q "CN=Android Debug"; then
+            echo "FATAL: Bundle was signed with Android Debug certificate!"
+            exit 1
+          fi
+          if ! echo "$CERT_INFO" | grep -q "CN=QuickCart"; then
+            echo "FATAL: Bundle does not contain QuickCart release certificate!"
+            exit 1
+          fi
+          echo "VERIFIED: Bundle is signed with QuickCart production release certificate."
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
