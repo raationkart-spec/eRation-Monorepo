@@ -30,7 +30,7 @@ export function UnserviceableLocationView({ onOpenPincodeModal }: Props) {
 
         {/* Subtitle */}
         <Text style={styles.subText}>
-          QuickCart is not delivering to <Text style={styles.boldPin}>{pincode}</Text> ({city}) yet. Please change your delivery location to continue.
+          Semart is not delivering to <Text style={styles.boldPin}>{pincode}</Text> ({city}) yet. Please change your delivery location to continue.
         </Text>
 
         {/* Single Change Location Action */}

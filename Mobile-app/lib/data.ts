@@ -1,9 +1,9 @@
 import type { Banner, Category, Product, Coupon, StoreConfig } from "./types";
 
 export const DEFAULT_CONFIG: StoreConfig = {
-  storeName: "QuickCart",
+  storeName: "Semart",
   supportPhone: "+91 90000 00000",
-  supportEmail: "support@quickcart.com",
+  supportEmail: "support@semart.com",
   deliveryFee: 3900, // ₹39
   freeDeliveryThreshold: 39900, // ₹399
   platformFee: 500, // ₹5

@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>()(
           user: {
             id: userData.id || "u_" + Date.now(),
             email: userData.email || "",
-            name: userData.name || userData.email?.split("@")[0] || "QuickCart Shopper",
+            name: userData.name || userData.email?.split("@")[0] || "Semart Shopper",
             phone: userData.phone || "",
             role: userData.role || "CUSTOMER",
           },
@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: {
             id: "u_" + Date.now(),
-            name: name || "QuickCart Shopper",
+            name: name || "Semart Shopper",
             phone,
             role: "CUSTOMER",
           },

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "QuickCart",
-    "slug": "quickcart-mobile",
+    "name": "Semart",
+    "slug": "semart-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.quickcart.app"
+      "bundleIdentifier": "com.semart.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.quickcart.app"
+      "package": "com.semart.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,6 +33,6 @@
       "expo-web-browser",
       "@react-native-google-signin/google-signin"
     ],
-    "scheme": "quickcart"
+    "scheme": "semart"
   }
 }

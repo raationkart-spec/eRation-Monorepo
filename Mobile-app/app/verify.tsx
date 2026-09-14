@@ -118,7 +118,7 @@ export default function VerifyScreen() {
                 >
                   <ChevronLeft size={22} color="#ffffff" />
                 </TouchableOpacity>
-                <Text style={styles.brandTitle}>QuickCart</Text>
+                <Text style={styles.brandTitle}>Semart</Text>
                 <View style={{ width: 40 }} />
               </View>
             </ImageBackground>

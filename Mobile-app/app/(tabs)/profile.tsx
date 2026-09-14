@@ -93,12 +93,12 @@ export default function ProfileScreen() {
         <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : "Q"}
+              {user?.name ? user.name.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : "S"}
             </Text>
           </View>
 
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.name || user?.email || "QuickCart User"}</Text>
+            <Text style={styles.userName}>{user?.name || user?.email || "Semart User"}</Text>
             <Text style={styles.userContact}>{user?.email || user?.phone || "Logged In"}</Text>
             <View style={styles.roleBadge}>
               <Text style={styles.roleText}>CUSTOMER</Text>
@@ -121,7 +121,7 @@ export default function ProfileScreen() {
             </View>
           </View>
           <Text style={styles.coinRuleText}>
-            Earn 10 QuickCoins for every ₹100 spent on QuickCart orders!
+            Earn 10 QuickCoins for every ₹100 spent on Semart orders!
           </Text>
         </View>
 
@@ -197,7 +197,7 @@ export default function ProfileScreen() {
 
           <View style={styles.linkRow}>
             <PhoneCall size={18} color="#0f172a" />
-            <Text style={styles.linkText}>Support: QuickCart Siliguri</Text>
+            <Text style={styles.linkText}>Support: Semart Siliguri</Text>
           </View>
         </View>
 

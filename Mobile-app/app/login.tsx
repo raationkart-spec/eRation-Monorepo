@@ -168,7 +168,7 @@ export default function LoginScreen() {
                   <Zap size={11} color="#ffffff" fill="#ffffff" />
                   <Text style={styles.badgeText}>DELIVERED ALL ACROSS SILIGURI</Text>
                 </View>
-                <Text style={styles.brandTitle}>QuickCart</Text>
+                <Text style={styles.brandTitle}>Semart</Text>
               </View>
             </ImageBackground>
           </View>

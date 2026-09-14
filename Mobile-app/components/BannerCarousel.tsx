@@ -33,7 +33,7 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
               <View style={styles.textContent}>
                 <View style={styles.badge}>
                   <Zap size={12} color="#ffffff" fill="#ffffff" />
-                  <Text style={styles.badgeText}>QUICKCART EXPRESS</Text>
+                  <Text style={styles.badgeText}>SEMART EXPRESS</Text>
                 </View>
                 <Text style={styles.title} numberOfLines={2}>
                   {banner.title}

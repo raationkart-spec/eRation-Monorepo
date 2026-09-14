@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK & Google Play AAB Bundle
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build-android:
-    name: Build Android APK
+    name: Build Android APK & Google Play AAB Bundle
     runs-on: ubuntu-latest
 
     steps:
@@ -72,16 +72,25 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x Mobile-app/android/gradlew
 
-      - name: Build release APK
+      - name: Build release APK and Google Play AAB Bundle
         working-directory: Mobile-app/android
         env:
           EXPO_PUBLIC_API_URL: "https://quickcart-nu-nine.vercel.app"
           NODE_ENV: "production"
-        run: ./gradlew assembleRelease --stacktrace
+        run: |
+          ./gradlew assembleRelease --stacktrace
+          ./gradlew bundleRelease --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: quickcart-apk
           path: Mobile-app/android/app/build/outputs/apk/release/*.apk
+          retention-days: 14
+
+      - name: Upload Google Play AAB Bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quickcart-aab
+          path: Mobile-app/android/app/build/outputs/bundle/release/*.aab
           retention-days: 14

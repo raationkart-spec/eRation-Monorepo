@@ -36,7 +36,7 @@ export default function AuthCallbackScreen() {
         }
 
         if (userParam && isMounted) {
-          setStatusText("Welcome to QuickCart! Redirecting...");
+          setStatusText("Welcome to Semart! Redirecting...");
           try {
             const userData = JSON.parse(decodeURIComponent(userParam));
             loginWithBackend(userData);

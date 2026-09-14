@@ -10,7 +10,7 @@ interface OrderStatusTimelineProps {
 }
 
 const STEPS: { key: OrderStatus; title: string; desc: string; icon: any }[] = [
-  { key: "PLACED", title: "Order Placed", desc: "Received by QuickCart store", icon: Clock },
+  { key: "PLACED", title: "Order Placed", desc: "Received by Semart store", icon: Clock },
   { key: "CONFIRMED", title: "Order Confirmed", desc: "Accepted by store manager", icon: CheckCircle2 },
   { key: "PACKED", title: "Packed", desc: "Items packed in eco bag", icon: Package },
   { key: "OUT_FOR_DELIVERY", title: "Out for Delivery", desc: "Delivery partner assigned", icon: Truck },

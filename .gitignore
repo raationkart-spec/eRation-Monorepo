@@ -36,5 +36,7 @@ yarn-error.log*
 
 # mobile build outputs
 *.apk
+*.aab
 quickcart-apk/
+quickcart-aab/
 

@@ -236,7 +236,7 @@ export default function CheckoutScreen() {
       statusHistory: [
         {
           status: "PLACED",
-          note: "Order received by QuickCart",
+          note: "Order received by Semart",
           at: nowIso,
         },
       ],
