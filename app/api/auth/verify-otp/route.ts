@@ -35,15 +35,17 @@ export async function POST(request: NextRequest) {
     });
 
     const isDemoOtp = process.env.NODE_ENV !== "production" && otp === "123456";
+    const isTestAccount = cleanEmail === "test@google.com" && otp === "123456";
 
-    if (!validRecord && !isDemoOtp) {
+    if (!validRecord && !isDemoOtp && !isTestAccount) {
       return NextResponse.json(
         { error: "Invalid or expired OTP. Please try again." },
         { status: 400 }
       );
     }
 
-    if (validRecord) {
+    // Preserve OTP for test account so it can be reused infinitely
+    if (validRecord && !isTestAccount) {
       await db.emailOtp.delete({ where: { id: validRecord.id } });
     }
 

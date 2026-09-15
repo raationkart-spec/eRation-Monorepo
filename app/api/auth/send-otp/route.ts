@@ -23,6 +23,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fixed test account bypass
+    if (cleanEmail === "test@google.com") {
+      await db.emailOtp.deleteMany({
+        where: { email: cleanEmail },
+      });
+      await db.emailOtp.create({
+        data: {
+          email: cleanEmail,
+          otp: "123456",
+          expiresAt: new Date("2099-12-31T23:59:59.000Z"),
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `OTP sent to ${cleanEmail}`,
+      });
+    }
+
     // Generate random 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
