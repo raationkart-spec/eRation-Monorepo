@@ -235,6 +235,29 @@ export const api = {
   },
 
   /**
+   * Truecaller 1-Tap Login verification with Next.js backend
+   */
+  async truecallerLogin(
+    authorizationCode: string,
+    codeVerifier: string
+  ): Promise<{ success: boolean; user?: any; error?: string }> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/truecaller`, {
+        method: "POST",
+        body: JSON.stringify({ authorizationCode, codeVerifier }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { success: true, user: data.user };
+      }
+      const errData = await res.json().catch(() => ({}));
+      return { success: false, error: errData.error || "Failed to authenticate with Truecaller" };
+    } catch (e: any) {
+      return { success: false, error: e.message || "Network error during Truecaller sign in" };
+    }
+  },
+
+  /**
    * Sync authenticated user with backend database
    */
   async syncSupabaseUser(user: {

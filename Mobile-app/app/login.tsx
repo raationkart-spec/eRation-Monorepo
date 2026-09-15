@@ -21,6 +21,7 @@ import { Mail, ArrowRight, Zap } from "lucide-react-native";
 import Svg, { Path } from "react-native-svg";
 import * as WebBrowser from "expo-web-browser";
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import { initializeAsync, verifyUserAsync } from "expo-truecaller";
 import { api } from "../lib/api";
 import { useAuthStore } from "../store/useAuthStore";
 
@@ -38,6 +39,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [truecallerLoading, setTruecallerLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -88,6 +90,57 @@ export default function LoginScreen() {
       }
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleTruecallerSignIn = async () => {
+    try {
+      setTruecallerLoading(true);
+      setErrorMsg("");
+
+      if (Platform.OS !== "android") {
+        setErrorMsg("Truecaller 1-tap login is supported on Android devices.");
+        return;
+      }
+
+      const initRes = await initializeAsync({
+        consentMode: "bottomsheet",
+        heading: "logInTo",
+        theme: "light",
+        ctaTextPrefix: "continue",
+        buttonShape: "rounded",
+        footerType: "anotherMethod",
+      });
+
+      if (!initRes?.isUsable) {
+        setErrorMsg("Truecaller app is not installed or active on this device.");
+        return;
+      }
+
+      const result = await verifyUserAsync();
+      const { authorizationCode, codeVerifier } = result;
+
+      if (!authorizationCode || !codeVerifier) {
+        throw new Error("Could not retrieve Truecaller authorization code.");
+      }
+
+      const res = await api.truecallerLogin(authorizationCode, codeVerifier);
+
+      if (res.success && res.user) {
+        loginWithBackend(res.user);
+        router.replace("/(tabs)");
+      } else {
+        setErrorMsg(res.error || "Failed to sign in with Truecaller.");
+      }
+    } catch (e: any) {
+      console.log("Truecaller login error:", e);
+      if (e.code === "USER_CANCELLED" || e.message?.toLowerCase().includes("cancel")) {
+        // User dismissed sheet
+      } else {
+        setErrorMsg(e.message || "Truecaller verification failed.");
+      }
+    } finally {
+      setTruecallerLoading(false);
     }
   };
 
@@ -193,6 +246,25 @@ export default function LoginScreen() {
               <View style={styles.actionContainer}>
                 {!showEmailInput ? (
                   <View style={styles.btnStack}>
+                    {/* 1-Tap Truecaller Login */}
+                    <TouchableOpacity
+                      style={styles.truecallerBtn}
+                      onPress={handleTruecallerSignIn}
+                      disabled={truecallerLoading || googleLoading}
+                      activeOpacity={0.85}
+                    >
+                      {truecallerLoading ? (
+                        <ActivityIndicator color="#ffffff" size="small" />
+                      ) : (
+                        <>
+                          <Svg width={18} height={18} viewBox="0 0 24 24" fill="#ffffff">
+                            <Path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-2.2 2.2a15.053 15.053 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1.01A11.36 11.36 0 018.57 3.9c0-.55-.45-1-1-1H3.99c-.55 0-1 .45-1 1 0 9.39 7.63 17.02 17.02 17.02.55 0 1-.45 1-1v-3.54c0-.55-.45-1-1-1z" />
+                          </Svg>
+                          <Text style={styles.truecallerBtnText}>1-Tap Login with Truecaller</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+
                     <TouchableOpacity
                       style={styles.googleBtn}
                       onPress={handleGoogleSignIn}
@@ -239,6 +311,12 @@ export default function LoginScreen() {
                       <Mail size={18} color="#ffffff" />
                       <Text style={styles.mainBtnText}>Login using Email</Text>
                     </TouchableOpacity>
+
+                    {errorMsg ? (
+                      <Text style={[styles.errorText, { textAlign: "center", marginTop: 6 }]}>
+                        {errorMsg}
+                      </Text>
+                    ) : null}
                   </View>
                 ) : (
                   <View style={styles.emailInputWrapper}>
@@ -420,6 +498,25 @@ const styles = StyleSheet.create({
   btnStack: {
     width: "100%",
     gap: 10,
+  },
+  truecallerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0087FF",
+    height: 48,
+    borderRadius: 24,
+    gap: 10,
+    shadowColor: "#0087FF",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  truecallerBtnText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "800",
   },
   googleBtn: {
     flexDirection: "row",

@@ -32,7 +32,13 @@
       "expo-asset",
       "expo-font",
       "expo-web-browser",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-truecaller",
+        {
+          "androidClientId": "oewpqo0wlybxpjhi3tcjsb5a1nhjoaszzh988n6zamc"
+        }
+      ]
     ],
     "scheme": "semart"
   }
