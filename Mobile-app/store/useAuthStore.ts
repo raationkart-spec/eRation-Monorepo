@@ -23,16 +23,17 @@ export const useAuthStore = create<AuthState>()(
       setTokenBalance: (tokenBalance) => set({ tokenBalance }),
       setUser: (user) => set({ user }),
       loginWithBackend: (userData) =>
-        set({
+        set((state) => ({
           user: {
-            id: userData.id || "u_" + Date.now(),
-            email: userData.email || "",
-            name: userData.name || userData.email?.split("@")[0] || "Semart Shopper",
-            phone: userData.phone || "",
-            role: userData.role || "CUSTOMER",
+            id: userData.id || state.user?.id || "u_" + Date.now(),
+            email: userData.email || state.user?.email || "",
+            name: userData.name || state.user?.name || userData.email?.split("@")[0] || "Semart Shopper",
+            phone: userData.phone || state.user?.phone || "",
+            role: userData.role || state.user?.role || "CUSTOMER",
+            image: userData.image || state.user?.image,
           },
           ...(typeof userData.tokenBalance === "number" ? { tokenBalance: userData.tokenBalance } : {}),
-        }),
+        })),
       loginWithPhone: (phone, name) =>
         set({
           user: {

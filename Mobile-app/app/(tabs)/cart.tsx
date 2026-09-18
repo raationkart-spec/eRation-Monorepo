@@ -60,7 +60,7 @@ export default function CartScreen() {
 
   const cartProductMap = items
     .map((item) => {
-      const prod = products.find((p) => p.id === item.productId);
+      const prod = products.find((p) => p.id === item.productId) || item.product;
       if (!prod) return null;
       return { item, product: prod };
     })
@@ -101,7 +101,7 @@ export default function CartScreen() {
     setCouponCodeInput("");
   };
 
-  if (items.length === 0) {
+  if (items.length === 0 || (cartProductMap.length === 0 && products.length > 0)) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.emptyContainer}>
@@ -114,7 +114,10 @@ export default function CartScreen() {
           </Text>
           <TouchableOpacity
             style={styles.browseBtn}
-            onPress={() => router.push("/(tabs)")}
+            onPress={() => {
+              if (items.length > 0) clear();
+              router.push("/(tabs)");
+            }}
             activeOpacity={0.8}
           >
             <Text style={styles.browseBtnText}>START SHOPPING</Text>
@@ -139,7 +142,7 @@ export default function CartScreen() {
       <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
         <View style={styles.headerTitleRow}>
           <ShoppingBag size={20} color="#ea580c" />
-          <Text style={styles.headerTitle}>Shopping Cart ({items.length})</Text>
+          <Text style={styles.headerTitle}>Shopping Cart ({cartProductMap.length})</Text>
         </View>
         <TouchableOpacity onPress={clear} activeOpacity={0.7}>
           <Text style={styles.clearText}>Clear</Text>
@@ -172,14 +175,14 @@ export default function CartScreen() {
                 <View style={styles.stepperBox}>
                   <TouchableOpacity
                     style={styles.stepBtn}
-                    onPress={() => setQty(product.id, item.quantity - 1)}
+                    onPress={() => setQty(product.id, item.quantity - 1, product)}
                   >
                     <Text style={styles.stepBtnText}>-</Text>
                   </TouchableOpacity>
                   <Text style={styles.quantityNum}>{item.quantity}</Text>
                   <TouchableOpacity
                     style={styles.stepBtn}
-                    onPress={() => setQty(product.id, Math.min(20, item.quantity + 1))}
+                    onPress={() => setQty(product.id, Math.min(20, item.quantity + 1), product)}
                   >
                     <Text style={styles.stepBtnText}>+</Text>
                   </TouchableOpacity>
@@ -253,8 +256,18 @@ export default function CartScreen() {
         </View>
 
         <TouchableOpacity
-          style={styles.checkoutBtn}
-          onPress={() => router.push("/checkout")}
+          style={[
+            styles.checkoutBtn,
+            (cartProductMap.length === 0 || itemTotal <= 0) && { opacity: 0.5 },
+          ]}
+          onPress={() => {
+            if (cartProductMap.length === 0 || itemTotal <= 0) {
+              setToastMessage("Your cart is empty or items are invalid");
+              return;
+            }
+            router.push("/checkout");
+          }}
+          disabled={cartProductMap.length === 0 || itemTotal <= 0}
           activeOpacity={0.85}
         >
           <Text style={styles.checkoutBtnText}>CHECKOUT</Text>

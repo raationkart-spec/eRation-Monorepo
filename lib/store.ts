@@ -144,9 +144,9 @@ export const INITIAL_COUPONS: Coupon[] = [
 export const useCatalog = create<CatalogState>()(
   persist(
     (set) => ({
-      products: PRODUCTS,
+      products: [],
       categories: CATEGORIES,
-      banners: BANNERS,
+      banners: [],
       config: DEFAULT_CONFIG,
       pincodes: SERVICEABLE_PINCODES,
       coupons: INITIAL_COUPONS,
@@ -234,16 +234,16 @@ export const useCatalog = create<CatalogState>()(
         set((s) => ({ pincodes: s.pincodes.filter((x) => x !== code) })),
       resetCatalog: () =>
         set({
-          products: PRODUCTS,
+          products: [],
           categories: CATEGORIES,
-          banners: BANNERS,
+          banners: [],
           config: DEFAULT_CONFIG,
           pincodes: SERVICEABLE_PINCODES,
           coupons: INITIAL_COUPONS,
           flashDeals: [],
         }),
     }),
-    { name: "qc-catalog", version: 5 }
+    { name: "qc-catalog", version: 6 }
   )
 );
 

@@ -47,7 +47,7 @@ export default function LoginScreen() {
     try {
       GoogleSignin.configure({
         webClientId:
-          "391965258299-cp842fdrb9nfa5l9e4p3e7c0fdbrcs1g.apps.googleusercontent.com",
+          "148639493611-8ufhbmietb8higbfk0cgge6jijmn7j4o.apps.googleusercontent.com",
         offlineAccess: false,
       });
     } catch (e) {
@@ -61,6 +61,11 @@ export default function LoginScreen() {
       setErrorMsg("");
 
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      try {
+        await GoogleSignin.signOut();
+      } catch {
+        // Ignore if no active Google session exists
+      }
       const signInResult = await GoogleSignin.signIn();
       const idToken =
         signInResult.data?.idToken || (signInResult as any).idToken;
@@ -73,6 +78,11 @@ export default function LoginScreen() {
 
       if (res.success && res.user) {
         loginWithBackend(res.user);
+        if (res.user.email) {
+          api.getTokenBalance(res.user.email).then((tb) => {
+            if (typeof tb === "number") useAuthStore.getState().setTokenBalance(tb);
+          }).catch(() => {});
+        }
         router.replace("/(tabs)");
       } else {
         setErrorMsg(res.error || "Failed to sign in with Google.");
@@ -83,7 +93,7 @@ export default function LoginScreen() {
       } else if (e.code === statusCodes.IN_PROGRESS) {
         // Operation already in progress
       } else if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        setErrorMsg("Google Play Services is not available or outdated.");
+        setErrorMsg("Google Play Services is not available. Please use Truecaller or Email OTP.");
       } else {
         console.error("Google sign-in error:", e);
         setErrorMsg(e.message || "Failed to sign in with Google.");
@@ -128,6 +138,11 @@ export default function LoginScreen() {
 
       if (res.success && res.user) {
         loginWithBackend(res.user);
+        if (res.user.email) {
+          api.getTokenBalance(res.user.email).then((tb) => {
+            if (typeof tb === "number") useAuthStore.getState().setTokenBalance(tb);
+          }).catch(() => {});
+        }
         router.replace("/(tabs)");
       } else {
         setErrorMsg(res.error || "Failed to sign in with Truecaller.");
@@ -360,6 +375,19 @@ export default function LoginScreen() {
                           <ArrowRight size={16} color="#ffffff" />
                         </>
                       )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowEmailInput(false);
+                        setErrorMsg("");
+                      }}
+                      style={{ alignSelf: "center", paddingVertical: 8 }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ color: "#94a3b8", fontSize: 12, fontWeight: "700" }}>
+                        ← Other sign in options
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 )}

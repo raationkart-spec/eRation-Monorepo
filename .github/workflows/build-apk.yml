@@ -41,12 +41,21 @@ jobs:
 
       - name: Create .env file for mobile build
         working-directory: Mobile-app
-        run: echo "EXPO_PUBLIC_API_URL=https://quickcart-nu-nine.vercel.app" > .env
+        run: |
+          cat << 'EOF' > .env
+          EXPO_PUBLIC_API_URL=https://quickcart-nu-nine.vercel.app
+          EXPO_PUBLIC_SUPABASE_URL=https://dopgzhmkexmuwjrllfcf.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_u0o6JzFPooNNJcDyLiaGbg_6hO2BmM8
+          EXPO_PUBLIC_TRUECALLER_CLIENT_ID=oewpqo0wlybxpjhi3tcjsb5a1nhjoaszzh988n6zamc
+          EOF
 
       - name: Prebuild native Android project
         working-directory: Mobile-app
         env:
           EXPO_PUBLIC_API_URL: "https://quickcart-nu-nine.vercel.app"
+          EXPO_PUBLIC_SUPABASE_URL: "https://dopgzhmkexmuwjrllfcf.supabase.co"
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_u0o6JzFPooNNJcDyLiaGbg_6hO2BmM8"
+          EXPO_PUBLIC_TRUECALLER_CLIENT_ID: "oewpqo0wlybxpjhi3tcjsb5a1nhjoaszzh988n6zamc"
           NODE_ENV: "production"
         run: npx expo prebuild --platform android --no-install
 
@@ -63,6 +72,9 @@ jobs:
         working-directory: Mobile-app/android
         env:
           EXPO_PUBLIC_API_URL: "https://quickcart-nu-nine.vercel.app"
+          EXPO_PUBLIC_SUPABASE_URL: "https://dopgzhmkexmuwjrllfcf.supabase.co"
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_u0o6JzFPooNNJcDyLiaGbg_6hO2BmM8"
+          EXPO_PUBLIC_TRUECALLER_CLIENT_ID: "oewpqo0wlybxpjhi3tcjsb5a1nhjoaszzh988n6zamc"
           NODE_ENV: "production"
         run: |
           ./gradlew assembleRelease --stacktrace

@@ -26,7 +26,7 @@ export function BillSummary({
   platformFee = 500, // ₹5
 }: BillSummaryProps) {
   const itemTotal = items.reduce((acc, item) => {
-    const prod = products.find((p) => p.id === item.productId);
+    const prod = products.find((p) => p.id === item.productId) || item.product;
     const price = item.overridePrice ?? prod?.price ?? 0;
     return acc + price * item.quantity;
   }, 0);

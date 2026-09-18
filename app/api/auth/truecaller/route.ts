@@ -77,11 +77,23 @@ export async function POST(request: NextRequest) {
 
     const rawPhone =
       profile.phone_number || profile.phoneNumber || profile.phone || "";
-    const cleanPhone = rawPhone ? rawPhone.replace(/\s+/g, "").trim() : null;
+
+    // Normalize phone number to standard E.164 (+91...)
+    const digitsOnly = rawPhone.replace(/\D/g, "");
+    let cleanPhone: string | null = null;
+    if (digitsOnly.length === 10) {
+      cleanPhone = `+91${digitsOnly}`;
+    } else if (digitsOnly.length === 11 && digitsOnly.startsWith("0")) {
+      cleanPhone = `+91${digitsOnly.slice(1)}`;
+    } else if (digitsOnly.length === 12 && digitsOnly.startsWith("91")) {
+      cleanPhone = `+${digitsOnly}`;
+    } else if (digitsOnly.length > 0) {
+      cleanPhone = `+${digitsOnly}`;
+    }
 
     if (!cleanPhone) {
       return NextResponse.json(
-        { error: "Truecaller profile does not contain a verified phone number" },
+        { error: "Truecaller profile does not contain a valid phone number" },
         { status: 400 }
       );
     }
@@ -96,43 +108,105 @@ export async function POST(request: NextRequest) {
     const rawEmail = profile.email || null;
     const cleanEmail = rawEmail ? rawEmail.toLowerCase().trim() : null;
 
-    // 3. Upsert user in Postgres database
+    // 3. Smart User Linking & Collision Resolution
     let user = null;
 
-    // Search by phone first
-    user = await db.user.findUnique({
+    const userByPhone = await db.user.findUnique({
       where: { phone: cleanPhone },
     });
 
-    // If not found by phone and email exists, search by email
-    if (!user && cleanEmail) {
-      user = await db.user.findUnique({
-        where: { email: cleanEmail },
-      });
-    }
+    const userByEmail = cleanEmail
+      ? await db.user.findUnique({
+          where: { email: cleanEmail },
+        })
+      : null;
 
-    if (user) {
-      // Update missing phone, email, or name
+    if (userByPhone && userByEmail && userByPhone.id !== userByEmail.id) {
+      // Account collision: user previously logged in via Google/Email on email,
+      // and via Truecaller on phone. Merge phone account into primary email account.
+      console.log(
+        `Merging Truecaller user ${userByPhone.id} into primary email user ${userByEmail.id}`
+      );
+
+      // Reassign orders and addresses to primary user
+      await db.order.updateMany({
+        where: { userId: userByPhone.id },
+        data: { userId: userByEmail.id },
+      });
+      await db.address.updateMany({
+        where: { userId: userByPhone.id },
+        data: { userId: userByEmail.id },
+      });
+
+      // Sum token balances
+      const combinedTokens =
+        (userByEmail.tokenBalance || 0) + (userByPhone.tokenBalance || 0);
+
+      // Delete phone user to free unique constraint
+      await db.account.deleteMany({ where: { userId: userByPhone.id } });
+      await db.user.delete({ where: { id: userByPhone.id } });
+
+      // Update primary user with phone and merged token balance
       user = await db.user.update({
-        where: { id: user.id },
+        where: { id: userByEmail.id },
         data: {
-          ...(cleanPhone && !user.phone ? { phone: cleanPhone } : {}),
-          ...(cleanEmail && !user.email ? { email: cleanEmail } : {}),
-          ...(!user.name && fullName ? { name: fullName } : {}),
+          phone: cleanPhone,
+          tokenBalance: combinedTokens,
+          name: userByEmail.name || fullName,
+          emailVerified: userByEmail.emailVerified || new Date(),
+        },
+      });
+    } else if (userByPhone) {
+      // User found by phone: link email if provided and not yet set
+      user = await db.user.update({
+        where: { id: userByPhone.id },
+        data: {
+          ...(cleanEmail && !userByPhone.email
+            ? { email: cleanEmail, emailVerified: new Date() }
+            : {}),
+          name: userByPhone.name || fullName,
+        },
+      });
+    } else if (userByEmail) {
+      // User found by email: link verified phone
+      user = await db.user.update({
+        where: { id: userByEmail.id },
+        data: {
+          phone: cleanPhone,
+          name: userByEmail.name || fullName,
+          emailVerified: userByEmail.emailVerified || new Date(),
         },
       });
     } else {
-      // Create new user with verified phone
+      // Completely new user registration
       user = await db.user.create({
         data: {
           phone: cleanPhone,
           email: cleanEmail,
           name: fullName,
+          emailVerified: cleanEmail ? new Date() : null,
           role: "CUSTOMER",
           tokenBalance: 0,
         },
       });
     }
+
+    // Link Account record for Truecaller
+    await db.account.upsert({
+      where: {
+        provider_providerAccountId: {
+          provider: "truecaller",
+          providerAccountId: cleanPhone,
+        },
+      },
+      update: { userId: user.id },
+      create: {
+        userId: user.id,
+        type: "oauth",
+        provider: "truecaller",
+        providerAccountId: cleanPhone,
+      },
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

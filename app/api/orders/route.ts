@@ -4,13 +4,34 @@ import { db } from "@/lib/db";
 import { makeOrderNumber } from "@/lib/orderNumber";
 import { computeCouponDiscount } from "@/lib/coupon";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     const isDbAdmin = (session?.user as any)?.role === "ADMIN";
+    const { searchParams } = new URL(request.url);
+    const emailParam = searchParams.get("email");
+    const phoneParam = searchParams.get("phone");
+
+    let whereClause: any = {};
+    if (isDbAdmin) {
+      whereClause = {};
+    } else if (session?.user?.id) {
+      whereClause = { userId: session.user.id };
+    } else if (emailParam || phoneParam) {
+      const orConditions: any[] = [];
+      if (emailParam) {
+        orConditions.push({ user: { email: { equals: emailParam.trim().toLowerCase(), mode: "insensitive" } } });
+      }
+      if (phoneParam) {
+        orConditions.push({ customerPhone: { contains: phoneParam.trim().slice(-10) } });
+      }
+      whereClause = { OR: orConditions };
+    } else {
+      whereClause = { id: "none" };
+    }
 
     const orders = await db.order.findMany({
-      where: isDbAdmin ? {} : session?.user?.id ? { userId: session.user.id } : {},
+      where: whereClause,
       include: {
         items: true,
         statusHistory: { orderBy: { at: "asc" } },

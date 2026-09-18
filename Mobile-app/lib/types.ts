@@ -117,6 +117,7 @@ export interface Address {
 export interface CartItem {
   productId: string;
   quantity: number;
+  product?: Product;
   dealId?: string;
   overridePrice?: number;
   bundleId?: string;

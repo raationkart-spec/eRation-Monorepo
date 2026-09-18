@@ -15,6 +15,7 @@ export async function GET(
       include: {
         items: true,
         statusHistory: { orderBy: { at: "asc" } },
+        user: true,
       },
     });
 
@@ -23,7 +24,17 @@ export async function GET(
     }
 
     // Check authorization: user must own order or be admin
-    if ((session?.user as any)?.role !== "ADMIN" && order.userId && order.userId !== session?.user?.id) {
+    const { searchParams } = new URL(request.url);
+    const emailParam = searchParams.get("email");
+    const phoneParam = searchParams.get("phone");
+
+    const isOwner =
+      !order.userId ||
+      (session?.user?.id && order.userId === session.user.id) ||
+      (emailParam && order.user?.email?.toLowerCase() === emailParam.trim().toLowerCase()) ||
+      (phoneParam && order.customerPhone?.includes(phoneParam.trim().slice(-10)));
+
+    if ((session?.user as any)?.role !== "ADMIN" && !isOwner) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

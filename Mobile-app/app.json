@@ -22,7 +22,8 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.semart.app",
-      "versionCode": 2
+      "versionCode": 3,
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"

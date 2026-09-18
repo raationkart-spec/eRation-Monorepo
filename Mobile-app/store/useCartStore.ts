@@ -1,20 +1,21 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { CartItem } from "../lib/types";
+import type { CartItem, Product } from "../lib/types";
 
 interface CartState {
   items: CartItem[];
-  setQty: (productId: string, quantity: number, overridePrice?: number) => void;
-  add: (productId: string, dealId?: string, overridePrice?: number, bundleId?: string) => void;
+  setQty: (productId: string, quantity: number, product?: Product, overridePrice?: number) => void;
+  add: (productId: string, product?: Product, dealId?: string, overridePrice?: number, bundleId?: string) => void;
   clear: () => void;
+  pruneInvalidItems: (validProductIds: string[]) => void;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
-      setQty: (productId, quantity, overridePrice) =>
+      setQty: (productId, quantity, product, overridePrice) =>
         set((s) => {
           if (quantity <= 0)
             return { items: s.items.filter((i) => i.productId !== productId) };
@@ -23,13 +24,18 @@ export const useCartStore = create<CartState>()(
             items: exists
               ? s.items.map((i) =>
                   i.productId === productId
-                    ? { ...i, quantity, overridePrice: overridePrice ?? i.overridePrice }
+                    ? {
+                        ...i,
+                        quantity,
+                        product: product ?? i.product,
+                        overridePrice: overridePrice ?? i.overridePrice,
+                      }
                     : i
                 )
-              : [...s.items, { productId, quantity, overridePrice }],
+              : [...s.items, { productId, quantity, product, overridePrice }],
           };
         }),
-      add: (productId, dealId, overridePrice, bundleId) =>
+      add: (productId, product, dealId, overridePrice, bundleId) =>
         set((s) => {
           const item = s.items.find((i) => i.productId === productId);
           if (item)
@@ -39,6 +45,7 @@ export const useCartStore = create<CartState>()(
                   ? {
                       ...i,
                       quantity: Math.min(20, i.quantity + 1),
+                      product: product ?? i.product,
                       dealId: dealId ?? i.dealId,
                       overridePrice: overridePrice ?? i.overridePrice,
                       bundleId: bundleId ?? i.bundleId,
@@ -47,14 +54,28 @@ export const useCartStore = create<CartState>()(
               ),
             };
           return {
-            items: [...s.items, { productId, quantity: 1, dealId, overridePrice, bundleId }],
+            items: [
+              ...s.items,
+              { productId, quantity: 1, product, dealId, overridePrice, bundleId },
+            ],
           };
         }),
       clear: () => set({ items: [] }),
+      pruneInvalidItems: (validProductIds) =>
+        set((s) => ({
+          items: s.items.filter((i) => validProductIds.includes(i.productId)),
+        })),
     }),
     {
       name: "qc-cart-mobile",
       storage: createJSONStorage(() => AsyncStorage),
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2) {
+          return { items: [] };
+        }
+        return persistedState as CartState;
+      },
     }
   )
 );

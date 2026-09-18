@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, MapPin, CreditCard, Ban } from "lucide-react-native";
 
 import { useShopStore } from "../../store/useShopStore";
+import { useAuthStore } from "../../store/useAuthStore";
 import { OrderStatusTimeline } from "../../components/OrderStatusTimeline";
 import { Toast } from "../../components/Toast";
 import { ORDER_STATUS_CONFIG, formatMoney, formatDate } from "../../lib/format";
@@ -29,7 +30,7 @@ export default function OrderDetailsScreen() {
 
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
 
-
+  const user = useAuthStore((s) => s.user);
   const orders = useShopStore((s) => s.orders);
   const cancelOrderInStore = useShopStore((s) => s.cancelOrder);
 
@@ -41,13 +42,12 @@ export default function OrderDetailsScreen() {
     async function loadOrder() {
       if (!id) return;
       const local = orders.find((o) => o.id === id);
-      if (local) {
+      if (local && local.items && local.items.length > 0) {
         setOrder(local);
         setLoading(false);
-        return;
       }
       try {
-        const fetched = await api.getOrder(id);
+        const fetched = await api.getOrder(id, user?.email, user?.phone);
         if (fetched) setOrder(fetched);
       } catch (e) {
         console.log("Error fetching order detail:", e);
@@ -56,7 +56,7 @@ export default function OrderDetailsScreen() {
       }
     }
     loadOrder();
-  }, [id, orders]);
+  }, [id, orders, user?.email, user?.phone]);
 
   if (loading) {
     return (

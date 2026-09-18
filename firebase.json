@@ -1,0 +1,10 @@
+{
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "QuickCart",
+        "supportEmail": "raationkart@gmail.com"
+      }
+    }
+  }
+}

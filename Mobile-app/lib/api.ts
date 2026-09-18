@@ -1,5 +1,5 @@
 import { BANNERS, CATEGORIES, DEFAULT_CONFIG, INITIAL_COUPONS, PRODUCTS, SERVICEABLE_PINCODES } from "./data";
-import type { Banner, Category, Coupon, FlashDeal, Order, Product, StoreConfig } from "./types";
+import type { Banner, Bundle, Category, Coupon, FlashDeal, Order, Product, StoreConfig } from "./types";
 
 const getApiBaseUrl = (): string => {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -85,14 +85,14 @@ export const api = {
       const res = await fetchWithTimeout(`${API_BASE_URL}/api/banners`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.banners) && data.banners.length > 0) {
+        if (Array.isArray(data.banners)) {
           return data.banners;
         }
       }
     } catch (e) {
       console.log("API banners fetch fallback:", e);
     }
-    return BANNERS;
+    return [];
   },
 
   /**
@@ -113,24 +113,14 @@ export const api = {
       const res = await fetchWithTimeout(url);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.products) && data.products.length > 0) {
+        if (Array.isArray(data.products)) {
           return data.products;
         }
       }
     } catch (e) {
       console.log("API products fetch fallback:", e);
     }
-
-    let result = PRODUCTS;
-    if (params?.category) {
-      const targetSlug = params.category === "fruits-veg" ? "fruits-vegetables" : params.category;
-      result = result.filter((p) => p.categorySlug === targetSlug);
-    }
-    if (params?.search) {
-      const q = params.search.toLowerCase();
-      result = result.filter((p) => p.name.toLowerCase().includes(q));
-    }
-    return result;
+    return [];
   },
 
   /**
@@ -148,12 +138,25 @@ export const api = {
     } catch (e) {
       console.log("API flash deals fetch fallback:", e);
     }
-    const allProds = PRODUCTS;
-    return [
-      { id: "fd1", productId: "p1", salePrice: 3900, isActive: true, product: allProds[0], startsAt: "2026-01-01T00:00:00.000Z", endsAt: "2026-12-31T23:59:59.000Z" },
-      { id: "fd2", productId: "p2", salePrice: 11900, isActive: true, product: allProds[1], startsAt: "2026-01-01T00:00:00.000Z", endsAt: "2026-12-31T23:59:59.000Z" },
-      { id: "fd3", productId: "p3", salePrice: 2800, isActive: true, product: allProds[2], startsAt: "2026-01-01T00:00:00.000Z", endsAt: "2026-12-31T23:59:59.000Z" },
-    ];
+    return [];
+  },
+
+  /**
+   * Fetch bundles
+   */
+  async getBundles(): Promise<Bundle[]> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/bundles`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.bundles)) {
+          return data.bundles;
+        }
+      }
+    } catch (e) {
+      console.log("API bundles fetch fallback:", e);
+    }
+    return [];
   },
 
   /**
@@ -287,7 +290,7 @@ export const api = {
    */
   async createOrder(
     orderPayload: Partial<Order> & { tokensToRedeem?: number }
-  ): Promise<{ success: boolean; orderId?: string; tokensEarned?: number; error?: string }> {
+  ): Promise<{ success: boolean; orderId?: string; orderNumber?: string; tokensEarned?: number; error?: string }> {
     try {
       const res = await fetchWithTimeout(`${API_BASE_URL}/api/orders`, {
         method: "POST",
@@ -299,6 +302,7 @@ export const api = {
         return {
           success: true,
           orderId: data.order?.id || data.orderId || data.id,
+          orderNumber: data.order?.orderNumber || data.orderNumber,
           tokensEarned: data.tokensEarned ?? data.order?.tokensEarned,
         };
       }
@@ -329,11 +333,37 @@ export const api = {
   },
 
   /**
+   * Fetch orders for user (supports mobile email/phone filtering)
+   */
+  async getOrders(email?: string, phone?: string): Promise<Order[]> {
+    try {
+      const params = new URLSearchParams();
+      if (email) params.append("email", email);
+      if (phone) params.append("phone", phone);
+      const queryStr = params.toString() ? `?${params.toString()}` : "";
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/orders${queryStr}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.orders)) {
+          return data.orders;
+        }
+      }
+    } catch (e) {
+      console.log("API getOrders fallback:", e);
+    }
+    return [];
+  },
+
+  /**
    * Check order status by ID
    */
-  async getOrder(orderId: string): Promise<Order | null> {
+  async getOrder(orderId: string, email?: string, phone?: string): Promise<Order | null> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE_URL}/api/orders/${orderId}`);
+      const params = new URLSearchParams();
+      if (email) params.append("email", email);
+      if (phone) params.append("phone", phone);
+      const queryStr = params.toString() ? `?${params.toString()}` : "";
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/orders/${orderId}${queryStr}`);
       if (res.ok) {
         const data = await res.json();
         return data.order || data;

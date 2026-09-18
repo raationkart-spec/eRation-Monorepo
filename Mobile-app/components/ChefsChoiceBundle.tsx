@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from "react-native";
 import { Utensils } from "lucide-react-native";
 import type { Bundle } from "../lib/types";
 import { formatMoney } from "../lib/format";
 import { useCartStore } from "../store/useCartStore";
+import { api } from "../lib/api";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 // Exactly 2 cards fit side-by-side with equal margins without getting cut off
@@ -13,33 +14,54 @@ interface ChefsChoiceBundleProps {
   bundles?: Bundle[];
 }
 
-export function ChefsChoiceBundle({ bundles }: ChefsChoiceBundleProps) {
-  const add = useCartStore((s) => s.add);
+export function ChefsChoiceBundle({ bundles: initialBundles }: ChefsChoiceBundleProps) {
+  const items = useCartStore((s) => s.items);
+  const setQty = useCartStore((s) => s.setQty);
+  const [bundles, setBundles] = useState<Bundle[]>(initialBundles || []);
 
-  const defaultBundles: Bundle[] = [
-    {
-      id: "b1",
-      name: "Super Breakfast Kit",
-      description: "Amul Milk + 6 Eggs + Wheat Bread",
-      tag: "SAVE 15%",
-      price: 15500, // ₹155
-      isActive: true,
-      imageUrl: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&auto=format&fit=crop&q=80",
-      items: [],
-    },
-    {
-      id: "b2",
-      name: "Curry Essentials Combo",
-      description: "1kg Tomatoes + 1kg Potatoes + Spinach",
-      tag: "BEST SELLER",
-      price: 7900, // ₹79
-      isActive: true,
-      imageUrl: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=80",
-      items: [],
-    },
-  ];
+  useEffect(() => {
+    if (initialBundles && initialBundles.length > 0) {
+      setBundles(initialBundles);
+      return;
+    }
+    async function loadBundles() {
+      try {
+        const res = await api.getBundles();
+        setBundles(res);
+      } catch (e) {
+        console.log("Error loading bundles in ChefsChoiceBundle:", e);
+      }
+    }
+    loadBundles();
+  }, [initialBundles]);
 
-  const list = bundles && bundles.length > 0 ? bundles : defaultBundles;
+  if (!bundles || bundles.length === 0) {
+    return null;
+  }
+
+  const handleAddBundle = (bundle: Bundle) => {
+    if (!bundle.items || bundle.items.length === 0) return;
+
+    const originalTotal = bundle.items.reduce(
+      (sum, i) => sum + (i.product?.price ?? 0) * i.quantity,
+      0
+    );
+    const ratio = originalTotal > 0 ? bundle.price / originalTotal : 1;
+
+    let cumulativeDiscountedPriceSum = 0;
+    bundle.items.forEach((item, index) => {
+      let discountedUnitPrice = Math.round((item.product?.price ?? 0) * ratio);
+      if (index === bundle.items.length - 1) {
+        const previousTotal = cumulativeDiscountedPriceSum;
+        discountedUnitPrice = Math.max(0, Math.floor((bundle.price - previousTotal) / item.quantity));
+      }
+      cumulativeDiscountedPriceSum += discountedUnitPrice * item.quantity;
+
+      const existingItem = items.find((i) => i.productId === item.productId);
+      const existingQty = existingItem?.quantity ?? 0;
+      setQty(item.productId, existingQty + item.quantity, item.product, discountedUnitPrice);
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -56,7 +78,7 @@ export function ChefsChoiceBundle({ bundles }: ChefsChoiceBundleProps) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {list.map((bundle) => (
+        {bundles.map((bundle) => (
           <View key={bundle.id} style={styles.bundleCard}>
             <View style={styles.imageWrapper}>
               {bundle.imageUrl ? (
@@ -81,7 +103,7 @@ export function ChefsChoiceBundle({ bundles }: ChefsChoiceBundleProps) {
                 <Text style={styles.price}>{formatMoney(bundle.price)}</Text>
                 <TouchableOpacity
                   style={styles.addBtn}
-                  onPress={() => add("p4", undefined, bundle.price, bundle.id)}
+                  onPress={() => handleAddBundle(bundle)}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.addBtnText}>ADD</Text>

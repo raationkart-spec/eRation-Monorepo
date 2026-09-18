@@ -31,8 +31,8 @@ export function FloatingCartBar() {
   const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const totalItemPrice = items.reduce((sum, item) => {
-    const prod = products.find((p) => p.id === item.productId);
-    const price = item.overridePrice ?? (prod ? prod.price : 1000);
+    const prod = products.find((p) => p.id === item.productId) || item.product;
+    const price = item.overridePrice ?? prod?.price ?? 0;
     return sum + price * item.quantity;
   }, 0);
 
@@ -43,7 +43,7 @@ export function FloatingCartBar() {
     pathname.includes("/login") ||
     pathname.includes("/verify");
 
-  if (totalCount === 0 || isHiddenRoute) {
+  if (totalCount === 0 || totalItemPrice === 0 || isHiddenRoute) {
     return null;
   }
 

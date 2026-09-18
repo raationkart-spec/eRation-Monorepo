@@ -94,7 +94,7 @@ export default function CheckoutScreen() {
 
   const cartProductMap = items
     .map((item) => {
-      const prod = products.find((p) => p.id === item.productId);
+      const prod = products.find((p) => p.id === item.productId) || item.product;
       if (!prod) return null;
       return { item, product: prod };
     })
@@ -184,6 +184,11 @@ export default function CheckoutScreen() {
       }
     }
 
+    if (items.length === 0 || cartProductMap.length === 0 || itemTotal <= 0) {
+      setToastMessage("Your cart is empty or items are no longer available.");
+      return;
+    }
+
     setPlacing(true);
 
     const orderItems = cartProductMap.map(({ item, product }) => {
@@ -245,28 +250,53 @@ export default function CheckoutScreen() {
       customerEmail: user?.email || "",
     };
 
+    let serverOrderId = orderPayload.id;
+    let serverOrderNumber = orderPayload.orderNumber;
     let earnedCoins = Math.floor(itemTotal / 1000);
+
     try {
       const res = await api.createOrder({
         ...orderPayload,
         tokensToRedeem: tokensApplied,
       });
+
+      if (!res.success) {
+        setPlacing(false);
+        setToastMessage(res.error || "Failed to place order. Please try again.");
+        return;
+      }
+
+      if (res.orderId) {
+        serverOrderId = res.orderId;
+      }
+      if (res.orderNumber) {
+        serverOrderNumber = res.orderNumber;
+      }
       if (typeof res.tokensEarned === "number") {
         earnedCoins = res.tokensEarned;
       }
-    } catch (e) {
-      console.log("Create order API error, using local state:", e);
+    } catch (e: any) {
+      setPlacing(false);
+      setToastMessage(e.message || "Network error. Please check your internet connection.");
+      return;
     }
+
+    const finalizedOrder: Order = {
+      ...orderPayload,
+      id: serverOrderId,
+      orderNumber: serverOrderNumber,
+      tokensEarned: earnedCoins,
+    };
 
     // Update local token balance
     setTokenBalance(Math.max(0, tokenBalance - tokensApplied + earnedCoins));
 
-    addOrder(orderPayload);
+    addOrder(finalizedOrder);
     clearCart();
     setAppliedCoupon(null);
     setPlacing(false);
 
-    router.replace(`/order-details/${orderPayload.id}`);
+    router.replace(`/order-details/${finalizedOrder.id}`);
   };
 
   return (

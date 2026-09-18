@@ -30,7 +30,7 @@ export function AddToCartButton({ product, size = "md" }: AddToCartButtonProps) 
     return (
       <TouchableOpacity
         style={[styles.addBtn, size === "sm" && styles.smHeight]}
-        onPress={() => add(product.id)}
+        onPress={() => add(product.id, product)}
         activeOpacity={0.8}
       >
         <Text style={styles.addBtnText}>ADD</Text>
@@ -43,7 +43,7 @@ export function AddToCartButton({ product, size = "md" }: AddToCartButtonProps) 
     <View style={[styles.stepperContainer, size === "sm" && styles.smHeight]}>
       <TouchableOpacity
         style={styles.stepperBtn}
-        onPress={() => setQty(product.id, quantity - 1)}
+        onPress={() => setQty(product.id, quantity - 1, product)}
         activeOpacity={0.7}
       >
         <Minus size={14} color="#ffffff" />
@@ -51,7 +51,7 @@ export function AddToCartButton({ product, size = "md" }: AddToCartButtonProps) 
       <Text style={styles.quantityText}>{quantity}</Text>
       <TouchableOpacity
         style={styles.stepperBtn}
-        onPress={() => setQty(product.id, Math.min(20, quantity + 1))}
+        onPress={() => setQty(product.id, Math.min(20, quantity + 1), product)}
         activeOpacity={0.7}
       >
         <Plus size={14} color="#ffffff" />

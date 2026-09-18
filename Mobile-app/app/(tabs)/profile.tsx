@@ -14,6 +14,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { User, MapPin, Package, PhoneCall, LogOut, Plus, Check, Trash2 } from "lucide-react-native";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 import { useAuthStore } from "../../store/useAuthStore";
 import { useShopStore } from "../../store/useShopStore";
@@ -98,8 +99,9 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.name || user?.email || "Semart User"}</Text>
-            <Text style={styles.userContact}>{user?.email || user?.phone || "Logged In"}</Text>
+            <Text style={styles.userName}>{user?.name || user?.email || user?.phone || "Semart User"}</Text>
+            {user?.email ? <Text style={styles.userContact}>{user.email}</Text> : null}
+            {user?.phone ? <Text style={[styles.userContact, { marginTop: 2, color: "#94a3b8" }]}>📱 {user.phone}</Text> : null}
             <View style={styles.roleBadge}>
               <Text style={styles.roleText}>CUSTOMER</Text>
             </View>
@@ -204,7 +206,12 @@ export default function ProfileScreen() {
         {/* Logout Action */}
         <TouchableOpacity
           style={styles.logoutBtn}
-          onPress={() => {
+          onPress={async () => {
+            try {
+              await GoogleSignin.signOut();
+            } catch {
+              // Ignore if no active Google session exists
+            }
             logout();
             router.push("/login");
           }}

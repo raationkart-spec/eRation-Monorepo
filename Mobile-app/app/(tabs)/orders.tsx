@@ -14,18 +14,48 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Package, ChevronRight, Clock } from "lucide-react-native";
 
 import { useShopStore } from "../../store/useShopStore";
+import { useAuthStore } from "../../store/useAuthStore";
+import { api } from "../../lib/api";
 import { ORDER_STATUS_CONFIG, formatMoney, formatDate } from "../../lib/format";
 import type { OrderStatus } from "../../lib/types";
 
 export default function OrdersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const user = useAuthStore((s) => s.user);
   const orders = useShopStore((s) => s.orders);
+  const addOrder = useShopStore((s) => s.addOrder);
   const [filter, setFilter] = useState<"ALL" | "ACTIVE" | "DELIVERED" | "CANCELLED">("ALL");
 
   const topPadding = Math.max(insets.top, Platform.OS === "android" ? StatusBar.currentHeight || 28 : 12);
 
-  const filteredOrders = orders.filter((o) => {
+  // Sync with server on load
+  React.useEffect(() => {
+    async function syncOrders() {
+      if (!user?.email && !user?.phone) return;
+      try {
+        const serverOrders = await api.getOrders(user?.email, user?.phone);
+        if (Array.isArray(serverOrders) && serverOrders.length > 0) {
+          serverOrders.forEach((so) => {
+            if (so.items && so.items.length > 0) {
+              const exists = orders.some((lo) => lo.id === so.id || lo.orderNumber === so.orderNumber);
+              if (!exists) {
+                addOrder(so);
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.log("Error syncing orders:", e);
+      }
+    }
+    syncOrders();
+  }, [user?.email, user?.phone]);
+
+  // Filter out any broken 0-item ghost orders from previous sessions
+  const validOrders = orders.filter((o) => o.items && o.items.length > 0);
+
+  const filteredOrders = validOrders.filter((o) => {
     if (filter === "ACTIVE")
       return o.status !== "DELIVERED" && o.status !== "CANCELLED";
     if (filter === "DELIVERED") return o.status === "DELIVERED";
@@ -37,7 +67,7 @@ export default function OrdersScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
         <Package size={20} color="#ea580c" />
-        <Text style={styles.headerTitle}>Your Orders ({orders.length})</Text>
+        <Text style={styles.headerTitle}>Your Orders ({validOrders.length})</Text>
       </View>
 
 

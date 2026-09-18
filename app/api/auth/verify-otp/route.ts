@@ -60,7 +60,13 @@ export async function POST(request: NextRequest) {
           email: cleanEmail,
           name: cleanEmail.split("@")[0],
           role: "CUSTOMER",
+          emailVerified: new Date(),
         },
+      });
+    } else if (!user.emailVerified) {
+      user = await db.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
       });
     }
 
