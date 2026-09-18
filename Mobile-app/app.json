@@ -23,7 +23,7 @@
       },
       "package": "com.semart.app",
       "versionCode": 3,
-      "googleServicesFile": "./android/app/google-services.json"
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"

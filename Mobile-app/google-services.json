@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "148639493611",
+    "project_id": "rationcart-22688",
+    "storage_bucket": "rationcart-22688.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:148639493611:android:c0ae433566540a965bfdae",
+        "android_client_info": {
+          "package_name": "com.semart.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "148639493611-3rupknf8jg9m253s32cuhbv5qrql952h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.semart.app",
+            "certificate_hash": "ab9b0c1b999a0ac64a6b79a90867c620196f9902"
+          }
+        },
+        {
+          "client_id": "148639493611-r6iebruh48kgfsdt6jm46hgm6rcbjrdd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.semart.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "148639493611-8ufhbmietb8higbfk0cgge6jijmn7j4o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0fZLIMKINiqt1fxitKYwkh-mHClhFF1k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "148639493611-8ufhbmietb8higbfk0cgge6jijmn7j4o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
