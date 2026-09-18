@@ -12,3 +12,6 @@ npm-debug.*
 *.orig.*
 web-build/
 .env.local
+google-services.json
+GoogleService-Info.plist
+.env
