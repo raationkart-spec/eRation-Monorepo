@@ -37,14 +37,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify token audience to prevent cross-app token reuse
-    const expectedClientId =
-      process.env.GOOGLE_CLIENT_ID ||
-      process.env.AUTH_GOOGLE_ID ||
-      "148639493611-8ufhbmietb8higbfk0cgge6jijmn7j4o.apps.googleusercontent.com";
+    const allowedClientIds = Array.from(
+      new Set(
+        [
+          process.env.GOOGLE_CLIENT_ID,
+          process.env.AUTH_GOOGLE_ID,
+          "148639493611-8ufhbmietb8higbfk0cgge6jijmn7j4o.apps.googleusercontent.com",
+        ].filter(Boolean) as string[]
+      )
+    );
 
-    const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-    if (!aud.includes(expectedClientId)) {
-      console.warn("Google token audience mismatch:", payload.aud, "expected:", expectedClientId);
+    const tokenAudiences = [
+      ...(Array.isArray(payload.aud) ? payload.aud : [payload.aud]),
+      payload.azp,
+    ].filter(Boolean);
+
+    const isAudienceValid = tokenAudiences.some((aud) =>
+      allowedClientIds.includes(aud)
+    );
+
+    if (!isAudienceValid) {
+      console.warn(
+        "Google token audience mismatch:",
+        tokenAudiences,
+        "allowed:",
+        allowedClientIds
+      );
       return NextResponse.json(
         { error: "Google token was not issued for this application" },
         { status: 401 }

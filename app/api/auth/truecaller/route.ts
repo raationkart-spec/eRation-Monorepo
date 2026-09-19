@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-const TRUECALLER_CLIENT_ID =
-  process.env.TRUECALLER_CLIENT_ID || "vehpunfwibqmwezricdesqmr9eet09qgwrnyzekapgi";
+const DEFAULT_TRUECALLER_CLIENT_ID = "vehpunfwibqmwezricdesqmr9eet09qgwrnyzekapgi";
+const OLD_TRUECALLER_CLIENT_ID = "oewpqo0wlybxpjhi3tcjsb5a1nhjoaszzh988n6zamc";
+
+const resolveTruecallerClientId = (overrideId?: string): string => {
+  if (overrideId && overrideId !== OLD_TRUECALLER_CLIENT_ID) return overrideId;
+  const envId = process.env.TRUECALLER_CLIENT_ID;
+  if (envId && envId !== OLD_TRUECALLER_CLIENT_ID) return envId;
+  return DEFAULT_TRUECALLER_CLIENT_ID;
+};
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { authorizationCode, codeVerifier } = body;
+    const { authorizationCode, codeVerifier, clientId } = body;
 
     if (!authorizationCode || !codeVerifier) {
       return NextResponse.json(
@@ -16,10 +23,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const activeClientId = resolveTruecallerClientId(clientId);
+
     // 1. Exchange authorization code with Truecaller OAuth Token API (PKCE)
     const tokenParams = new URLSearchParams();
     tokenParams.append("grant_type", "authorization_code");
-    tokenParams.append("client_id", TRUECALLER_CLIENT_ID);
+    tokenParams.append("client_id", activeClientId);
     tokenParams.append("code", authorizationCode);
     tokenParams.append("code_verifier", codeVerifier);
 

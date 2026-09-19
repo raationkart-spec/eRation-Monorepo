@@ -12,14 +12,25 @@ export async function POST(
 
     const order = await db.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: true, user: true },
     });
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if ((session?.user as any)?.role !== "ADMIN" && order.userId && order.userId !== session?.user?.id) {
+    const { searchParams } = new URL(request.url);
+    const body = await request.json().catch(() => ({}));
+    const emailParam = (body?.email || searchParams.get("email"))?.toLowerCase()?.trim();
+    const phoneParam = (body?.phone || searchParams.get("phone"))?.trim();
+
+    const isOwner =
+      !order.userId ||
+      (session?.user?.id && order.userId === session.user.id) ||
+      (emailParam && order.user?.email?.toLowerCase() === emailParam) ||
+      (phoneParam && order.customerPhone?.includes(phoneParam.slice(-10)));
+
+    if ((session?.user as any)?.role !== "ADMIN" && !isOwner) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

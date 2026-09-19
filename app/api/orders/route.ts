@@ -66,12 +66,25 @@ export async function POST(request: NextRequest) {
     } = body;
     const tokensToRedeem: number = Math.max(0, Number(body.tokensToRedeem) || 0);
 
-    // ── Resolve unified userId from session or email ─────────────────────────
+    // ── Resolve unified userId from session, email, or phone ─────────────────
     let resolvedUserId: string | null = session?.user?.id ?? null;
     if (!resolvedUserId && customerEmail) {
       const cleanCustEmail = String(customerEmail).toLowerCase().trim();
       const dbUser = await db.user.findUnique({
         where: { email: cleanCustEmail },
+        select: { id: true },
+      });
+      resolvedUserId = dbUser?.id ?? null;
+    }
+    if (!resolvedUserId && customerPhone) {
+      const digitsOnly = String(customerPhone).replace(/\D/g, "");
+      const phoneVariants = [
+        `+91${digitsOnly.slice(-10)}`,
+        digitsOnly.slice(-10),
+        `+${digitsOnly}`,
+      ];
+      const dbUser = await db.user.findFirst({
+        where: { phone: { in: phoneVariants } },
         select: { id: true },
       });
       resolvedUserId = dbUser?.id ?? null;

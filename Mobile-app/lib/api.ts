@@ -247,7 +247,11 @@ export const api = {
     try {
       const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/truecaller`, {
         method: "POST",
-        body: JSON.stringify({ authorizationCode, codeVerifier }),
+        body: JSON.stringify({
+          authorizationCode,
+          codeVerifier,
+          clientId: process.env.EXPO_PUBLIC_TRUECALLER_CLIENT_ID || "vehpunfwibqmwezricdesqmr9eet09qgwrnyzekapgi",
+        }),
       });
       if (res.ok) {
         const data = await res.json();
