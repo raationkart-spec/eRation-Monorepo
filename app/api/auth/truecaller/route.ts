@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 const TRUECALLER_CLIENT_ID =
-  process.env.TRUECALLER_CLIENT_ID || "oewpqo0wlybxpjhi3tcjsb5a1nhjoaszzh988n6zamc";
+  process.env.TRUECALLER_CLIENT_ID || "vehpunfwibqmwezricdesqmr9eet09qgwrnyzekapgi";
 
 export async function POST(request: NextRequest) {
   try {
