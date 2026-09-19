@@ -94,6 +94,12 @@ export default function LoginScreen() {
         // Operation already in progress
       } else if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         setErrorMsg("Google Play Services is not available. Please use Truecaller or Email OTP.");
+      } else if (
+        e.code === "10" ||
+        e.code === 10 ||
+        e.message?.includes("DEVELOPER_ERROR")
+      ) {
+        setErrorMsg("Google Sign-In is not configured for this build (SHA-1 mismatch). Please use Email OTP.");
       } else {
         console.error("Google sign-in error:", e);
         setErrorMsg(e.message || "Failed to sign in with Google.");
@@ -151,6 +157,13 @@ export default function LoginScreen() {
       console.log("Truecaller login error:", e);
       if (e.code === "USER_CANCELLED" || e.message?.toLowerCase().includes("cancel")) {
         // User dismissed sheet
+      } else if (
+        e.code === "ERR_UNKNOWN_ERROR" ||
+        e.code === "ERR_MISSING_CLIENT_ID" ||
+        e.message?.toLowerCase().includes("unknown truecaller error") ||
+        e.message?.toLowerCase().includes("partner")
+      ) {
+        setErrorMsg("Truecaller is undergoing review or unverified for this build. Please use Google Sign-In or Email OTP.");
       } else {
         setErrorMsg(e.message || "Truecaller verification failed.");
       }
