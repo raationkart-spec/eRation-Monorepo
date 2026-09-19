@@ -29,6 +29,18 @@ WebBrowser.maybeCompleteAuthSession();
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
+const GOOGLE_WEB_CLIENT_ID =
+  "148639493611-8ufhbmietb8higbfk0cgge6jijmn7j4o.apps.googleusercontent.com";
+
+try {
+  GoogleSignin.configure({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    offlineAccess: false,
+  });
+} catch (e) {
+  console.log("GoogleSignin module configure error:", e);
+}
+
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -42,18 +54,6 @@ export default function LoginScreen() {
   const [truecallerLoading, setTruecallerLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  useEffect(() => {
-    try {
-      GoogleSignin.configure({
-        webClientId:
-          "148639493611-8ufhbmietb8higbfk0cgge6jijmn7j4o.apps.googleusercontent.com",
-        offlineAccess: false,
-      });
-    } catch (e) {
-      console.log("GoogleSignin.configure error:", e);
-    }
-  }, []);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -227,6 +227,7 @@ export default function LoginScreen() {
             styles.scrollContainer,
             { paddingBottom: keyboardHeight > 0 ? keyboardHeight : 0 },
           ]}
+          scrollEnabled={keyboardHeight > 0 || showEmailInput || SCREEN_HEIGHT < 640}
           bounces={false}
           keyboardShouldPersistTaps="always"
           showsVerticalScrollIndicator={false}
@@ -442,10 +443,12 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
+    minHeight: "100%",
     backgroundColor: "#090d16",
+    justifyContent: "space-between",
   },
   heroSection: {
-    height: SCREEN_HEIGHT * 0.70,
+    height: Math.min(Math.round(SCREEN_HEIGHT * 0.35), 260),
     width: "100%",
     position: "relative",
   },
@@ -467,22 +470,22 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.25)",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+    gap: 5,
   },
   badgeText: {
     color: "#ffffff",
     fontSize: 9,
     fontWeight: "900",
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   brandTitle: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: "900",
     color: "#ffffff",
-    marginTop: 8,
+    marginTop: 4,
     letterSpacing: -0.5,
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 2 },
@@ -490,20 +493,20 @@ const styles = StyleSheet.create({
   },
   bottomCard: {
     flex: 1,
-    marginTop: -32,
+    marginTop: -20,
     backgroundColor: "#0f172a",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderTopWidth: 1,
     borderTopColor: "rgba(255, 255, 255, 0.15)",
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 16,
     justifyContent: "space-between",
   },
   bottomCardTight: {
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingTop: 14,
+    paddingBottom: 10,
   },
   contentBox: {
     flex: 1,
@@ -513,10 +516,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mainTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "900",
     color: "#ffffff",
-    lineHeight: 30,
+    lineHeight: 26,
     textAlign: "center",
   },
   orangeTitle: {
@@ -524,39 +527,39 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   subText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     color: "#cbd5e1",
     textAlign: "center",
-    marginTop: 4,
+    marginTop: 3,
     paddingHorizontal: 10,
-    lineHeight: 17,
+    lineHeight: 15,
   },
   actionContainer: {
-    marginVertical: 10,
+    marginVertical: 6,
     width: "100%",
   },
   btnStack: {
     width: "100%",
-    gap: 10,
+    gap: 8,
   },
   truecallerBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#0087FF",
-    height: 48,
-    borderRadius: 24,
-    gap: 10,
+    height: 44,
+    borderRadius: 22,
+    gap: 8,
     shadowColor: "#0087FF",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   truecallerBtnText: {
     color: "#ffffff",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
   },
   googleBtn: {
@@ -564,20 +567,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#ffffff",
-    height: 48,
-    borderRadius: 24,
-    gap: 10,
+    height: 44,
+    borderRadius: 22,
+    gap: 8,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
   },
   googleBtnText: {
     color: "#0f172a",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
   },
   mainOrangeBtn: {
@@ -585,21 +588,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#f97316",
-    height: 48,
-    borderRadius: 24,
+    height: 44,
+    borderRadius: 22,
     gap: 8,
     shadowColor: "#f97316",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 3,
   },
   disabledBtn: {
     opacity: 0.5,
   },
   mainBtnText: {
     color: "#ffffff",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "900",
   },
   emailInputWrapper: {
@@ -611,14 +614,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e293b",
     borderWidth: 1.5,
     borderColor: "#f97316",
-    borderRadius: 24,
+    borderRadius: 22,
     paddingHorizontal: 16,
-    height: 48,
+    height: 44,
   },
   textInput: {
     flex: 1,
     color: "#ffffff",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
   },
   errorText: {
