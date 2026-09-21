@@ -77,8 +77,18 @@ export default function ProductDetailScreen() {
     );
   }
 
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
   const discount = discountPercent(product.mrp, product.price);
   const savings = Math.max(0, product.mrp - product.price);
+
+  const galleryImages =
+    Array.isArray(product.imageUrls) && product.imageUrls.length > 0
+      ? product.imageUrls
+      : product.imageUrl
+        ? [product.imageUrl]
+        : [];
+  const activeImageUri = galleryImages[selectedImageIndex] || product.imageUrl;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -101,12 +111,43 @@ export default function ProductDetailScreen() {
             </View>
           ) : null}
 
-          {product.imageUrl ? (
-            <Image source={{ uri: product.imageUrl }} style={styles.mainImage} resizeMode="contain" />
+          {galleryImages.length > 1 ? (
+            <View style={styles.pageBadge}>
+              <Text style={styles.pageBadgeText}>
+                {selectedImageIndex + 1} / {galleryImages.length}
+              </Text>
+            </View>
+          ) : null}
+
+          {activeImageUri ? (
+            <Image source={{ uri: activeImageUri }} style={styles.mainImage} resizeMode="contain" />
           ) : (
             <ShoppingBag size={80} color="#cbd5e1" />
           )}
         </View>
+
+        {/* Thumbnail Selector Strip */}
+        {galleryImages.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.thumbStrip}
+          >
+            {galleryImages.map((uri, idx) => (
+              <TouchableOpacity
+                key={`${uri}-${idx}`}
+                onPress={() => setSelectedImageIndex(idx)}
+                style={[
+                  styles.thumbItem,
+                  selectedImageIndex === idx && styles.thumbItemActive,
+                ]}
+                activeOpacity={0.7}
+              >
+                <Image source={{ uri }} style={styles.thumbImage} resizeMode="contain" />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
 
         {/* Product Info Section */}
         <View style={styles.infoCard}>
@@ -381,5 +422,44 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     width: "50%",
+  },
+  pageBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  pageBadgeText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "800",
+  },
+  thumbStrip: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  thumbItem: {
+    width: 52,
+    height: 52,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    backgroundColor: "#ffffff",
+    overflow: "hidden",
+    padding: 2,
+  },
+  thumbItemActive: {
+    borderColor: "#ea580c",
+    backgroundColor: "#fff7ed",
+  },
+  thumbImage: {
+    width: "100%",
+    height: "100%",
   },
 });

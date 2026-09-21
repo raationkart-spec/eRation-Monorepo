@@ -28,21 +28,28 @@ export interface Product {
   name: string;
   slug: string;
   description?: string;
-  categorySlug: string;
+  categorySlug?: string;
   brand?: string;
   unit: string;
   mrp: number; // paise
   price: number; // paise
-  stockQty: number;
-  lowStockThreshold: number;
-  emoji: string;
+  stockQty?: number;
+  lowStockThreshold?: number;
+  emoji?: string;
   imageUrl?: string | null;
+  imageUrls?: string[];
+  image?: string | null;
   images?: string[];
-  tags: string[];
-  isActive: boolean;
-  isFeatured: boolean;
-  sortOrder: number;
+  tags?: string[];
+  isActive?: boolean;
+  isFeatured?: boolean;
+  sortOrder?: number;
+  itemCode?: string | null;
+  barcode?: string | null;
+  barcodeSymbology?: string | null;
   createdAt?: string;
+  availability?: "IN_STOCK" | "OUT_OF_STOCK";
+  isAvailable?: boolean;
 }
 
 export interface FlashDeal {

@@ -1,7 +1,7 @@
 "use client";
 import { use, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Info, ShieldCheck, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info, ShieldCheck, ChevronDown } from "lucide-react";
 import { useCatalog } from "@/lib/store";
 import { ProductImage } from "@/components/ProductImage";
 import { AddToCartButton } from "@/components/AddToCartButton";
@@ -23,6 +23,7 @@ export default function ProductPage({
 
   const [nutritionalOpen, setNutritionalOpen] = useState(false);
   const [benefitsOpen, setBenefitsOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   if (!hydrated) return <ProductDetailSkeleton />;
 
@@ -38,6 +39,13 @@ export default function ProductPage({
     );
   }
 
+  const galleryImages =
+    Array.isArray(product.imageUrls) && product.imageUrls.length > 0
+      ? product.imageUrls
+      : product.imageUrl
+        ? [product.imageUrl]
+        : [];
+
   const category = categories.find((c) => c.slug === product.categorySlug);
   const discount = discountPercent(product.mrp, product.price);
   const related = products
@@ -49,6 +57,8 @@ export default function ProductPage({
     )
     .slice(0, 6);
 
+  const activeImageUrl = galleryImages[selectedImageIndex] || product.imageUrl;
+
   return (
     <div className="content-in pb-12 max-w-2xl mx-auto">
       {/* Back button */}
@@ -59,20 +69,81 @@ export default function ProductPage({
         <ChevronLeft size={20} /> Back
       </Link>
 
-      {/* Main Image Header matching Stitch */}
+      {/* Main Image Header with Multi-Image Gallery */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm">
         {discount > 0 && (
           <span className="absolute left-4 top-4 z-10 rounded-full bg-red-600 px-3 py-1 text-2xs font-extrabold text-white shadow-sm">
             {discount}% OFF
           </span>
         )}
-        <ProductImage
-          imageUrl={product.imageUrl}
-          emoji={product.emoji}
-          alt={product.name}
-          className="aspect-square w-full rounded-xl"
-          size="text-[120px]"
-        />
+        {galleryImages.length > 1 && (
+          <span className="absolute right-4 top-4 z-10 rounded-full bg-slate-900/60 px-2.5 py-0.5 text-3xs font-extrabold text-white backdrop-blur-2xs">
+            {selectedImageIndex + 1} / {galleryImages.length}
+          </span>
+        )}
+        <div className="relative">
+          <ProductImage
+            imageUrl={activeImageUrl}
+            emoji={product.emoji}
+            alt={product.name}
+            className="aspect-square w-full rounded-xl"
+            size="text-[120px]"
+          />
+
+          {galleryImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedImageIndex((prev) =>
+                    prev > 0 ? prev - 1 : galleryImages.length - 1
+                  )
+                }
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-slate-700 shadow-md hover:bg-white transition"
+                aria-label="Previous image"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedImageIndex((prev) =>
+                    prev < galleryImages.length - 1 ? prev + 1 : 0
+                  )
+                }
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-slate-700 shadow-md hover:bg-white transition"
+                aria-label="Next image"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Thumbnails strip */}
+        {galleryImages.length > 1 && (
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none">
+            {galleryImages.map((imgUrl, idx) => (
+              <button
+                key={`${imgUrl}-${idx}`}
+                type="button"
+                onClick={() => setSelectedImageIndex(idx)}
+                className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-slate-50 transition ${
+                  selectedImageIndex === idx
+                    ? "border-brand ring-2 ring-brand/30 scale-105"
+                    : "border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100"
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imgUrl}
+                  alt={`Thumbnail ${idx + 1}`}
+                  className="h-full w-full object-contain p-0.5"
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Details Section Container matching Stitch rounded-t-3xl -mt-6 */}

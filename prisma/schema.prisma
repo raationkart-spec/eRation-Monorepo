@@ -119,10 +119,14 @@ model Product {
   lowStockThreshold Int         @default(5)
   emoji             String
   imageUrl          String?
+  imageUrls         String[]    @default([])
   tags              String[]
   isActive          Boolean     @default(true)
   isFeatured        Boolean     @default(false)
   sortOrder         Int         @default(0)
+  itemCode          String?     @unique
+  barcode           String?
+  barcodeSymbology  String?
   orderItems        OrderItem[]
   flashDeals        FlashDeal[]
   bundleItems       BundleItem[]
@@ -289,5 +293,34 @@ model EmailOtp {
   otp       String
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+enum ImportStatus {
+  PREVIEW
+  COMMITTED
+  ROLLED_BACK
+  FAILED
+}
+
+model InventoryImport {
+  id               String       @id @default(cuid())
+  fileHash         String
+  fileName         String
+  fileSize         Int
+  sheetName        String
+  importedBy       String
+  totalRows        Int
+  createdCount     Int
+  updatedCount     Int
+  skippedCount     Int
+  errorCount       Int
+  shortageCount    Int
+  missingCodeCount Int
+  status           ImportStatus @default(COMMITTED)
+  summary          Json
+  createdAt        DateTime     @default(now())
+
+  @@index([fileHash])
+  @@index([createdAt])
 }
 
