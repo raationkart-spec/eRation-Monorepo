@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import { useCatalog } from "@/lib/store";
 import { useToast } from "@/components/toast";
 import type { Product } from "@/lib/types";
-import { ImageUploader } from "./ImageUploader";
+import { MultiImageUploader } from "./MultiImageUploader";
 import { Percent, Sparkles } from "lucide-react";
+import { BarcodeRenderer } from "./inventory/BarcodeRenderer";
 
 const EMOJI_CHOICES = [
   "🍎","🍌","🥦","🥕","🍅","🥬","🥭","🍇","🥛","🥚","🧀","🧈","🍞","🥐","🧁",
@@ -20,13 +21,24 @@ export function ProductForm({ existing }: { existing?: Product }) {
   const upsertProduct = useCatalog((s) => s.upsertProduct);
   const show = useToast((s) => s.show);
 
+  const initialImages =
+    existing?.imageUrls && existing.imageUrls.length > 0
+      ? existing.imageUrls
+      : existing?.imageUrl
+        ? [existing.imageUrl]
+        : [];
+
+  const [imageUrls, setImageUrls] = useState<string[]>(initialImages);
+
   const [f, setF] = useState({
     name: existing?.name ?? "",
     categorySlug: existing?.categorySlug ?? categories[0]?.slug ?? "",
     brand: existing?.brand ?? "",
     unit: existing?.unit ?? "",
+    itemCode: existing?.itemCode ?? "",
+    barcodeSymbology: existing?.barcodeSymbology ?? "CODE128",
     emoji: existing?.emoji ?? "🛒",
-    imageUrl: existing?.imageUrl ?? "",
+    imageUrl: existing?.imageUrl ?? (initialImages[0] ?? ""),
     mrp: existing ? String(existing.mrp / 100) : "",
     price: existing ? String(existing.price / 100) : "",
     stockQty: existing ? String(existing.stockQty) : "0",
@@ -41,6 +53,11 @@ export function ProductForm({ existing }: { existing?: Product }) {
 
   const set = (k: string, v: string | boolean) =>
     setF((s) => ({ ...s, [k]: v }));
+
+  const handleImagesChange = (urls: string[]) => {
+    setImageUrls(urls);
+    set("imageUrl", urls[0] || "");
+  };
 
   // Calculated discount metrics
   const numericMrp = parseFloat(f.mrp) || 0;
@@ -73,6 +90,7 @@ export function ProductForm({ existing }: { existing?: Product }) {
       existing?.slug ??
       f.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+    const itemCodeTrimmed = f.itemCode.trim();
     const payload = {
       id: existing?.id,
       name: f.name.trim(),
@@ -80,8 +98,12 @@ export function ProductForm({ existing }: { existing?: Product }) {
       categorySlug: f.categorySlug,
       brand: f.brand.trim() || undefined,
       unit: f.unit.trim(),
+      itemCode: itemCodeTrimmed || (existing ? "" : undefined),
+      barcode: itemCodeTrimmed || (existing ? "" : undefined),
+      barcodeSymbology: itemCodeTrimmed ? f.barcodeSymbology : (existing ? null : undefined),
       emoji: f.emoji,
-      imageUrl: f.imageUrl.trim() || undefined,
+      imageUrl: imageUrls.length > 0 ? imageUrls[0] : (existing ? "" : undefined),
+      imageUrls,
       mrp,
       price,
       stockQty: parseInt(f.stockQty) || 0,
@@ -104,7 +126,15 @@ export function ProductForm({ existing }: { existing?: Product }) {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save product");
+      if (!res.ok) {
+        if (res.status === 409 || data.error?.toLowerCase().includes("item code")) {
+          setErrors((prev) => ({
+            ...prev,
+            itemCode: data.error || "Item code is already in use by another product",
+          }));
+        }
+        throw new Error(data.error || "Failed to save product");
+      }
 
       upsertProduct(data.product as Product);
       show(existing ? "Product updated" : "Product created");
@@ -165,18 +195,71 @@ export function ProductForm({ existing }: { existing?: Product }) {
             className="ainput"
           />
         </Field>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+          <Field label="Item Code / Barcode (optional)" error={errors.itemCode}>
+            <input
+              value={f.itemCode}
+              onChange={(e) => {
+                set("itemCode", e.target.value);
+                if (errors.itemCode) setErrors((prev) => ({ ...prev, itemCode: "" }));
+              }}
+              placeholder="e.g. 00491823, 100PB349, 89012330"
+              className="ainput font-mono"
+            />
+            <p className="mt-1 text-3xs text-slate-400">
+              Leave blank to clear barcode. Blank codes will not generate or infer barcodes.
+            </p>
+          </Field>
+          <Field label="Barcode Symbology">
+            <select
+              value={f.barcodeSymbology}
+              onChange={(e) => set("barcodeSymbology", e.target.value)}
+              className="ainput"
+            >
+              <option value="CODE128">Code 128 (Universal - Alphanumeric &amp; Numeric)</option>
+              <option value="EAN13">EAN-13 (GS1 Standard 13-digit)</option>
+            </select>
+            <p className="mt-1 text-3xs text-slate-400">
+              EAN-13 requires exactly 13 digits with valid checksum. Code 128 accepts any alphanumeric code.
+            </p>
+          </Field>
+        </div>
+
+        {f.itemCode.trim() ? (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-2xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+              Live Barcode Preview &amp; Shelf Label
+            </p>
+            <BarcodeRenderer
+              code={f.itemCode}
+              symbology={f.barcodeSymbology}
+              productName={f.name}
+              price={numericPrice * 100}
+              unit={f.unit}
+              showActions={true}
+            />
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-2.5 text-center">
+            <p className="text-2xs text-slate-400">
+              No item code entered. Barcode will be cleared on save.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Image & Icon Card */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
         <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-2">
-          2. Product Visuals &amp; Media
+          2. Product Visuals &amp; Media Gallery
         </h2>
 
-        <ImageUploader
-          imageUrl={f.imageUrl}
-          onChange={(url) => set("imageUrl", url)}
-          label="Product Image (Uploaded or URL)"
+        <MultiImageUploader
+          imageUrls={imageUrls}
+          onChange={handleImagesChange}
+          label="Product Gallery (Upload Multiple or Add URLs)"
+          maxImages={10}
         />
 
         <Field label="Fallback Emoji Icon">

@@ -100,6 +100,7 @@ interface CatalogState {
   deleteProduct: (id: string) => void;
   adjustStock: (id: string, changeQty: number) => void;
   upsertCategory: (c: Category) => void;
+  deleteCategory: (id: string) => void;
   upsertBanner: (b: Banner) => void;
   deleteBanner: (id: string) => void;
   upsertCoupon: (c: Coupon) => void;
@@ -154,11 +155,22 @@ export const useCatalog = create<CatalogState>()(
       setFlashDeals: (flashDeals) => set({ flashDeals }),
       upsertProduct: (p) =>
         set((s) => {
-          const exists = s.products.some((x) => x.id === p.id);
+          const imageUrls = Array.isArray(p.imageUrls) && p.imageUrls.length > 0
+            ? p.imageUrls
+            : p.imageUrl ? [p.imageUrl] : [];
+          const imageUrl = imageUrls.length > 0 ? imageUrls[0] : (p.imageUrl || null);
+          const norm: Product = {
+            ...p,
+            imageUrls,
+            imageUrl,
+            image: imageUrl,
+            images: imageUrls,
+          };
+          const exists = s.products.some((x) => x.id === norm.id);
           return {
             products: exists
-              ? s.products.map((x) => (x.id === p.id ? p : x))
-              : [...s.products, p],
+              ? s.products.map((x) => (x.id === norm.id ? norm : x))
+              : [...s.products, norm],
           };
         }),
       bulkUpsertProducts: (incoming) =>
@@ -171,7 +183,19 @@ export const useCatalog = create<CatalogState>()(
               existingId ||
               p.id ||
               "imp_" + Date.now() + Math.random().toString(36).substring(2, 7);
-            byId.set(finalId, { ...p, id: finalId } as Product);
+            const imageUrls = Array.isArray(p.imageUrls) && p.imageUrls.length > 0
+              ? p.imageUrls
+              : p.imageUrl ? [p.imageUrl] : [];
+            const imageUrl = imageUrls.length > 0 ? imageUrls[0] : (p.imageUrl || null);
+            const norm: Product = {
+              ...p,
+              id: finalId,
+              imageUrls,
+              imageUrl,
+              image: imageUrl,
+              images: imageUrls,
+            };
+            byId.set(finalId, norm);
           });
           return { products: Array.from(byId.values()) };
         }),
@@ -198,6 +222,8 @@ export const useCatalog = create<CatalogState>()(
               : [...s.categories, c],
           };
         }),
+      deleteCategory: (id) =>
+        set((s) => ({ categories: s.categories.filter((x) => x.id !== id) })),
       upsertBanner: (b) =>
         set((s) => {
           const exists = s.banners.some((x) => x.id === b.id);

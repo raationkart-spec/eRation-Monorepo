@@ -37,12 +37,33 @@ export interface Product {
   lowStockThreshold: number;
   emoji: string;
   imageUrl?: string | null;
+  imageUrls?: string[];
+  image?: string | null;
   images?: string[];
   tags: string[];
   isActive: boolean;
   isFeatured: boolean;
   sortOrder: number;
+  itemCode?: string | null;
+  barcode?: string | null;
+  barcodeSymbology?: string | null;
   createdAt?: string;
+  availability?: "IN_STOCK" | "OUT_OF_STOCK";
+  isAvailable?: boolean;
+}
+
+export interface StorefrontBarcodeProduct {
+  id: string;
+  name: string;
+  slug: string;
+  price: number; // paise
+  mrp: number; // paise
+  image?: string | null;
+  imageUrl?: string | null;
+  emoji?: string;
+  unit: string;
+  availability: "IN_STOCK" | "OUT_OF_STOCK";
+  isAvailable: boolean;
 }
 
 export interface FlashDeal {
