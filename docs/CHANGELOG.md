@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] — POS Bulk Inventory Import, Barcodes & Full-Stack Hardening
 
 ### Added
+- **Vercel dependency resolution**: Pinned Vitest to `4.1.11`, compatible with the repository's `@types/node` 20.x range, so clean Vercel `npm install` no longer fails on Vitest 5 peer requirements.
 - **Product create/edit media**: Admin product forms now persist optional unique item codes and matching barcode metadata, explicitly clear barcode fields when the code is removed, and support up to 10 product images with primary-image selection, reordering, preview, removal, and legacy `imageUrl` compatibility. The additive `imageUrls` migration artifact is documented but not applied automatically.
 - **Prisma Schema & Neon Database Migration**: Added `itemCode String? @unique`, `barcode String?`, and `barcodeSymbology String?` to `Product` model. Created `InventoryImport` model with `ImportStatus` enum (`COMMITTED`, `ROLLED_BACK`, `FAILED`) and pre-import JSON snapshot audit storage. Pushed safely to Neon Postgres via Prisma.
 - **Core Ingestion & Barcode Engine**:
